@@ -1,6 +1,8 @@
 import abc
-import numpy as np
+import warnings
 from time import time
+
+import numpy as np
 from matplotlib.colors import colorConverter
 
 
@@ -144,6 +146,15 @@ class D3Axes(D3Base):
         self.texts = [D3Text(ax, text) for text in
                       ax.texts + [ax.xaxis.label, ax.yaxis.label, ax.title]]
 
+        # Some warnings for pieces of matplotlib which are not yet implemented
+        for attr in ['images', 'collections', 'containers',
+                     'artists', 'patches', 'tables']:
+            if len(getattr(ax, attr)) > 0:
+                warnings.warn("{0} not implemented.  "
+                              "Elements will be ignored".format(attr))
+        if ax.legend_ is not None:
+            warnings.warn("legend is not implemented: it will be ignored")
+
     def style(self):
         return '\n'.join([self.STYLE.format(i=self.i,
                                             fontsize=11)] +
@@ -215,6 +226,10 @@ class D3Line2D(D3Base):
 
         if marker not in ('None', 'none', None):
             # TODO: use actual marker, not simply circles
+            if marker != 'o':
+                warnings.warn("Only marker='o' is currently supported. "
+                              "Defaulting to this.")
+
             ms = 2. / 3. * self.line.get_markersize()
             mc = color_to_hex(self.line.get_markerfacecolor())
             mec = color_to_hex(self.line.get_markeredgecolor())
@@ -230,6 +245,9 @@ class D3Line2D(D3Base):
                                                   alpha=alpha)
         if style not in ('None', 'none', None):
             # TODO: use actual line style
+            if style not in ['-', 'solid']:
+                warnings.warn("Only solid lines are currently supported. "
+                              "Defaulting to this.")
             lc = color_to_hex(self.line.get_color())
             lw = self.line.get_linewidth()
             result += self.LINE_TEMPLATE.format(id=id(self.line),
