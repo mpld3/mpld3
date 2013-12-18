@@ -75,11 +75,27 @@ axes_{id}.append('g')
 	.attr('class', 'main axis')
 	.call(yAxis_{id});
 
-{lines}
+{elements}
+"""
+
+D3_LINE = """
+var data_{id} = {data}
+
+var line_{id} = d3.svg.line()
+     .x(function(d) {{return x_{axid}(d[0]);}})
+     .y(function(d) {{return y_{axid}(d[1]);}})
+     .interpolate("linear");
+
+axes_{axid}.append("svg:path")
+              .attr("d", line_{id}(data_{id}))
+              .attr("stroke", "{linecolor}")
+              .attr("stroke-width", {linewidth})
+              .attr("fill", "none")
+              .attr("stroke-opacity", {alpha})
 """
 
 
-D3_LINE = """
+D3_PTS = """
 var g_{id} = axes_{axid}.append("svg:g");
 
 var data_{id} = {data};
@@ -115,8 +131,9 @@ def get_text_coordinates(txt):
     return txt.get_transform().transform(txt.get_position())
 
 
-def rgb_to_hex(rgb):
+def color_to_hex(color):
     """Convert rgb tuple to hex color code"""
+    rgb = colorConverter.to_rgb(color)
     return '#{:02X}{:02X}{:02X}'.format(*(int(255 * c) for c in rgb))
 
 
@@ -130,59 +147,65 @@ def fig_to_d3(fig):
     for ax in fig.axes:
         bounds = ax.get_position().bounds
 
-        lines_html = []
+        axes_elements = []
 
         for i, line in enumerate(ax.lines):
-            # point attributes
-            #line.get_data()
-            #line.get_markersize()
-            #line.get_markeredgecolor()
-            #line.get_markeredgewidth()
-
-            # line attributes: do this later
-            #line.get_marker()
-            #line.get_linestyle()
-            #line.get_linewidth()
-            #line.get_color()
-
-            data = np.asarray(line.get_data()).T.tolist()
-            ms = 2. / 3. * line.get_markersize()
-            mc = rgb_to_hex(colorConverter.to_rgb(line.get_markerfacecolor()))
-            mec = rgb_to_hex(colorConverter.to_rgb(line.get_markeredgecolor()))
-            mew = line.get_markeredgewidth()
+            data = line.get_xydata().tolist()
             alpha = line.get_alpha()
             if alpha is None:
                 alpha = 1
+            marker = line.get_marker()
+            style = line.get_linestyle()
+
+            if marker not in ('None', 'none', None):
+                # TODO: use actual marker, not simply circles
+                ms = 2. / 3. * line.get_markersize()
+                mc = color_to_hex(line.get_markerfacecolor())
+                mec = color_to_hex(line.get_markeredgecolor())
+                mew = line.get_markeredgewidth()
             
-            lines_html.append(D3_LINE.format(id=id(line),
-                                             axid=id(ax),
-                                             i=i + 1,
-                                             data=data,
-                                             markersize=ms,
-                                             markercolor=mc,
-                                             markeredgecolor=mec,
-                                             markeredgewidth=mew,
-                                             alpha=alpha))
+                axes_elements.append(D3_PTS.format(id=id(line),
+                                                   axid=id(ax),
+                                                   i=i + 1,
+                                                   data=data,
+                                                   markersize=ms,
+                                                   markercolor=mc,
+                                                   markeredgecolor=mec,
+                                                   markeredgewidth=mew,
+                                                   alpha=alpha))
+
+            if style not in ('None', 'none', None):
+                # TODO: use actual line style
+                lc = color_to_hex(line.get_color())
+                lw = line.get_linewidth()
+                axes_elements.append(D3_LINE.format(id=id(line),
+                                                    axid=id(ax),
+                                                    figid=id(fig),
+                                                    data=data,
+                                                    linecolor=lc,
+                                                    linewidth=lw,
+                                                    alpha=alpha))
+                
 
         texts = ax.texts + [ax.xaxis.label, ax.yaxis.label, ax.title]
         for text in texts:
             if not text.get_text():
                 continue
             x, y = get_text_coordinates(text)
-            color =  rgb_to_hex(colorConverter.to_rgb(text.get_color()))
+            color =  color_to_hex(colorConverter.to_rgb(text.get_color()))
             fontsize = text.get_size()
 
             # hack for y-label alignment
             if text is ax.yaxis.label:
                 x += fontsize
             
-            lines_html.append(D3_TEXT.format(figid=id(fig),
-                                             text=text.get_text(),
-                                             x=x, y=y,
-                                             fontsize=fontsize,
-                                             color=color,
-                                             rotation=-text.get_rotation(),
-                                             anchor="middle"))
+            axes_elements.append(D3_TEXT.format(figid=id(fig),
+                                                text=text.get_text(),
+                                                x=x, y=y,
+                                                fontsize=fontsize,
+                                                color=color,
+                                                rotation=-text.get_rotation(),
+                                                anchor="middle"))
                                              
         xtick_size = ax.xaxis.get_major_ticks()[0].label.get_fontsize()
         ytick_size = ax.yaxis.get_major_ticks()[0].label.get_fontsize()
@@ -194,7 +217,7 @@ def fig_to_d3(fig):
                                         xtick_size=xtick_size,
                                         ytick_size=ytick_size,
                                         bbox=ax.get_position().bounds,
-                                        lines='\n'.join(lines_html)))
+                                        elements='\n'.join(axes_elements)))
                              
     fig_html = D3_FIGURE.format(id=id(fig),
                                 figwidth=fig.get_figwidth(),
@@ -214,6 +237,8 @@ if __name__ == '__main__':
     ax.plot(np.random.random(10),
             np.random.random(10),
             'og')
+    ax.plot(np.linspace(0.1, 0.9, 10),
+            np.random.random(10), '-b', lw=5, alpha=0.2)
     ax.set_xlabel('x label')
     ax.set_ylabel('y label')
     ax.set_title('title')
