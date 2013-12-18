@@ -1,5 +1,6 @@
 import abc
 import numpy as np
+from time import time
 from matplotlib.colors import colorConverter
 
 
@@ -39,8 +40,7 @@ class D3Figure(object):
     <div id='chart{id}'></div>
 
     <script type="text/javascript">
-    // set a timeout of 0 to make sure d3.js is loaded
-    setTimeout(function(){{
+    func{id} = function(){{
     var figwidth = {figwidth} * {dpi};
     var figheight = {figheight} * {dpi};
 
@@ -51,16 +51,23 @@ class D3Figure(object):
                    .attr('class', 'chart');
 
     {axes}
-    }}, 0)
+
+    }}
+
+    // set a timeout of 0 to allow d3.js to load
+    setTimeout(function(){{ func{id}() }}, 0)
     </script>
     """
     def __init__(self, fig):
+        # use time() to make sure multiple versions of this figure
+        # don't cross-talk if used on the same page.
+        self.chart_id = str(id(fig)) + str(int(time()))
         self.fig = fig
-        self.axes = [D3Axes(fig, ax) for ax in fig.axes]
+        self.axes = [D3Axes(ax, self.chart_id) for ax in fig.axes]
 
     def __str__(self):
         axes = '\n'.join(map(str, self.axes))
-        fig = self.FIGURE_TEMPLATE.format(id=id(self.fig),
+        fig = self.FIGURE_TEMPLATE.format(id=self.chart_id,
                                           figwidth=self.fig.get_figwidth(),
                                           figheight=self.fig.get_figheight(),
                                           dpi=self.fig.dpi,
@@ -70,7 +77,7 @@ class D3Figure(object):
 
 class D3Axes(object):
     AXES_TEMPLATE = """
-    var axes_{id} = chart_{figid}.append('g')
+    var axes_{id} = chart_{chart_id}.append('g')
             .attr('transform', 'translate(' + ({bbox[0]} * figwidth) + ',' +
                                 ((1 - {bbox[1]} - {bbox[3]}) * figheight) + ')')
             .attr('width', {bbox[2]} * figwidth)
@@ -107,11 +114,12 @@ class D3Axes(object):
 
     {elements}
     """
-    def __init__(self, fig, ax):
-        self.fig = fig
+    def __init__(self, ax, chart_id):
         self.ax = ax
-        self.lines = [D3Line2D(ax, line, i) for i, line in enumerate(ax.lines)]
-        self.texts = [D3Text(ax, text) for text in
+        self.chart_id = chart_id
+        self.lines = [D3Line2D(ax, line, chart_id, i)
+                      for i, line in enumerate(ax.lines)]
+        self.texts = [D3Text(ax, text, chart_id) for text in
                       ax.texts + [ax.xaxis.label, ax.yaxis.label, ax.title]]
 
     def __str__(self):
@@ -120,7 +128,7 @@ class D3Axes(object):
         ytick_size = self.ax.yaxis.get_major_ticks()[0].label.get_fontsize()
 
         return self.AXES_TEMPLATE.format(id=id(self.ax),
-                                         figid=id(self.fig),
+                                         chart_id=self.chart_id,
                                          xlim=self.ax.get_xlim(),
                                          ylim=self.ax.get_ylim(),
                                          xtick_size=xtick_size,
@@ -164,9 +172,10 @@ class D3Line2D(object):
               .attr("fill-opacity", {alpha})
               .attr("stroke-opacity", {alpha});
     """
-    def __init__(self, ax, line, i=None):
+    def __init__(self, ax, line, chart_id, i=None):
         self.ax = ax
         self.line = line
+        self.chart_id = chart_id
         if i is not None:
             self.i = i
         else:
@@ -212,7 +221,7 @@ class D3Line2D(object):
 
 class D3Text(object):
     TEXT_TEMPLATE = """
-    chart_{figid}.append("text")
+    chart_{chart_id}.append("text")
         .text("{text}")
         .attr("class", "axes-text")
         .attr("x", {x})
@@ -222,7 +231,8 @@ class D3Text(object):
         .attr("transform", "rotate({rotation},{x}," + (figheight - {y}) + ")")
         .attr("style", "text-anchor: {anchor};")
     """
-    def __init__(self, ax, text):
+    def __init__(self, ax, text, chart_id):
+        self.chart_id = chart_id
         self.ax = ax
         self.text = text
     
@@ -239,7 +249,7 @@ class D3Text(object):
         if self.text is self.ax.yaxis.label:
             x += fontsize
             
-        return self.TEXT_TEMPLATE.format(figid=id(self.ax.figure),
+        return self.TEXT_TEMPLATE.format(chart_id=self.chart_id,
                                          text=self.text.get_text(),
                                          x=x, y=y,
                                          fontsize=fontsize,
