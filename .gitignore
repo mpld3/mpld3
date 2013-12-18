@@ -41,3 +41,6 @@ nosetests.xml
 
 # ipython
 .ipynb_checkpoints
+
+# temporary files
+tmp.*
