@@ -20,6 +20,29 @@ def color_to_hex(color):
 class D3Base(object):
     __metaclass__ = abc.ABCMeta
 
+    def _initialize(self, parent=None, **kwds):
+        self.parent = parent
+        for key, val in kwds.items():
+            setattr(self, key, val)
+
+    @property
+    def figid(self):
+        if hasattr(self, '_figid'):
+            return self._figid
+        elif self.parent is not None and self.parent is not self:
+            return self.parent.figid
+        else:
+            raise AttributeError("no attribute figid")
+
+    @property
+    def axid(self):
+        if hasattr(self, '_axid'):
+            return self._axid
+        elif self.parent is not None and self.parent is not self:
+            return self.parent.axid
+        else:
+            raise AttributeError("no attribute axid")
+
     @abc.abstractmethod
     def html(self):
         raise NotImplementedError()
@@ -43,32 +66,33 @@ class D3Figure(D3Base):
     """
 
     FIGURE_TEMPLATE = """
-    <div id='chart{id}'></div>
+    <div id='figure{id}'></div>
 
     <script type="text/javascript">
-    func{id} = function(chart){{
+    func{id} = function(figure){{
 
     var figwidth = {figwidth} * {dpi};
     var figheight = {figheight} * {dpi};
 
-    chart = chart.append('svg:svg')
+    var canvas = figure.append('svg:svg')
                    .attr('width', figwidth)
                    .attr('height', figheight)
-                   .attr('class', chart)
+                   .attr('class', 'canvas')
 
     {axes}
 
     }}
 
     // set a timeout of 0 to allow d3.js to load
-    setTimeout(function(){{ func{id}(d3.select('#chart{id}')) }}, 0)
+    setTimeout(function(){{ func{id}(d3.select('#figure{id}')) }}, 0)
     </script>
     """
     def __init__(self, fig):
         # use time() to make sure multiple versions of this figure
         # don't cross-talk if used on the same page.
-        self.fig = fig
-        self.axes = [D3Axes(ax, i + 1)
+        self._initialize(parent=None, fig=fig)
+        self._figid = str(id(self.fig)) + str(int(time()))
+        self.axes = [D3Axes(self, ax, i + 1)
                      for i, ax in enumerate(fig.axes)]
 
     def style(self):
@@ -77,8 +101,7 @@ class D3Figure(D3Base):
 
     def html(self):
         axes = '\n'.join(map(str, self.axes))
-        fig_id = str(id(self.fig)) + str(int(time()))
-        fig = self.FIGURE_TEMPLATE.format(id=fig_id,
+        fig = self.FIGURE_TEMPLATE.format(id=self.figid,
                                           figwidth=self.fig.get_figwidth(),
                                           figheight=self.fig.get_figheight(),
                                           dpi=self.fig.dpi,
@@ -88,20 +111,24 @@ class D3Figure(D3Base):
 
 class D3Axes(D3Base):
     STYLE = """
-    .axes{i}.axis line, .axes{i}.axis path {{
+    div#figure{figid}
+    .axes{axid}.axis line, .axes{axid}.axis path {{
         shape-rendering: crispEdges;
         stroke: black;
         fill: none;
     }}
 
-    .axes{i}.axis text {{
+    div#figure{figid}
+    .axes{axid}.axis text {{
         font-family: sans-serif;
         font-size: {fontsize}px;
+        fill: black;
+        stroke: none;
     }}
     """
 
     AXES_TEMPLATE = """
-    var axes_{id} = chart.append('g')
+    var axes_{axid} = canvas.append('g')
             .attr('transform', 'translate(' + ({bbox[0]} * figwidth) + ',' +
                                 ((1 - {bbox[1]} - {bbox[3]}) * figheight) + ')')
             .attr('width', {bbox[2]} * figwidth)
@@ -109,41 +136,41 @@ class D3Axes(D3Base):
             .attr('class', 'main');
 
     // draw the x axis
-    var x_{id} = d3.scale.linear()
+    var x_{axid} = d3.scale.linear()
                        .domain([{xlim[0]}, {xlim[1]}])
                        .range([0, {bbox[2]} * figwidth]);
 
-    var xAxis_{id} = d3.svg.axis()
-            .scale(x_{id})
+    var xAxis_{axid} = d3.svg.axis()
+            .scale(x_{axid})
             .orient('bottom');
 
-    axes_{id}.append('g')
+    axes_{axid}.append('g')
             .attr('transform', 'translate(0,' + {bbox[3]} * figheight + ')')
-            .attr('class', 'axes{i} x axis')
-            .call(xAxis_{id});
+            .attr('class', 'axes{axid} x axis')
+            .call(xAxis_{axid});
 
     // draw the y axis
-    var y_{id} = d3.scale.linear()
+    var y_{axid} = d3.scale.linear()
                        .domain([{ylim[0]}, {ylim[1]}])
                        .range([{bbox[3]} * figheight, 0]);
 
-    var yAxis_{id} = d3.svg.axis()
-            .scale(y_{id})
+    var yAxis_{axid} = d3.svg.axis()
+            .scale(y_{axid})
             .orient('left');
 
-    axes_{id}.append('g')
+    axes_{axid}.append('g')
             .attr('transform', 'translate(0,0)')
-            .attr('class', 'axes{i} y axis')
-            .call(yAxis_{id});
+            .attr('class', 'axes{axid} y axis')
+            .call(yAxis_{axid});
 
     {elements}
     """
-    def __init__(self, ax, i):
-        self.ax = ax
-        self.i = i
-        self.lines = [D3Line2D(ax, line, i + 1)
+    def __init__(self, parent, ax, i):
+        self._initialize(parent=parent, ax=ax)
+        self._axid = str(i)
+        self.lines = [D3Line2D(self, line, i + 1)
                       for i, line in enumerate(ax.lines)]
-        self.texts = [D3Text(ax, text) for text in
+        self.texts = [D3Text(self, ax, text) for text in
                       ax.texts + [ax.xaxis.label, ax.yaxis.label, ax.title]]
 
         # Some warnings for pieces of matplotlib which are not yet implemented
@@ -152,11 +179,16 @@ class D3Axes(D3Base):
             if len(getattr(ax, attr)) > 0:
                 warnings.warn("{0} not implemented.  "
                               "Elements will be ignored".format(attr))
+
         if ax.legend_ is not None:
             warnings.warn("legend is not implemented: it will be ignored")
 
+        if ax.xaxis._gridOnMajor or ax.yaxis._gridOnMajor:
+            warnings.warn("grid is not implemented: it will be ignored")
+
     def style(self):
-        return '\n'.join([self.STYLE.format(i=self.i,
+        return '\n'.join([self.STYLE.format(axid=self.axid,
+                                            figid=self.figid,
                                             fontsize=11)] +
                          [l.style() for l in self.lines] +
                          [t.style() for t in self.texts])
@@ -167,7 +199,7 @@ class D3Axes(D3Base):
         ytick_size = self.ax.yaxis.get_major_ticks()[0].label.get_fontsize()
 
         return self.AXES_TEMPLATE.format(id=id(self.ax),
-                                         i=self.i,
+                                         axid=self.axid,
                                          xlim=self.ax.get_xlim(),
                                          ylim=self.ax.get_ylim(),
                                          xtick_size=xtick_size,
@@ -178,28 +210,29 @@ class D3Axes(D3Base):
 
 class D3Line2D(D3Base):
     DATA_TEMPLATE = """
-    var data_{id} = {data}
+    var data_{lineid} = {data}
     """
 
     LINE_TEMPLATE = """
-    var line_{id} = d3.svg.line()
+    var line_{lineid} = d3.svg.line()
          .x(function(d) {{return x_{axid}(d[0]);}})
          .y(function(d) {{return y_{axid}(d[1]);}})
          .interpolate("linear");
 
     axes_{axid}.append("svg:path")
-                  .attr("d", line_{id}(data_{id}))
-                  .attr("stroke", "{linecolor}")
-                  .attr("stroke-width", {linewidth})
-                  .attr("fill", "none")
-                  .attr("stroke-opacity", {alpha})
+                   .attr("d", line_{lineid}(data_{lineid}))
+                   .attr("stroke", "{linecolor}")
+                   .attr("stroke-width", {linewidth})
+                   .attr("fill", "none")
+                   .attr("stroke-opacity", {alpha})
+                   .attr('class', 'line {lineid}');
     """
 
     POINTS_TEMPLATE = """
-    var g_{id} = axes_{axid}.append("svg:g");
+    var g_{lineid} = axes_{axid}.append("svg:g");
 
-    g_{id}.selectAll("scatter-dots-{i}")
-          .data(data_{id})
+    g_{lineid}.selectAll("scatter-dots-{lineid}")
+          .data(data_{lineid})
           .enter().append("svg:circle")
               .attr("cx", function (d,i) {{ return x_{axid}(d[0]); }} )
               .attr("cy", function (d) {{ return y_{axid}(d[1]); }} )
@@ -208,12 +241,12 @@ class D3Line2D(D3Base):
               .attr("stroke", "{markeredgecolor}")
               .attr("fill", "{markercolor}")
               .attr("fill-opacity", {alpha})
-              .attr("stroke-opacity", {alpha});
+              .attr("stroke-opacity", {alpha})
+              .attr('class', 'points {lineid}');
     """
-    def __init__(self, ax, line, i=''):
-        self.ax = ax
-        self.line = line
-        self.i = i
+    def __init__(self, parent, line, i=''):
+        self._initialize(parent=parent, line=line)
+        self.lineid = "{0}{1}".format(self.axid, i)
         
     def html(self):
         data = self.line.get_xydata().tolist()
@@ -222,7 +255,7 @@ class D3Line2D(D3Base):
             alpha = 1
         marker = self.line.get_marker()
         style = self.line.get_linestyle()
-        result = self.DATA_TEMPLATE.format(id=id(self.line), data=data)
+        result = self.DATA_TEMPLATE.format(lineid=self.lineid, data=data)
 
         if marker not in ('None', 'none', None):
             # TODO: use actual marker, not simply circles
@@ -234,9 +267,8 @@ class D3Line2D(D3Base):
             mc = color_to_hex(self.line.get_markerfacecolor())
             mec = color_to_hex(self.line.get_markeredgecolor())
             mew = self.line.get_markeredgewidth()
-            result += self.POINTS_TEMPLATE.format(id=id(self.line),
-                                                  axid=id(self.ax),
-                                                  i=self.i,
+            result += self.POINTS_TEMPLATE.format(lineid=self.lineid,
+                                                  axid=self.axid,
                                                   data=data,
                                                   markersize=ms,
                                                   markercolor=mc,
@@ -250,9 +282,8 @@ class D3Line2D(D3Base):
                               "Defaulting to this.")
             lc = color_to_hex(self.line.get_color())
             lw = self.line.get_linewidth()
-            result += self.LINE_TEMPLATE.format(id=id(self.line),
-                                                axid=id(self.ax),
-                                                figid=id(self.ax.figure),
+            result += self.LINE_TEMPLATE.format(lineid=self.lineid,
+                                                axid=self.axid,
                                                 data=data,
                                                 linecolor=lc,
                                                 linewidth=lw,
@@ -262,7 +293,7 @@ class D3Line2D(D3Base):
 
 class D3Text(D3Base):
     TEXT_TEMPLATE = """
-    chart.append("text")
+    canvas.append("text")
         .text("{text}")
         .attr("class", "axes-text")
         .attr("x", {x})
@@ -272,9 +303,8 @@ class D3Text(D3Base):
         .attr("transform", "rotate({rotation},{x}," + (figheight - {y}) + ")")
         .attr("style", "text-anchor: {anchor};")
     """
-    def __init__(self, ax, text):
-        self.ax = ax
-        self.text = text
+    def __init__(self, parent, ax, text):
+        self._initialize(parent=parent, ax=ax, text=text)
     
     def html(self):
         if not self.text.get_text():
