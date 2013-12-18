@@ -42,7 +42,7 @@ var chart_{id} = d3.select('#chart{id}')
 D3_AXES = """
 var axes_{id} = chart_{figid}.append('g')
 	.attr('transform', 'translate(' + ({bbox[0]} * figwidth) + ',' +
-                                          ({bbox[1]} * figheight) + ')')
+                            ((1 - {bbox[1]} - {bbox[3]}) * figheight) + ')')
 	.attr('width', {bbox[2]} * figwidth)
 	.attr('height', {bbox[3]} * figheight)
 	.attr('class', 'main');
