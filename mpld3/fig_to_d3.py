@@ -1,11 +1,10 @@
 import numpy as np
 from matplotlib.colors import colorConverter
 
-D3_LOAD = """
-<script type="text/javascript" src="http://d3js.org/d3.v3.min.js"></script>
-"""
 
 D3_FIGURE = """
+<script type="text/javascript" src="http://d3js.org/d3.v3.min.js"></script>
+
 <style>
 .axis line, .axis path {{
     shape-rendering: crispEdges;
@@ -23,6 +22,8 @@ D3_FIGURE = """
 <div id='chart{id}'></div>
 
 <script type="text/javascript">
+// set a timeout of 0 to make sure d3.js is loaded
+setTimeout(function(){{
 var figwidth = {figwidth} * {dpi};
 var figheight = {figheight} * {dpi};
 
@@ -33,7 +34,7 @@ var chart_{id} = d3.select('#chart{id}')
                    .attr('class', 'chart');
 
 {axes}
-
+}}, 0)
 </script>
 """
 
@@ -119,7 +120,7 @@ def rgb_to_hex(rgb):
     return '#{:02X}{:02X}{:02X}'.format(*(int(255 * c) for c in rgb))
 
 
-def fig_to_d3(fig, load_d3=True):
+def fig_to_d3(fig):
     """Output d3 representation of the figure"""
     figheight = fig.get_figheight()
     figwidth = fig.get_figwidth()
@@ -201,11 +202,7 @@ def fig_to_d3(fig, load_d3=True):
                                 dpi=fig.dpi,
                                 axes='\n'.join(axes_html))
 
-    if load_d3:
-        return '\n'.join([D3_LOAD,
-                          fig_html])
-    else:
-        return fig_html
+    return fig_html
                          
                          
 
