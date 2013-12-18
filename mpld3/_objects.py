@@ -15,24 +15,28 @@ def color_to_hex(color):
     return '#{:02X}{:02X}{:02X}'.format(*(int(255 * c) for c in rgb))
 
 
-class D3Figure(object):
+class D3Base(object):
+    __metaclass__ = abc.ABCMeta
+
+    @abc.abstractmethod
+    def html(self):
+        raise NotImplementedError()
+
+    def style(self):
+        return ''
+
+    def __str__(self):
+        return self.html()
+        
+
+class D3Figure(D3Base):
     D3_IMPORT = """
     <script type="text/javascript" src="http://d3js.org/d3.v3.min.js"></script>
     """
 
     STYLE = """
     <style>
-    .axis line, .axis path {
-        shape-rendering: crispEdges;
-        stroke: black;
-        fill: none;
-    }
-
-    .axis text {
-        font-family: sans-serif;
-        font-size: 11px;
-    }
-
+    {styles}
     </style>
     """
 
@@ -40,44 +44,62 @@ class D3Figure(object):
     <div id='chart{id}'></div>
 
     <script type="text/javascript">
-    func{id} = function(){{
+    func{id} = function(chart){{
+
     var figwidth = {figwidth} * {dpi};
     var figheight = {figheight} * {dpi};
 
-    var chart_{id} = d3.select('#chart{id}')
-                   .append('svg:svg')
+    chart = chart.append('svg:svg')
                    .attr('width', figwidth)
                    .attr('height', figheight)
-                   .attr('class', 'chart');
+                   .attr('class', chart)
 
     {axes}
 
     }}
 
     // set a timeout of 0 to allow d3.js to load
-    setTimeout(function(){{ func{id}() }}, 0)
+    setTimeout(function(){{ func{id}(d3.select('#chart{id}')) }}, 0)
     </script>
     """
     def __init__(self, fig):
         # use time() to make sure multiple versions of this figure
         # don't cross-talk if used on the same page.
-        self.chart_id = str(id(fig)) + str(int(time()))
         self.fig = fig
-        self.axes = [D3Axes(ax, self.chart_id) for ax in fig.axes]
+        self.axes = [D3Axes(ax, i + 1)
+                     for i, ax in enumerate(fig.axes)]
 
-    def __str__(self):
+    def style(self):
+        return self.STYLE.format(styles='\n'.join([ax.style()
+                                                   for ax in self.axes]))
+
+    def html(self):
         axes = '\n'.join(map(str, self.axes))
-        fig = self.FIGURE_TEMPLATE.format(id=self.chart_id,
+        fig_id = str(id(self.fig)) + str(int(time()))
+        fig = self.FIGURE_TEMPLATE.format(id=fig_id,
                                           figwidth=self.fig.get_figwidth(),
                                           figheight=self.fig.get_figheight(),
                                           dpi=self.fig.dpi,
                                           axes=axes)
-        return self.D3_IMPORT + self.STYLE + fig
+        return self.D3_IMPORT + self.style() + fig
 
 
-class D3Axes(object):
+class D3Axes(D3Base):
+    STYLE = """
+    .axes{i}.axis line, .axes{i}.axis path {{
+        shape-rendering: crispEdges;
+        stroke: black;
+        fill: none;
+    }}
+
+    .axes{i}.axis text {{
+        font-family: sans-serif;
+        font-size: {fontsize}px;
+    }}
+    """
+
     AXES_TEMPLATE = """
-    var axes_{id} = chart_{chart_id}.append('g')
+    var axes_{id} = chart.append('g')
             .attr('transform', 'translate(' + ({bbox[0]} * figwidth) + ',' +
                                 ((1 - {bbox[1]} - {bbox[3]}) * figheight) + ')')
             .attr('width', {bbox[2]} * figwidth)
@@ -95,7 +117,7 @@ class D3Axes(object):
 
     axes_{id}.append('g')
             .attr('transform', 'translate(0,' + {bbox[3]} * figheight + ')')
-            .attr('class', 'main axis')
+            .attr('class', 'axes{i} x axis')
             .call(xAxis_{id});
 
     // draw the y axis
@@ -109,26 +131,32 @@ class D3Axes(object):
 
     axes_{id}.append('g')
             .attr('transform', 'translate(0,0)')
-            .attr('class', 'main axis')
+            .attr('class', 'axes{i} y axis')
             .call(yAxis_{id});
 
     {elements}
     """
-    def __init__(self, ax, chart_id):
+    def __init__(self, ax, i):
         self.ax = ax
-        self.chart_id = chart_id
-        self.lines = [D3Line2D(ax, line, chart_id, i)
+        self.i = i
+        self.lines = [D3Line2D(ax, line, i + 1)
                       for i, line in enumerate(ax.lines)]
-        self.texts = [D3Text(ax, text, chart_id) for text in
+        self.texts = [D3Text(ax, text) for text in
                       ax.texts + [ax.xaxis.label, ax.yaxis.label, ax.title]]
 
-    def __str__(self):
+    def style(self):
+        return '\n'.join([self.STYLE.format(i=self.i,
+                                            fontsize=11)] +
+                         [l.style() for l in self.lines] +
+                         [t.style() for t in self.texts])
+
+    def html(self):
         elements = '\n'.join(map(str, self.lines + self.texts))
         xtick_size = self.ax.xaxis.get_major_ticks()[0].label.get_fontsize()
         ytick_size = self.ax.yaxis.get_major_ticks()[0].label.get_fontsize()
 
         return self.AXES_TEMPLATE.format(id=id(self.ax),
-                                         chart_id=self.chart_id,
+                                         i=self.i,
                                          xlim=self.ax.get_xlim(),
                                          ylim=self.ax.get_ylim(),
                                          xtick_size=xtick_size,
@@ -137,8 +165,7 @@ class D3Axes(object):
                                          elements=elements)
 
 
-class D3Line2D(object):
-    """D3 Line"""
+class D3Line2D(D3Base):
     DATA_TEMPLATE = """
     var data_{id} = {data}
     """
@@ -172,16 +199,12 @@ class D3Line2D(object):
               .attr("fill-opacity", {alpha})
               .attr("stroke-opacity", {alpha});
     """
-    def __init__(self, ax, line, chart_id, i=None):
+    def __init__(self, ax, line, i=''):
         self.ax = ax
         self.line = line
-        self.chart_id = chart_id
-        if i is not None:
-            self.i = i
-        else:
-            self.i = ''
+        self.i = i
         
-    def __str__(self):
+    def html(self):
         data = self.line.get_xydata().tolist()
         alpha = self.line.get_alpha()
         if alpha is None:
@@ -219,9 +242,9 @@ class D3Line2D(object):
         return result
 
 
-class D3Text(object):
+class D3Text(D3Base):
     TEXT_TEMPLATE = """
-    chart_{chart_id}.append("text")
+    chart.append("text")
         .text("{text}")
         .attr("class", "axes-text")
         .attr("x", {x})
@@ -231,12 +254,11 @@ class D3Text(object):
         .attr("transform", "rotate({rotation},{x}," + (figheight - {y}) + ")")
         .attr("style", "text-anchor: {anchor};")
     """
-    def __init__(self, ax, text, chart_id):
-        self.chart_id = chart_id
+    def __init__(self, ax, text):
         self.ax = ax
         self.text = text
     
-    def __str__(self):
+    def html(self):
         if not self.text.get_text():
             return ''
         
@@ -249,8 +271,7 @@ class D3Text(object):
         if self.text is self.ax.yaxis.label:
             x += fontsize
             
-        return self.TEXT_TEMPLATE.format(chart_id=self.chart_id,
-                                         text=self.text.get_text(),
+        return self.TEXT_TEMPLATE.format(text=self.text.get_text(),
                                          x=x, y=y,
                                          fontsize=fontsize,
                                          color=color,
