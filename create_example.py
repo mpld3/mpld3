@@ -11,5 +11,7 @@ ax.plot(np.linspace(0.1, 0.9, 10),
 ax.set_xlabel('x label')
 ax.set_ylabel('y label')
 ax.set_title('title')
-    
-open('tmp.html', 'w').write(fig_to_d3(fig))
+
+filename = "example.html"
+print "Writing output to {0}".format(filename)
+open(filename, 'w').write(fig_to_d3(fig))

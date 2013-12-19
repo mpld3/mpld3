@@ -44,3 +44,4 @@ nosetests.xml
 
 # temporary files
 tmp.*
+example.html
