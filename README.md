@@ -25,5 +25,6 @@ the notebooks in the examples directory, or run ``create_example.py``, which
 will create an output file ``example.html`` which can be viewed in your
 browser.
 
-Alternatively, check out the IPython notebook examples in the ``examples``
-directory.
+Alternatively, check out the
+[IPython notebook examples](http://nbviewer.ipython.org/github/jakevdp/mpld3/tree/master/examples/)
+available in the ``examples`` directory.
