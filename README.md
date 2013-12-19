@@ -34,8 +34,8 @@ available in the ``examples`` directory.
 
 Features
 --------
-Currently Supported
-~~~~~~~~~~~~~~~~~~~
+### Currently Supported
+
 Currently the support of matplotlib features is very limited.  The code
 supports the following:
 
@@ -44,8 +44,8 @@ supports the following:
 - grid lines and their properties
 - title and axis labels
 
-TODO List
-~~~~~~~~~
+### TODO List
+
 There are a lot of things which could be implemented fairly easily, given
 enough time and energy:
 
