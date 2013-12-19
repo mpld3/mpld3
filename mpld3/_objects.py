@@ -62,6 +62,16 @@ class D3Figure(D3Base):
 
     STYLE = """
     <style>
+    
+    .grid .tick {{
+      stroke: lightgrey;
+      opacity: 0.7;
+    }}
+    
+    .grid path {{
+      stroke-width: 0;
+    }}
+
     {styles}
     </style>
     """
@@ -160,26 +170,36 @@ class D3Axes(D3Base):
                       .attr("class", "bg{axid}")
                       .attr("fill", "{axesbg}");
 
-    // draw the x axis
-    var xAxis_{axid} = d3.svg.axis()
+    // axis factory functions: used for grid lines & axes
+    var create_xAxis_{axid} = function(){{
+       return d3.svg.axis()
             .scale(x_{axid})
             .orient('bottom');
+    }}
+
+    var create_yAxis_{axid} = function(){{
+       return d3.svg.axis()
+            .scale(y_{axid})
+            .orient('left');
+    }}
+
+    // draw the x axis
+    var xAxis_{axid} = create_xAxis_{axid}();
 
     axes_{axid}.append('g')
-            .attr('transform', 'translate(0,' + {bbox[3]} * figheight + ')')
+            .attr('transform', 'translate(0,' + ({bbox[3]} * figheight) + ')')
             .attr('class', 'axes{axid} x axis')
             .call(xAxis_{axid});
 
     // draw the y axis
-    var yAxis_{axid} = d3.svg.axis()
-            .scale(y_{axid})
-            .orient('left');
+    var yAxis_{axid} = create_yAxis_{axid}();
 
     axes_{axid}.append('g')
             .attr('transform', 'translate(0,0)')
             .attr('class', 'axes{axid} y axis')
             .call(yAxis_{axid});
 
+    // create the clip boundary
     var clip_{axid} = axes_{axid}.append("svg:clipPath")
                              .attr("id", "clip{axid}")
                              .append("svg:rect")
@@ -188,16 +208,42 @@ class D3Axes(D3Base):
                              .attr("width", {bbox[2]} * figwidth)
                              .attr("height", {bbox[3]} * figheight);
 
+    var unclipped_axes_{axid} = axes_{axid};
+
     axes_{axid} = axes_{axid}.append('g')
             .attr("clip-path", "url(#clip{axid})");
 
+    // draw grid lines (if needed)
+    axes_{axid}.append("g")
+         .attr("class", "axes{axid} x grid")
+         .attr("transform", "translate(0," + ({bbox[3]} * figheight) + ")")
+         .call(create_xAxis_{axid}()
+                       .tickSize(-({bbox[3]} * figheight), 0, 0)
+                       .tickFormat(""));
+
+
+    axes_{axid}.append("g")
+         .attr("class", "axes{axid} y grid")
+         .call(create_yAxis_{axid}()
+                       .tickSize(-({bbox[2]} * figwidth), 0, 0)
+                       .tickFormat(""));
+    
     {elements}
 
     function zoomed{axid}() {{
         //console.log(d3.event.translate);
         //console.log(d3.event.scale);
-        axes_{axid}.select(".x.axis").call(xAxis_{axid});
-        axes_{axid}.select(".y.axis").call(yAxis_{axid});
+        unclipped_axes_{axid}.select(".x.axis").call(xAxis_{axid});
+        unclipped_axes_{axid}.select(".y.axis").call(yAxis_{axid});
+
+        axes_{axid}.select(".x.grid")
+            .call(create_xAxis_{axid}()
+            .tickSize(-({bbox[3]} * figheight), 0, 0)
+            .tickFormat(""));
+        axes_{axid}.select(".y.grid")
+            .call(create_yAxis_{axid}()
+            .tickSize(-({bbox[2]} * figwidth), 0, 0)
+            .tickFormat(""));
 
         {element_zooms}
     }}
@@ -248,7 +294,7 @@ class D3Axes(D3Base):
                                          xtick_size=xtick_size,
                                          ytick_size=ytick_size,
                                          bbox=self.ax.get_position().bounds,
-                                         axesbg='#F9F9F9',
+                                         axesbg='#FCFCFC',
                                          elements=elements,
                                          element_zooms=zooms)
 
