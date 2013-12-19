@@ -18,6 +18,29 @@ def color_to_hex(color):
     return '#{:02X}{:02X}{:02X}'.format(*(int(255 * c) for c in rgb))
 
 
+LINESTYLES = {'solid': "10,0",
+              '-': "10,0",
+              'dashed': "5,5",
+              '--': "5,5",
+              'dotted': "2,2",
+              ':': "2,2",
+              'dash_dot': "5,2,2,2",
+              '-.': "5,2,2,2",
+              '': "none",
+              ' ': "none",
+              'None': "none",
+              'none': "none"}
+
+def get_dasharray(line):
+    ls = line.get_linestyle()
+    dasharray = LINESTYLES.get(ls, None)
+    if dasharray is None:
+        warnings.warn("dash style '{0}' not understood: "
+                      "defaulting to solid.".format(ls))
+        dasharray=LINESTYLES['-']
+    return dasharray
+
+
 class D3Base(object):
     __metaclass__ = abc.ABCMeta
 
@@ -95,7 +118,8 @@ class D3Figure(D3Base):
         # use time() to make sure multiple versions of this figure
         # don't cross-talk if used on the same page.
         self._initialize(parent=None, fig=fig)
-        self._figid = str(id(self.fig)) + str(int(time()))
+        import uuid
+        self._figid = str(uuid.uuid4()).replace('-', '')
         self.axes = [D3Axes(self, ax, i + 1)
                      for i, ax in enumerate(fig.axes)]
 
@@ -271,11 +295,14 @@ class D3Axes(D3Base):
 
 class D3Grid(D3Base):
     STYLE = """
+    div#figure{figid}
     .grid .tick {{
       stroke: {color};
+      stroke-dasharray: {dasharray};
       opacity: {alpha};
     }}
     
+    div#figure{figid}
     .grid path {{
       stroke-width: 0;
     }}
@@ -342,8 +369,11 @@ class D3Grid(D3Base):
                      + self.ax.yaxis.get_gridlines())
         color = color_to_hex(gridlines[0].get_color())
         alpha = gridlines[0].get_alpha()
+        dasharray = get_dasharray(gridlines[0])
         return self.STYLE.format(color=color,
-                                 alpha=alpha)
+                                 alpha=alpha,
+                                 figid=self.figid,
+                                 dasharray=dasharray)
 
 
 class D3Line2D(D3Base):
@@ -356,6 +386,7 @@ class D3Line2D(D3Base):
     path.line{lineid} {{
         stroke: {linecolor};
         stroke-width: {linewidth};
+        stroke-dasharray: {dasharray};
         fill: none;
         stroke-opacity: {alpha};
     }}
@@ -408,10 +439,11 @@ class D3Line2D(D3Base):
         self.lineid = "{0}{1}".format(self.axid, i)
 
     def has_line(self):
-        return self.line.get_linestyle() not in ['None', 'none', None]
+        return self.line.get_linestyle() not in ['', ' ', 'None',
+                                                 'none', None]
 
     def has_points(self):
-        return self.line.get_marker() not in ['None', 'none', None]
+        return self.line.get_marker() not in ['', ' ', 'None', 'none', None]
 
     def zoom(self):
         ret = ""
@@ -433,6 +465,8 @@ class D3Line2D(D3Base):
         mc = color_to_hex(self.line.get_markerfacecolor())
         mec = color_to_hex(self.line.get_markeredgecolor())
         mew = self.line.get_markeredgewidth()
+        dasharray = get_dasharray(self.line)
+
         return self.STYLE.format(figid=self.figid,
                                  lineid=self.lineid,
                                  linecolor=lc,
@@ -441,6 +475,7 @@ class D3Line2D(D3Base):
                                  markeredgewidth=mew,
                                  markeredgecolor=mec,
                                  markercolor=mc,
+                                 dasharray=dasharray,
                                  alpha=alpha)
         
     def html(self):
@@ -465,9 +500,6 @@ class D3Line2D(D3Base):
         if self.has_line():
             # TODO: use actual line style
             style = self.line.get_linestyle()
-            if style not in ['-', 'solid']:
-                warnings.warn("Only solid lines are currently supported. "
-                              "Defaulting to this.")
             result += self.LINE_TEMPLATE.format(lineid=self.lineid,
                                                 axid=self.axid,
                                                 data=data)
