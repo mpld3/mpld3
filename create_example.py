@@ -12,6 +12,8 @@ ax.set_xlabel('x label')
 ax.set_ylabel('y label')
 ax.set_title('title', fontsize=20)
 
+ax.text(0.15, 0.85, "some text", fontsize=18)
+
 ax.grid(True, color='lightgray', alpha=0.7)
 
 filename = "example.html"

@@ -501,12 +501,16 @@ class D3Text(D3Base):
         if not self.text.get_text():
             return ''
         
+        if self.text.get_transform() is self.ax.transData:
+            # TODO: anchor this text to the axes, rather than to the figure.
+            pass
+
         x, y = get_text_coordinates(self.text)
         color =  color_to_hex(self.text.get_color())
         fontsize = self.text.get_size()
 
+        # TODO: fix vertical/horizontal spacing and anchor point
         # hack for y-label alignment
-        # need to fix vertical/horizontal spacing
         if self.text is self.ax.yaxis.label:
             x += fontsize
             
