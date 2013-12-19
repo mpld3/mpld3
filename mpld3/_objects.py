@@ -51,6 +51,9 @@ class D3Base(object):
     def style(self):
         return ''
 
+    def zoom(self):
+        return ''
+
     def __str__(self):
         return self.html()
         
@@ -62,16 +65,6 @@ class D3Figure(D3Base):
 
     STYLE = """
     <style>
-    
-    .grid .tick {{
-      stroke: lightgrey;
-      opacity: 0.7;
-    }}
-    
-    .grid path {{
-      stroke-width: 0;
-    }}
-
     {styles}
     </style>
     """
@@ -212,21 +205,6 @@ class D3Axes(D3Base):
 
     axes_{axid} = axes_{axid}.append('g')
             .attr("clip-path", "url(#clip{axid})");
-
-    // draw grid lines (if needed)
-    axes_{axid}.append("g")
-         .attr("class", "axes{axid} x grid")
-         .attr("transform", "translate(0," + ({bbox[3]} * figheight) + ")")
-         .call(create_xAxis_{axid}()
-                       .tickSize(-({bbox[3]} * figheight), 0, 0)
-                       .tickFormat(""));
-
-
-    axes_{axid}.append("g")
-         .attr("class", "axes{axid} y grid")
-         .call(create_yAxis_{axid}()
-                       .tickSize(-({bbox[2]} * figwidth), 0, 0)
-                       .tickFormat(""));
     
     {elements}
 
@@ -235,15 +213,6 @@ class D3Axes(D3Base):
         //console.log(d3.event.scale);
         unclipped_axes_{axid}.select(".x.axis").call(xAxis_{axid});
         unclipped_axes_{axid}.select(".y.axis").call(yAxis_{axid});
-
-        axes_{axid}.select(".x.grid")
-            .call(create_xAxis_{axid}()
-            .tickSize(-({bbox[3]} * figheight), 0, 0)
-            .tickFormat(""));
-        axes_{axid}.select(".y.grid")
-            .call(create_yAxis_{axid}()
-            .tickSize(-({bbox[2]} * figwidth), 0, 0)
-            .tickFormat(""));
 
         {element_zooms}
     }}
@@ -255,6 +224,7 @@ class D3Axes(D3Base):
                       for i, line in enumerate(ax.lines)]
         self.texts = [D3Text(self, ax, text) for text in
                       ax.texts + [ax.xaxis.label, ax.yaxis.label, ax.title]]
+        self.grids = [D3Grid(self, ax)]
 
         # Some warnings for pieces of matplotlib which are not yet implemented
         for attr in ['images', 'collections', 'containers',
@@ -266,9 +236,6 @@ class D3Axes(D3Base):
         if ax.legend_ is not None:
             warnings.warn("legend is not implemented: it will be ignored")
 
-        if ax.xaxis._gridOnMajor or ax.yaxis._gridOnMajor:
-            warnings.warn("grid is not implemented: it will be ignored")
-
     def style(self):
         xticks = self.ax.xaxis.get_ticklabels()
         if len(xticks) == 0:
@@ -277,13 +244,16 @@ class D3Axes(D3Base):
             fontsize_x = xticks[0].properties()['size']
         return '\n'.join([self.STYLE.format(axid=self.axid,
                                             figid=self.figid,
-                                            fontsize=fontsize_x)] +
+                                            fontsize=fontsize_x)] + 
+                         [g.style() for g in self.grids] +
                          [l.style() for l in self.lines] +
                          [t.style() for t in self.texts])
 
     def html(self):
-        elements = '\n'.join(map(str, self.lines + self.texts))
-        zooms = '\n'.join(line.zoom() for line in self.lines)
+        elements = '\n'.join([elem.html() for elem in
+                              (self.grids + self.lines + self.texts)])
+        zooms = '\n'.join(elem.zoom() for elem in
+                          (self.grids + self.lines + self.texts))
         xtick_size = self.ax.xaxis.get_major_ticks()[0].label.get_fontsize()
         ytick_size = self.ax.yaxis.get_major_ticks()[0].label.get_fontsize()
 
@@ -297,6 +267,83 @@ class D3Axes(D3Base):
                                          axesbg='#FCFCFC',
                                          elements=elements,
                                          element_zooms=zooms)
+
+
+class D3Grid(D3Base):
+    STYLE = """
+    .grid .tick {{
+      stroke: {color};
+      opacity: {alpha};
+    }}
+    
+    .grid path {{
+      stroke-width: 0;
+    }}
+    """
+
+    XGRID_TEMPLATE = """
+    // draw grid lines (if needed)
+    axes_{axid}.append("g")
+         .attr("class", "axes{axid} x grid")
+         .attr("transform", "translate(0," + ({bbox[3]} * figheight) + ")")
+         .call(create_xAxis_{axid}()
+                       .tickSize(-({bbox[3]} * figheight), 0, 0)
+                       .tickFormat(""));
+    """
+
+    YGRID_TEMPLATE = """
+    axes_{axid}.append("g")
+         .attr("class", "axes{axid} y grid")
+         .call(create_yAxis_{axid}()
+                       .tickSize(-({bbox[2]} * figwidth), 0, 0)
+                       .tickFormat(""));
+    """
+
+    XZOOM = """
+        axes_{axid}.select(".x.grid")
+            .call(create_xAxis_{axid}()
+            .tickSize(-({bbox[3]} * figheight), 0, 0)
+            .tickFormat(""));
+    """
+
+    YZOOM = """
+        axes_{axid}.select(".y.grid")
+            .call(create_yAxis_{axid}()
+            .tickSize(-({bbox[2]} * figwidth), 0, 0)
+            .tickFormat(""));
+    """
+    def __init__(self, parent, ax):
+        self._initialize(parent=parent, ax=ax)
+
+    def zoom(self):
+        ret = ""
+        bbox = self.ax.get_position().bounds
+        if self.ax.xaxis._gridOnMajor:
+            ret += self.XZOOM.format(axid=self.axid,
+                                     bbox=bbox)
+        if self.ax.yaxis._gridOnMajor:
+            ret += self.YZOOM.format(axid=self.axid,
+                                     bbox=bbox)
+        return ret
+
+    def html(self):
+        ret = ""
+        bbox = self.ax.get_position().bounds
+        if self.ax.xaxis._gridOnMajor:
+            ret += self.XGRID_TEMPLATE.format(axid=self.axid,
+                                              bbox=bbox)
+        if self.ax.yaxis._gridOnMajor:
+            ret += self.YGRID_TEMPLATE.format(axid=self.axid,
+                                              bbox=bbox)
+        return ret
+
+    def style(self):
+        gridlines = (self.ax.xaxis.get_gridlines()
+                     + self.ax.yaxis.get_gridlines())
+        color = color_to_hex(gridlines[0].get_color())
+        alpha = gridlines[0].get_alpha()
+        return self.STYLE.format(color=color,
+                                 alpha=alpha)
 
 
 class D3Line2D(D3Base):
@@ -324,14 +371,14 @@ class D3Line2D(D3Base):
     """
 
     LINE_ZOOM = """
-    axes_{axid}.select(".line{lineid}")
-                   .attr("d", line_{lineid}(data_{lineid}));
+        axes_{axid}.select(".line{lineid}")
+                       .attr("d", line_{lineid}(data_{lineid}));
     """
 
     POINTS_ZOOM = """
-    axes_{axid}.selectAll(".points{lineid}")
-              .attr("cx", function (d,i) {{ return x_{axid}(d[0]); }} )
-              .attr("cy", function (d) {{ return y_{axid}(d[1]); }} );
+        axes_{axid}.selectAll(".points{lineid}")
+                  .attr("cx", function (d,i) {{ return x_{axid}(d[0]); }} )
+                  .attr("cy", function (d) {{ return y_{axid}(d[1]); }} );
     """
 
     LINE_TEMPLATE = """
