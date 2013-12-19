@@ -243,7 +243,7 @@ class D3Axes(D3Base):
     """
     def __init__(self, parent, ax, i):
         self._initialize(parent=parent, ax=ax)
-        self._axid = str(i)
+        self._axid = self.figid + str(i)
         self.lines = [D3Line2D(self, line, i + 1)
                       for i, line in enumerate(ax.lines)]
         self.texts = [D3Text(self, ax, text) for text in
