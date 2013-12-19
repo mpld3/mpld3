@@ -5,6 +5,9 @@ mpld3: A D3 Viewer for Matplotlib
 - License: BSD 3-clause
 
 This is a minimal interactive viewer for matplotlib graphics built on D3.
+For an example of the code in action, see the 
+[IPython notebook examples](http://nbviewer.ipython.org/github/jakevdp/mpld3/tree/master/examples/)
+available in the ``examples`` directory of this repository.
 
 The code is still very incomplete, and does not (yet) support all of
 matplotlib's features.  It should be considered a proof-of-concept, for now.
