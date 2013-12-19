@@ -4,6 +4,7 @@ from time import time
 
 import numpy as np
 from matplotlib.colors import colorConverter
+from matplotlib.font_manager import FontProperties
 
 
 def get_text_coordinates(txt):
@@ -187,9 +188,14 @@ class D3Axes(D3Base):
             warnings.warn("grid is not implemented: it will be ignored")
 
     def style(self):
+        xticks = self.ax.xaxis.get_ticklabels()
+        if len(xticks) == 0:
+            fontsize_x = 11
+        else:
+            fontsize_x = xticks[0].properties()['size']
         return '\n'.join([self.STYLE.format(axid=self.axid,
                                             figid=self.figid,
-                                            fontsize=11)] +
+                                            fontsize=fontsize_x)] +
                          [l.style() for l in self.lines] +
                          [t.style() for t in self.texts])
 
@@ -213,6 +219,25 @@ class D3Line2D(D3Base):
     var data_{lineid} = {data}
     """
 
+    LINE_STYLE = """
+    div#figure{figid}
+    path.line{lineid} {{
+        stroke: {linecolor};
+        stroke-width: {linewidth};
+        fill: none;
+        stroke-opacity: {alpha};
+    }}
+
+    div#figure{figid}
+    circle.points{lineid} {{
+        stroke-width: {markeredgewidth};
+        stroke: {markeredgecolor};
+        fill: {markercolor};
+        fill-opacity: {alpha};
+        stroke-opacity: {alpha};
+    }}
+    """
+
     LINE_TEMPLATE = """
     var line_{lineid} = d3.svg.line()
          .x(function(d) {{return x_{axid}(d[0]);}})
@@ -221,11 +246,7 @@ class D3Line2D(D3Base):
 
     axes_{axid}.append("svg:path")
                    .attr("d", line_{lineid}(data_{lineid}))
-                   .attr("stroke", "{linecolor}")
-                   .attr("stroke-width", {linewidth})
-                   .attr("fill", "none")
-                   .attr("stroke-opacity", {alpha})
-                   .attr('class', 'line {lineid}');
+                   .attr('class', 'line{lineid}');
     """
 
     POINTS_TEMPLATE = """
@@ -237,16 +258,31 @@ class D3Line2D(D3Base):
               .attr("cx", function (d,i) {{ return x_{axid}(d[0]); }} )
               .attr("cy", function (d) {{ return y_{axid}(d[1]); }} )
               .attr("r", {markersize})
-              .attr("stroke-width", {markeredgewidth})
-              .attr("stroke", "{markeredgecolor}")
-              .attr("fill", "{markercolor}")
-              .attr("fill-opacity", {alpha})
-              .attr("stroke-opacity", {alpha})
-              .attr('class', 'points {lineid}');
+              .attr('class', 'points{lineid}');
     """
     def __init__(self, parent, line, i=''):
         self._initialize(parent=parent, line=line)
         self.lineid = "{0}{1}".format(self.axid, i)
+
+    def style(self):
+        alpha = self.line.get_alpha()
+        if alpha is None:
+            alpha = 1
+        lc = color_to_hex(self.line.get_color())
+        lw = self.line.get_linewidth()
+        ms = 2. / 3. * self.line.get_markersize()
+        mc = color_to_hex(self.line.get_markerfacecolor())
+        mec = color_to_hex(self.line.get_markeredgecolor())
+        mew = self.line.get_markeredgewidth()
+        return self.LINE_STYLE.format(figid=self.figid,
+                                      lineid=self.lineid,
+                                      linecolor=lc,
+                                      linewidth=lw,
+                                      markersize=ms,
+                                      markeredgewidth=mew,
+                                      markeredgecolor=mec,
+                                      markercolor=mc,
+                                      alpha=alpha)
         
     def html(self):
         data = self.line.get_xydata().tolist()
@@ -264,30 +300,18 @@ class D3Line2D(D3Base):
                               "Defaulting to this.")
 
             ms = 2. / 3. * self.line.get_markersize()
-            mc = color_to_hex(self.line.get_markerfacecolor())
-            mec = color_to_hex(self.line.get_markeredgecolor())
-            mew = self.line.get_markeredgewidth()
             result += self.POINTS_TEMPLATE.format(lineid=self.lineid,
                                                   axid=self.axid,
-                                                  data=data,
                                                   markersize=ms,
-                                                  markercolor=mc,
-                                                  markeredgecolor=mec,
-                                                  markeredgewidth=mew,
-                                                  alpha=alpha)
+                                                  data=data)
         if style not in ('None', 'none', None):
             # TODO: use actual line style
             if style not in ['-', 'solid']:
                 warnings.warn("Only solid lines are currently supported. "
                               "Defaulting to this.")
-            lc = color_to_hex(self.line.get_color())
-            lw = self.line.get_linewidth()
             result += self.LINE_TEMPLATE.format(lineid=self.lineid,
                                                 axid=self.axid,
-                                                data=data,
-                                                linecolor=lc,
-                                                linewidth=lw,
-                                                alpha=alpha)
+                                                data=data)
         return result
 
 
