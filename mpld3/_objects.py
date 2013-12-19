@@ -129,18 +129,38 @@ class D3Axes(D3Base):
     """
 
     AXES_TEMPLATE = """
-    var axes_{axid} = canvas.append('g')
-            .attr('transform', 'translate(' + ({bbox[0]} * figwidth) + ',' +
-                                ((1 - {bbox[1]} - {bbox[3]}) * figheight) + ')')
-            .attr('width', {bbox[2]} * figwidth)
-            .attr('height', {bbox[3]} * figheight)
-            .attr('class', 'main');
-
-    // draw the x axis
+    // create the x and y axis
     var x_{axid} = d3.scale.linear()
                        .domain([{xlim[0]}, {xlim[1]}])
                        .range([0, {bbox[2]} * figwidth]);
 
+    var y_{axid} = d3.scale.linear()
+                       .domain([{ylim[0]}, {ylim[1]}])
+                       .range([{bbox[3]} * figheight, 0]);
+
+    // zoom object for the axes
+    var zoom{axid} = d3.behavior.zoom()
+                    .x(x_{axid})
+                    .y(y_{axid})
+                    .on("zoom", zoomed{axid});
+
+    // create the axes itself
+    var axes_{axid} = canvas.append('g')
+            .attr('transform', 'translate(' + ({bbox[0]} * figwidth) + ',' +
+                              ((1 - {bbox[1]} - {bbox[3]}) * figheight) + ')')
+            .attr('width', {bbox[2]} * figwidth)
+            .attr('height', {bbox[3]} * figheight)
+            .attr('class', 'main')
+            .call(zoom{axid});
+
+    // create the axes background
+    axes_{axid}.append("svg:rect")
+                      .attr("width", {bbox[2]} * figwidth)
+                      .attr("height", {bbox[3]} * figheight)
+                      .attr("class", "bg{axid}")
+                      .attr("fill", "{axesbg}");
+
+    // draw the x axis
     var xAxis_{axid} = d3.svg.axis()
             .scale(x_{axid})
             .orient('bottom');
@@ -151,10 +171,6 @@ class D3Axes(D3Base):
             .call(xAxis_{axid});
 
     // draw the y axis
-    var y_{axid} = d3.scale.linear()
-                       .domain([{ylim[0]}, {ylim[1]}])
-                       .range([{bbox[3]} * figheight, 0]);
-
     var yAxis_{axid} = d3.svg.axis()
             .scale(y_{axid})
             .orient('left');
@@ -164,7 +180,27 @@ class D3Axes(D3Base):
             .attr('class', 'axes{axid} y axis')
             .call(yAxis_{axid});
 
+    var clip_{axid} = axes_{axid}.append("svg:clipPath")
+                             .attr("id", "clip{axid}")
+                             .append("svg:rect")
+                             .attr("x", 0)
+                             .attr("y", 0)
+                             .attr("width", {bbox[2]} * figwidth)
+                             .attr("height", {bbox[3]} * figheight);
+
+    axes_{axid} = axes_{axid}.append('g')
+            .attr("clip-path", "url(#clip{axid})");
+
     {elements}
+
+    function zoomed{axid}() {{
+        //console.log(d3.event.translate);
+        //console.log(d3.event.scale);
+        axes_{axid}.select(".x.axis").call(xAxis_{axid});
+        axes_{axid}.select(".y.axis").call(yAxis_{axid});
+
+        {element_zooms}
+    }}
     """
     def __init__(self, parent, ax, i):
         self._initialize(parent=parent, ax=ax)
@@ -201,6 +237,7 @@ class D3Axes(D3Base):
 
     def html(self):
         elements = '\n'.join(map(str, self.lines + self.texts))
+        zooms = '\n'.join(line.zoom() for line in self.lines)
         xtick_size = self.ax.xaxis.get_major_ticks()[0].label.get_fontsize()
         ytick_size = self.ax.yaxis.get_major_ticks()[0].label.get_fontsize()
 
@@ -211,7 +248,9 @@ class D3Axes(D3Base):
                                          xtick_size=xtick_size,
                                          ytick_size=ytick_size,
                                          bbox=self.ax.get_position().bounds,
-                                         elements=elements)
+                                         axesbg='#F9F9F9',
+                                         elements=elements,
+                                         element_zooms=zooms)
 
 
 class D3Line2D(D3Base):
@@ -219,7 +258,7 @@ class D3Line2D(D3Base):
     var data_{lineid} = {data}
     """
 
-    LINE_STYLE = """
+    STYLE = """
     div#figure{figid}
     path.line{lineid} {{
         stroke: {linecolor};
@@ -236,6 +275,17 @@ class D3Line2D(D3Base):
         fill-opacity: {alpha};
         stroke-opacity: {alpha};
     }}
+    """
+
+    LINE_ZOOM = """
+    axes_{axid}.select(".line{lineid}")
+                   .attr("d", line_{lineid}(data_{lineid}));
+    """
+
+    POINTS_ZOOM = """
+    axes_{axid}.selectAll(".points{lineid}")
+              .attr("cx", function (d,i) {{ return x_{axid}(d[0]); }} )
+              .attr("cy", function (d) {{ return y_{axid}(d[1]); }} );
     """
 
     LINE_TEMPLATE = """
@@ -264,6 +314,22 @@ class D3Line2D(D3Base):
         self._initialize(parent=parent, line=line)
         self.lineid = "{0}{1}".format(self.axid, i)
 
+    def has_line(self):
+        return self.line.get_linestyle() not in ['None', 'none', None]
+
+    def has_points(self):
+        return self.line.get_marker() not in ['None', 'none', None]
+
+    def zoom(self):
+        ret = ""
+        if self.has_points():
+            ret += self.POINTS_ZOOM.format(lineid=self.lineid,
+                                           axid=self.axid)
+        if self.has_line():
+            ret += self.LINE_ZOOM.format(lineid=self.lineid,
+                                         axid=self.axid)
+        return ret
+
     def style(self):
         alpha = self.line.get_alpha()
         if alpha is None:
@@ -274,27 +340,26 @@ class D3Line2D(D3Base):
         mc = color_to_hex(self.line.get_markerfacecolor())
         mec = color_to_hex(self.line.get_markeredgecolor())
         mew = self.line.get_markeredgewidth()
-        return self.LINE_STYLE.format(figid=self.figid,
-                                      lineid=self.lineid,
-                                      linecolor=lc,
-                                      linewidth=lw,
-                                      markersize=ms,
-                                      markeredgewidth=mew,
-                                      markeredgecolor=mec,
-                                      markercolor=mc,
-                                      alpha=alpha)
+        return self.STYLE.format(figid=self.figid,
+                                 lineid=self.lineid,
+                                 linecolor=lc,
+                                 linewidth=lw,
+                                 markersize=ms,
+                                 markeredgewidth=mew,
+                                 markeredgecolor=mec,
+                                 markercolor=mc,
+                                 alpha=alpha)
         
     def html(self):
         data = self.line.get_xydata().tolist()
         alpha = self.line.get_alpha()
         if alpha is None:
             alpha = 1
-        marker = self.line.get_marker()
-        style = self.line.get_linestyle()
         result = self.DATA_TEMPLATE.format(lineid=self.lineid, data=data)
 
-        if marker not in ('None', 'none', None):
+        if self.has_points():
             # TODO: use actual marker, not simply circles
+            marker = self.line.get_marker()
             if marker != 'o':
                 warnings.warn("Only marker='o' is currently supported. "
                               "Defaulting to this.")
@@ -304,8 +369,9 @@ class D3Line2D(D3Base):
                                                   axid=self.axid,
                                                   markersize=ms,
                                                   data=data)
-        if style not in ('None', 'none', None):
+        if self.has_line():
             # TODO: use actual line style
+            style = self.line.get_linestyle()
             if style not in ['-', 'solid']:
                 warnings.warn("Only solid lines are currently supported. "
                               "Defaulting to this.")

@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt
 from IPython.display import HTML
-from .fig_to_d3 import fig_to_d3
+from . import fig_to_d3
 
 
 def display_d3(fig, closefig=True):
