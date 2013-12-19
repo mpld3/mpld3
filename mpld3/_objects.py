@@ -156,14 +156,18 @@ class D3Axes(D3Base):
     """
 
     AXES_TEMPLATE = """
+    // store the width and height of the axes
+    var width_{axid} = {bbox[2]} * figwidth;
+    var height_{axid} = {bbox[3]} * figheight
+
     // create the x and y axis
     var x_{axid} = d3.scale.linear()
                        .domain([{xlim[0]}, {xlim[1]}])
-                       .range([0, {bbox[2]} * figwidth]);
+                       .range([0, width_{axid}]);
 
     var y_{axid} = d3.scale.linear()
                        .domain([{ylim[0]}, {ylim[1]}])
-                       .range([{bbox[3]} * figheight, 0]);
+                       .range([height_{axid}, 0]);
 
     // zoom object for the axes
     var zoom{axid} = d3.behavior.zoom()
@@ -175,15 +179,15 @@ class D3Axes(D3Base):
     var axes_{axid} = canvas.append('g')
             .attr('transform', 'translate(' + ({bbox[0]} * figwidth) + ',' +
                               ((1 - {bbox[1]} - {bbox[3]}) * figheight) + ')')
-            .attr('width', {bbox[2]} * figwidth)
-            .attr('height', {bbox[3]} * figheight)
+            .attr('width', width_{axid})
+            .attr('height', height_{axid})
             .attr('class', 'main')
             .call(zoom{axid});
 
     // create the axes background
     axes_{axid}.append("svg:rect")
-                      .attr("width", {bbox[2]} * figwidth)
-                      .attr("height", {bbox[3]} * figheight)
+                      .attr("width", width_{axid})
+                      .attr("height", height_{axid})
                       .attr("class", "bg{axid}")
                       .attr("fill", "{axesbg}");
 
@@ -204,7 +208,7 @@ class D3Axes(D3Base):
     var xAxis_{axid} = create_xAxis_{axid}();
 
     axes_{axid}.append('g')
-            .attr('transform', 'translate(0,' + ({bbox[3]} * figheight) + ')')
+            .attr('transform', 'translate(0,' + (height_{axid}) + ')')
             .attr('class', 'axes{axid} x axis')
             .call(xAxis_{axid});
 
@@ -222,8 +226,8 @@ class D3Axes(D3Base):
                              .append("svg:rect")
                              .attr("x", 0)
                              .attr("y", 0)
-                             .attr("width", {bbox[2]} * figwidth)
-                             .attr("height", {bbox[3]} * figheight);
+                             .attr("width", width_{axid})
+                             .attr("height", height_{axid});
 
     var unclipped_axes_{axid} = axes_{axid};
 
@@ -312,9 +316,9 @@ class D3Grid(D3Base):
     // draw grid lines (if needed)
     axes_{axid}.append("g")
          .attr("class", "axes{axid} x grid")
-         .attr("transform", "translate(0," + ({bbox[3]} * figheight) + ")")
+         .attr("transform", "translate(0," + (height_{axid}) + ")")
          .call(create_xAxis_{axid}()
-                       .tickSize(-({bbox[3]} * figheight), 0, 0)
+                       .tickSize(-(height_{axid}), 0, 0)
                        .tickFormat(""));
     """
 
@@ -322,21 +326,21 @@ class D3Grid(D3Base):
     axes_{axid}.append("g")
          .attr("class", "axes{axid} y grid")
          .call(create_yAxis_{axid}()
-                       .tickSize(-({bbox[2]} * figwidth), 0, 0)
+                       .tickSize(-(width_{axid}), 0, 0)
                        .tickFormat(""));
     """
 
     XZOOM = """
         axes_{axid}.select(".x.grid")
             .call(create_xAxis_{axid}()
-            .tickSize(-({bbox[3]} * figheight), 0, 0)
+            .tickSize(-(height_{axid}), 0, 0)
             .tickFormat(""));
     """
 
     YZOOM = """
         axes_{axid}.select(".y.grid")
             .call(create_yAxis_{axid}()
-            .tickSize(-({bbox[2]} * figwidth), 0, 0)
+            .tickSize(-(width_{axid}), 0, 0)
             .tickFormat(""));
     """
     def __init__(self, parent, ax):
