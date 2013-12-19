@@ -1,47 +1,14 @@
 import abc
+import uuid
 import warnings
-from time import time
 
 import numpy as np
-from matplotlib.colors import colorConverter
-from matplotlib.font_manager import FontProperties
 
-
-def get_text_coordinates(txt):
-    """Get figure coordinates of a text instance"""
-    return txt.get_transform().transform(txt.get_position())
-
-
-def color_to_hex(color):
-    """Convert rgb tuple to hex color code"""
-    rgb = colorConverter.to_rgb(color)
-    return '#{:02X}{:02X}{:02X}'.format(*(int(255 * c) for c in rgb))
-
-
-LINESTYLES = {'solid': "10,0",
-              '-': "10,0",
-              'dashed': "5,5",
-              '--': "5,5",
-              'dotted': "2,2",
-              ':': "2,2",
-              'dash_dot': "5,2,2,2",
-              '-.': "5,2,2,2",
-              '': "none",
-              ' ': "none",
-              'None': "none",
-              'none': "none"}
-
-def get_dasharray(line):
-    ls = line.get_linestyle()
-    dasharray = LINESTYLES.get(ls, None)
-    if dasharray is None:
-        warnings.warn("dash style '{0}' not understood: "
-                      "defaulting to solid.".format(ls))
-        dasharray=LINESTYLES['-']
-    return dasharray
+from ._utils import get_text_coordinates, color_to_hex, get_dasharray
 
 
 class D3Base(object):
+    """Abstract Base Class for D3js objects"""
     __metaclass__ = abc.ABCMeta
 
     def _initialize(self, parent=None, **kwds):
@@ -82,6 +49,7 @@ class D3Base(object):
         
 
 class D3Figure(D3Base):
+    """Class for representing a matplotlib Figure in D3js"""
     D3_IMPORT = """
     <script type="text/javascript" src="http://d3js.org/d3.v3.min.js"></script>
     """
@@ -93,10 +61,10 @@ class D3Figure(D3Base):
     """
 
     FIGURE_TEMPLATE = """
-    <div id='figure{id}'></div>
+    <div id='figure{figid}'></div>
 
     <script type="text/javascript">
-    func{id} = function(figure){{
+    func{figid} = function(figure){{
 
     var figwidth = {figwidth} * {dpi};
     var figheight = {figheight} * {dpi};
@@ -111,15 +79,18 @@ class D3Figure(D3Base):
     }}
 
     // set a timeout of 0 to allow d3.js to load
-    setTimeout(function(){{ func{id}(d3.select('#figure{id}')) }}, 0)
+    setTimeout(function(){{ func{figid}(d3.select('#figure{figid}')) }}, 0)
     </script>
     """
+    @staticmethod
+    def generate_figid():
+        return str(uuid.uuid4()).replace('-', '')
+
     def __init__(self, fig):
         # use time() to make sure multiple versions of this figure
         # don't cross-talk if used on the same page.
         self._initialize(parent=None, fig=fig)
-        import uuid
-        self._figid = str(uuid.uuid4()).replace('-', '')
+        self._figid = self.generate_figid()
         self.axes = [D3Axes(self, ax, i + 1)
                      for i, ax in enumerate(fig.axes)]
 
@@ -128,8 +99,8 @@ class D3Figure(D3Base):
                                                    for ax in self.axes]))
 
     def html(self):
-        axes = '\n'.join(map(str, self.axes))
-        fig = self.FIGURE_TEMPLATE.format(id=self.figid,
+        axes = '\n'.join(ax.html() for ax in self.axes)
+        fig = self.FIGURE_TEMPLATE.format(figid=self.figid,
                                           figwidth=self.fig.get_figwidth(),
                                           figheight=self.fig.get_figheight(),
                                           dpi=self.fig.dpi,
@@ -138,6 +109,7 @@ class D3Figure(D3Base):
 
 
 class D3Axes(D3Base):
+    """Class for representing a matplotlib Axes in D3js"""
     STYLE = """
     div#figure{figid}
     .axes{axid}.axis line, .axes{axid}.axis path {{
@@ -176,7 +148,7 @@ class D3Axes(D3Base):
                     .on("zoom", zoomed{axid});
 
     // create the axes itself
-    var axes_{axid} = canvas.append('g')
+    var baseaxes_{axid} = canvas.append('g')
             .attr('transform', 'translate(' + ({bbox[0]} * figwidth) + ',' +
                               ((1 - {bbox[1]} - {bbox[3]}) * figheight) + ')')
             .attr('width', width_{axid})
@@ -185,7 +157,7 @@ class D3Axes(D3Base):
             .call(zoom{axid});
 
     // create the axes background
-    axes_{axid}.append("svg:rect")
+    baseaxes_{axid}.append("svg:rect")
                       .attr("width", width_{axid})
                       .attr("height", height_{axid})
                       .attr("class", "bg{axid}")
@@ -207,7 +179,7 @@ class D3Axes(D3Base):
     // draw the x axis
     var xAxis_{axid} = create_xAxis_{axid}();
 
-    axes_{axid}.append('g')
+    baseaxes_{axid}.append('g')
             .attr('transform', 'translate(0,' + (height_{axid}) + ')')
             .attr('class', 'axes{axid} x axis')
             .call(xAxis_{axid});
@@ -215,23 +187,23 @@ class D3Axes(D3Base):
     // draw the y axis
     var yAxis_{axid} = create_yAxis_{axid}();
 
-    axes_{axid}.append('g')
+    baseaxes_{axid}.append('g')
             .attr('transform', 'translate(0,0)')
             .attr('class', 'axes{axid} y axis')
             .call(yAxis_{axid});
 
     // create the clip boundary
-    var clip_{axid} = axes_{axid}.append("svg:clipPath")
+    var clip_{axid} = baseaxes_{axid}.append("svg:clipPath")
                              .attr("id", "clip{axid}")
                              .append("svg:rect")
                              .attr("x", 0)
                              .attr("y", 0)
                              .attr("width", width_{axid})
                              .attr("height", height_{axid});
-
-    var unclipped_axes_{axid} = axes_{axid};
-
-    axes_{axid} = axes_{axid}.append('g')
+ 
+    // axes_{axid} is the axes on which to draw plot components: they'll
+    // be clipped when zooming or scrolling moves them out of the plot.
+    var axes_{axid} = baseaxes_{axid}.append('g')
             .attr("clip-path", "url(#clip{axid})");
     
     {elements}
@@ -239,8 +211,8 @@ class D3Axes(D3Base):
     function zoomed{axid}() {{
         //console.log(d3.event.translate);
         //console.log(d3.event.scale);
-        unclipped_axes_{axid}.select(".x.axis").call(xAxis_{axid});
-        unclipped_axes_{axid}.select(".y.axis").call(yAxis_{axid});
+        baseaxes_{axid}.select(".x.axis").call(xAxis_{axid});
+        baseaxes_{axid}.select(".y.axis").call(yAxis_{axid});
 
         {element_zooms}
     }}
@@ -265,11 +237,11 @@ class D3Axes(D3Base):
             warnings.warn("legend is not implemented: it will be ignored")
 
     def style(self):
-        xticks = self.ax.xaxis.get_ticklabels()
-        if len(xticks) == 0:
+        ticks = self.ax.xaxis.get_ticklabels() + self.ax.yaxis.get_ticklabels()
+        if len(ticks) == 0:
             fontsize_x = 11
         else:
-            fontsize_x = xticks[0].properties()['size']
+            fontsize_x = ticks[0].properties()['size']
         return '\n'.join([self.STYLE.format(axid=self.axid,
                                             figid=self.figid,
                                             fontsize=fontsize_x)] + 
@@ -282,15 +254,11 @@ class D3Axes(D3Base):
                               (self.grids + self.lines + self.texts)])
         zooms = '\n'.join(elem.zoom() for elem in
                           (self.grids + self.lines + self.texts))
-        xtick_size = self.ax.xaxis.get_major_ticks()[0].label.get_fontsize()
-        ytick_size = self.ax.yaxis.get_major_ticks()[0].label.get_fontsize()
 
         return self.AXES_TEMPLATE.format(id=id(self.ax),
                                          axid=self.axid,
                                          xlim=self.ax.get_xlim(),
                                          ylim=self.ax.get_ylim(),
-                                         xtick_size=xtick_size,
-                                         ytick_size=ytick_size,
                                          bbox=self.ax.get_position().bounds,
                                          axesbg='#FCFCFC',
                                          elements=elements,
@@ -298,12 +266,13 @@ class D3Axes(D3Base):
 
 
 class D3Grid(D3Base):
+    """Class for representing a matplotlib Axes grid in D3js"""
     STYLE = """
     div#figure{figid}
     .grid .tick {{
       stroke: {color};
       stroke-dasharray: {dasharray};
-      opacity: {alpha};
+      stroke-opacity: {alpha};
     }}
     
     div#figure{figid}
@@ -313,7 +282,7 @@ class D3Grid(D3Base):
     """
 
     XGRID_TEMPLATE = """
-    // draw grid lines (if needed)
+    // draw x grid lines: we use a second x-axis with long ticks
     axes_{axid}.append("g")
          .attr("class", "axes{axid} x grid")
          .attr("transform", "translate(0," + (height_{axid}) + ")")
@@ -323,6 +292,7 @@ class D3Grid(D3Base):
     """
 
     YGRID_TEMPLATE = """
+    // draw y grid lines: we use a second y-axis with long ticks
     axes_{axid}.append("g")
          .attr("class", "axes{axid} y grid")
          .call(create_yAxis_{axid}()
@@ -369,8 +339,8 @@ class D3Grid(D3Base):
         return ret
 
     def style(self):
-        gridlines = (self.ax.xaxis.get_gridlines()
-                     + self.ax.yaxis.get_gridlines())
+        gridlines = (self.ax.xaxis.get_gridlines() +
+                     self.ax.yaxis.get_gridlines())
         color = color_to_hex(gridlines[0].get_color())
         alpha = gridlines[0].get_alpha()
         dasharray = get_dasharray(gridlines[0])
@@ -381,6 +351,7 @@ class D3Grid(D3Base):
 
 
 class D3Line2D(D3Base):
+    """Class for representing a 2D matplotlib line in D3js"""
     DATA_TEMPLATE = """
     var data_{lineid} = {data}
     """
@@ -511,6 +482,7 @@ class D3Line2D(D3Base):
 
 
 class D3Text(D3Base):
+    """Class for representing matplotlib text in D3js"""
     TEXT_TEMPLATE = """
     canvas.append("text")
         .text("{text}")
