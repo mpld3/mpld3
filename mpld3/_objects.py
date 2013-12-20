@@ -2,7 +2,7 @@ import abc
 import uuid
 import warnings
 
-from ._utils import get_text_coordinates, color_to_hex, get_dasharray
+from ._utils import get_figtext_coordinates, color_to_hex, get_dasharray
 
 
 class D3Base(object):
@@ -48,8 +48,10 @@ class D3Base(object):
 
 class D3Figure(D3Base):
     """Class for representing a matplotlib Figure in D3js"""
+    D3_WEB_LOC = "http://d3js.org/d3.v3.min.js"
+
     D3_IMPORT = """
-    <script type="text/javascript" src="http://d3js.org/d3.v3.min.js"></script>
+    <script type="text/javascript" src="{d3_location}"></script>
     """
 
     STYLE = """
@@ -92,18 +94,22 @@ class D3Figure(D3Base):
         self.axes = [D3Axes(self, ax, i + 1)
                      for i, ax in enumerate(fig.axes)]
 
+
     def style(self):
         return self.STYLE.format(styles='\n'.join([ax.style()
                                                    for ax in self.axes]))
 
-    def html(self):
+    def html(self, d3_location=None):
+        if d3_location is None:
+            d3_location = self.D3_WEB_LOC
         axes = '\n'.join(ax.html() for ax in self.axes)
         fig = self.FIGURE_TEMPLATE.format(figid=self.figid,
                                           figwidth=self.fig.get_figwidth(),
                                           figheight=self.fig.get_figheight(),
                                           dpi=self.fig.dpi,
                                           axes=axes)
-        return self.D3_IMPORT + self.style() + fig
+        d3_import = self.D3_IMPORT.format(d3_location=d3_location)
+        return d3_import + self.style() + fig
 
 
 class D3Axes(D3Base):
@@ -220,8 +226,9 @@ class D3Axes(D3Base):
         self._axid = self.figid + str(i)
         self.lines = [D3Line2D(self, line, i + 1)
                       for i, line in enumerate(ax.lines)]
-        self.texts = [D3Text(self, ax, text) for text in
-                      ax.texts + [ax.xaxis.label, ax.yaxis.label, ax.title]]
+        self.texts = [D3Text(self, ax, text, i + 1) for i, text in
+                      enumerate(ax.texts + [ax.xaxis.label,
+                                            ax.yaxis.label, ax.title])]
         self.grids = [D3Grid(self, ax)]
 
         # Some warnings for pieces of matplotlib which are not yet implemented
@@ -253,12 +260,14 @@ class D3Axes(D3Base):
         zooms = '\n'.join(elem.zoom() for elem in
                           (self.grids + self.lines + self.texts))
 
+        axisbg = color_to_hex(self.ax.patch.get_facecolor())
+
         return self.AXES_TEMPLATE.format(id=id(self.ax),
                                          axid=self.axid,
                                          xlim=self.ax.get_xlim(),
                                          ylim=self.ax.get_ylim(),
                                          bbox=self.ax.get_position().bounds,
-                                         axesbg='#FCFCFC',
+                                         axesbg=axisbg,
                                          elements=elements,
                                          element_zooms=zooms)
 
@@ -481,40 +490,84 @@ class D3Line2D(D3Base):
 
 class D3Text(D3Base):
     """Class for representing matplotlib text in D3js"""
-    TEXT_TEMPLATE = """
+    FIG_TEXT_TEMPLATE = """
     canvas.append("text")
         .text("{text}")
-        .attr("class", "axes-text")
+        .attr("class", "text{textid}")
         .attr("x", {x})
         .attr("y", figheight - {y})
         .attr("font-size", "{fontsize}px")
         .attr("fill", "{color}")
         .attr("transform", "rotate({rotation},{x}," + (figheight - {y}) + ")")
-        .attr("style", "text-anchor: {anchor};")
+        .attr("style", "text-anchor: {h_anchor};")
     """
-    def __init__(self, parent, ax, text):
-        self._initialize(parent=parent, ax=ax, text=text)
 
-    def html(self):
-        if not self.text.get_text():
+    AXES_TEXT_TEMPLATE = """
+    axes_{axid}.append("text")
+        .text("{text}")
+        .attr("class", "text{textid}")
+        .attr("x", x_{axid}({x}))
+        .attr("y", y_{axid}({y}))
+        .attr("font-size", "{fontsize}px")
+        .attr("fill", "{color}")
+        .attr("transform", "rotate({rotation},{x}," + (figheight - {y}) + ")")
+        .attr("style", "text-anchor: {h_anchor};")
+    """ 
+
+    AXES_TEXT_ZOOM = """
+        axes_{axid}.select(".text{textid}")
+                       .attr("x", x_{axid}({x}))
+                       .attr("y", y_{axid}({y}))
+    """
+    def __init__(self, parent, ax, text, i=''):
+        self._initialize(parent=parent, ax=ax, text=text)
+        self.textid = "{0}{1}".format(self.axid, i)
+
+    def is_axes_text(self):
+        return (self.text.get_transform() is self.ax.transData)
+
+    def zoom(self):
+        if self.is_axes_text():
+            x, y = self.text.get_position()
+            return self.AXES_TEXT_ZOOM.format(axid=self.axid,
+                                              textid=self.textid,
+                                              x=x, y=y)
+        else:
             return ''
 
-        if self.text.get_transform() is self.ax.transData:
-            # TODO: anchor this text to the axes, rather than to the figure.
-            pass
+    def html(self):
+        text_content = self.text.get_text()
 
-        x, y = get_text_coordinates(self.text)
+        if not text_content:
+            return ''
+
+        if self.is_axes_text():
+            x, y = self.text.get_position()
+            template = self.AXES_TEXT_TEMPLATE
+
+        else:
+            x, y = get_figtext_coordinates(self.text)
+            template = self.FIG_TEXT_TEMPLATE
+
         color =  color_to_hex(self.text.get_color())
         fontsize = self.text.get_size()
+        rotation = -self.text.get_rotation()
 
-        # TODO: fix vertical/horizontal spacing and anchor point
+        # TODO: fix vertical anchor point
+        h_anchor = {'left':'start',
+                    'center':'middle',
+                    'right':'end'}[self.text.get_horizontalalignment()]
+
         # hack for y-label alignment
         if self.text is self.ax.yaxis.label:
             x += fontsize
 
-        return self.TEXT_TEMPLATE.format(text=self.text.get_text(),
-                                         x=x, y=y,
-                                         fontsize=fontsize,
-                                         color=color,
-                                         rotation=-self.text.get_rotation(),
-                                         anchor="middle")
+        return template.format(axid=self.axid,
+                               textid=self.textid,
+                               text=text_content,
+                               x=x, y=y,
+                               fontsize=fontsize,
+                               color=color,
+                               rotation=rotation,
+                               h_anchor=h_anchor)
+        

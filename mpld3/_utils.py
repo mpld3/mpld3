@@ -3,7 +3,7 @@ import warnings
 
 from matplotlib.colors import colorConverter
 
-def get_text_coordinates(txt):
+def get_figtext_coordinates(txt):
     """Get figure coordinates of a text instance"""
     return txt.get_transform().transform(txt.get_position())
 
