@@ -4,11 +4,12 @@ import warnings
 from collections import defaultdict
 import base64
 import io
+from matplotlib.collections import LineCollection
+from matplotlib.lines import Line2D
+import matplotlib
 
 from ._utils import get_figtext_coordinates, color_to_hex, \
     get_dasharray, get_d3_shape_for_marker
-
-import matplotlib
 
 
 class D3Base(object):
@@ -320,6 +321,8 @@ class D3Axes(D3Base):
         for collection in ax.collections:
             if isinstance(collection, mpl.collections.PolyCollection):
                 self.collections.append(D3PatchCollection(self, collection))
+            elif isinstance(collection, mpl.collections.LineCollection):
+                D3AddLineCollection(self, collection)
             else:
                 warnings.warn("{0} not implemented.  "
                               "Elements will be ignored".format(collection))
@@ -622,6 +625,31 @@ class D3Line2D(D3Base):
         return result
 
 
+def D3AddLineCollection(d3axes, collection):
+    """Function for adding LineCollections to D3 plot"""
+    collection.update_scalarmappable()
+    colors = collection.get_colors()
+    linewidths = collection.get_linewidths()
+    styles = collection.get_linestyles()
+    get_linewidth = lambda i: linewidths[i % len(linewidths)]
+    get_color = lambda i: colors[i % len(colors)]
+    reverse_linestyle_lookup = {
+        (10, 0) : "-",
+        None : "-",
+        (6, 6) : "--",
+        (2, 2) : ":",
+        (4,4,2,4) : "-."}
+    get_style = lambda i: reverse_linestyle_lookup[styles[i % len(styles)][1]]
+
+    for i, path in enumerate(collection.get_paths()):
+        line_segment = Line2D(path.vertices[:, 0], path.vertices[:, 1],
+                              linewidth=get_linewidth(i), color=get_color(i),
+                              linestyle=get_style(i))
+        d3axes.lines.append(D3Line2D(d3axes, line_segment))
+
+
+
+
 class D3Text(D3Base):
     """Class for representing matplotlib text in D3js"""
     FIG_TEXT_TEMPLATE = """
@@ -780,7 +808,7 @@ class D3Patch(D3Base):
 
 
 class D3PatchCollection(D3Base):
-    """Class for representing matplotlib patche collections in D3js"""
+    """Class for representing matplotlib patch collections in D3js"""
     STYLE = """
     div#figure{figid}
     path.coll{elid}.patch{i} {{
