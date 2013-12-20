@@ -1,4 +1,7 @@
-from distutils.core import setup
+try:
+    from setuptools import setup
+except ImportError:
+    from distutils.core import setup
 
 DESCRIPTION = "D3 Viewer for Matplotlib"
 LONG_DESCRIPTION = DESCRIPTION
@@ -9,10 +12,7 @@ MAINTAINER = "Jake VanderPlas"
 MAINTAINER_EMAIL = "jakevdp@cs.washington.edu"
 DOWNLOAD_URL = 'http://github.com/jakevdp/mpld3'
 LICENSE = 'BSD 3-clause'
-
-# partial import to get version
-import mpld3
-VERSION = mpld3.__version__
+VERSION = '0.0.1'
 
 setup(name=NAME,
       version=VERSION,
@@ -25,5 +25,5 @@ setup(name=NAME,
       url=DOWNLOAD_URL,
       download_url=DOWNLOAD_URL,
       license=LICENSE,
-      packages=['mpld3']
+      packages=['mpld3'],
      )
