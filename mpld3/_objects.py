@@ -51,7 +51,7 @@ class D3Figure(D3Base):
     D3_WEB_LOC = "http://d3js.org/d3.v3.min.js"
 
     D3_IMPORT = """
-    <script type="text/javascript" src="{d3_location}"></script>
+    <script type="text/javascript" src="{d3_url}"></script>
     """
 
     STYLE = """
@@ -99,16 +99,16 @@ class D3Figure(D3Base):
         return self.STYLE.format(styles='\n'.join([ax.style()
                                                    for ax in self.axes]))
 
-    def html(self, d3_location=None):
-        if d3_location is None:
-            d3_location = self.D3_WEB_LOC
+    def html(self, d3_url=None):
+        if d3_url is None:
+            d3_url = self.D3_WEB_LOC
         axes = '\n'.join(ax.html() for ax in self.axes)
         fig = self.FIGURE_TEMPLATE.format(figid=self.figid,
                                           figwidth=self.fig.get_figwidth(),
                                           figheight=self.fig.get_figheight(),
                                           dpi=self.fig.dpi,
                                           axes=axes)
-        d3_import = self.D3_IMPORT.format(d3_location=d3_location)
+        d3_import = self.D3_IMPORT.format(d3_url=d3_url)
         return d3_import + self.style() + fig
 
 

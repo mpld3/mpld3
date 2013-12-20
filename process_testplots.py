@@ -8,7 +8,7 @@ import pylab as plt
 
 def combine_testplots(wildcard='test_plots/*.py',
                       outfile='test_plots.html',
-                      d3_location=None):
+                      d3_url=None):
     fig_html = []
     for filename in glob.glob('test_plots/*.py'):
         dirname, fname = os.path.split(filename)
@@ -20,7 +20,7 @@ def combine_testplots(wildcard='test_plots/*.py',
         if hasattr(f, 'main'):
             print "running {0}".format(filename)
             fig = f.main()
-            fig_html.append(fig_to_d3(fig, d3_location))
+            fig_html.append(fig_to_d3(fig, d3_url))
 
     print "writing results to {0}".format(outfile)
     template = '<html>\n{content}\n</html>'
@@ -33,7 +33,7 @@ def combine_testplots(wildcard='test_plots/*.py',
 
 if __name__ == '__main__':
     import sys
-    d3_location = None if len(sys.argv) == 1 else sys.argv[1]
+    d3_url = None if len(sys.argv) == 1 else sys.argv[1]
     combine_testplots(wildcard='test_plots/*.py',
                       outfile='test_plots.html',
-                      d3_location=d3_location)
+                      d3_url=d3_url)
