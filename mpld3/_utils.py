@@ -21,8 +21,9 @@ def many_to_one(input_dict):
                 for key in keys)
 
 LINESTYLES = many_to_one({('solid', '-'): "10,0",
-                          ('dashed', '--'): "8,8",
+                          ('dashed', '--'): "6,6",
                           ('dotted', ':'): "2,2",
+                          ('dashdot', '-.'): "4,4,2,4",
                           ('', ' ', 'None', 'none'): "none"})
 
 def get_dasharray(line):
