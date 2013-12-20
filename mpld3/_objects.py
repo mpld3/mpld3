@@ -2,11 +2,7 @@ import abc
 import uuid
 import warnings
 
-import numpy as np
-
 from ._utils import get_text_coordinates, color_to_hex, get_dasharray, get_d3_shape_for_marker
-
-
 
 class D3Base(object):
     """Abstract Base Class for D3js objects"""
@@ -47,7 +43,7 @@ class D3Base(object):
 
     def __str__(self):
         return self.html()
-        
+
 
 class D3Figure(D3Base):
     """Class for representing a matplotlib Figure in D3js"""
@@ -201,12 +197,12 @@ class D3Axes(D3Base):
                              .attr("y", 0)
                              .attr("width", width_{axid})
                              .attr("height", height_{axid});
- 
+
     // axes_{axid} is the axes on which to draw plot components: they'll
     // be clipped when zooming or scrolling moves them out of the plot.
     var axes_{axid} = baseaxes_{axid}.append('g')
             .attr("clip-path", "url(#clip{axid})");
-    
+
     {elements}
 
     function zoomed{axid}() {{
@@ -245,7 +241,7 @@ class D3Axes(D3Base):
             fontsize_x = ticks[0].properties()['size']
         return '\n'.join([self.STYLE.format(axid=self.axid,
                                             figid=self.figid,
-                                            fontsize=fontsize_x)] + 
+                                            fontsize=fontsize_x)] +
                          [g.style() for g in self.grids] +
                          [l.style() for l in self.lines] +
                          [t.style() for t in self.texts])
@@ -275,7 +271,7 @@ class D3Grid(D3Base):
       stroke-dasharray: {dasharray};
       stroke-opacity: {alpha};
     }}
-    
+
     div#figure{figid}
     .grid path {{
       stroke-width: 0;
@@ -452,7 +448,7 @@ class D3Line2D(D3Base):
                                  markercolor=mc,
                                  dasharray=dasharray,
                                  alpha=alpha)
-        
+
     def html(self):
         data = self.line.get_xydata().tolist()
         alpha = self.line.get_alpha()
@@ -494,11 +490,11 @@ class D3Text(D3Base):
     """
     def __init__(self, parent, ax, text):
         self._initialize(parent=parent, ax=ax, text=text)
-    
+
     def html(self):
         if not self.text.get_text():
             return ''
-        
+
         if self.text.get_transform() is self.ax.transData:
             # TODO: anchor this text to the axes, rather than to the figure.
             pass
@@ -511,7 +507,7 @@ class D3Text(D3Base):
         # hack for y-label alignment
         if self.text is self.ax.yaxis.label:
             x += fontsize
-            
+
         return self.TEXT_TEMPLATE.format(text=self.text.get_text(),
                                          x=x, y=y,
                                          fontsize=fontsize,
