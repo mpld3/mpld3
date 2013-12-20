@@ -230,7 +230,7 @@ class D3Axes(D3Base):
                       enumerate(ax.texts + [ax.xaxis.label,
                                             ax.yaxis.label, ax.title])]
         self.grids = [D3Grid(self, ax)]
-        self.patches = [D3Polygon(self, patch, i)
+        self.patches = [D3Patch(self, patch, i)
                         for i, patch in enumerate(ax.patches)]
 
         # Some warnings for pieces of matplotlib which are not yet implemented
@@ -572,11 +572,11 @@ class D3Text(D3Base):
                                rotation=rotation,
                                h_anchor=h_anchor)
         
-class D3Polygon(D3Base):
-    """Class for representing matplotlib polygons in D3js"""
+class D3Patch(D3Base):
+    """Class for representing matplotlib patches in D3js"""
     STYLE = """
     div#figure{figid}
-    path.polygon{elid} {{
+    path.patch{elid} {{
         stroke: {linecolor};
         stroke-width: {linewidth};
         stroke-dasharray: {dasharray};
@@ -589,19 +589,19 @@ class D3Polygon(D3Base):
     TEMPLATE = """
     var data_{elid} = {data}
 
-    var polygon_{elid} = d3.svg.line()
+    var patch_{elid} = d3.svg.line()
          .x(function(d) {{return x_{axid}(d[0]);}})
          .y(function(d) {{return y_{axid}(d[1]);}})
          .interpolate("linear");
 
     axes_{axid}.append("svg:path")
-                   .attr("d", polygon_{elid}(data_{elid}))
-                   .attr('class', 'polygon{elid}');
+                   .attr("d", patch_{elid}(data_{elid}))
+                   .attr('class', 'patch{elid}');
     """
 
     ZOOM = """
-        axes_{axid}.select(".polygon{elid}")
-                       .attr("d", polygon_{elid}(data_{elid}));
+        axes_{axid}.select(".patch{elid}")
+                       .attr("d", patch_{elid}(data_{elid}));
     """
     def __init__(self, parent, patch, i=''):
         self._initialize(parent=parent, patch=patch)

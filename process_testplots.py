@@ -1,3 +1,9 @@
+"""
+Generate Test Plots
+
+This script will go through all the plots in the ``test_plots`` directory, and
+save them as D3js to a single HTML file for inspection.
+"""
 import os
 import glob
 from mpld3 import fig_to_d3
@@ -6,9 +12,22 @@ import matplotlib
 matplotlib.use('Agg') #don't display plots
 import pylab as plt
 
+
 def combine_testplots(wildcard='test_plots/*.py',
                       outfile='test_plots.html',
                       d3_url=None):
+    """Generate figures from the plots and save to an HTML file
+
+    Parameters
+    ----------
+    wildcard : string
+        a regex matching files
+    outfile : string
+        the output HTML file for saving the results
+    d3_url : string
+        the URL of the d3 library to use.  If not specified, a standard web
+        address will be used.
+    """
     fig_html = []
     for filename in glob.glob('test_plots/*.py'):
         dirname, fname = os.path.split(filename)
