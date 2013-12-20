@@ -3,7 +3,6 @@ import matplotlib.pyplot as plt
 
 def main():
     fig, ax = plt.subplots()
-    fig.subplots_adjust(hspace=0.3)
 
     x = [0, 1]
 

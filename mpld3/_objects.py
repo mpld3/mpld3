@@ -230,13 +230,15 @@ class D3Axes(D3Base):
                       enumerate(ax.texts + [ax.xaxis.label,
                                             ax.yaxis.label, ax.title])]
         self.grids = [D3Grid(self, ax)]
+        self.patches = [D3Polygon(self, patch, i)
+                        for i, patch in enumerate(ax.patches)]
 
         # Some warnings for pieces of matplotlib which are not yet implemented
-        for attr in ['images', 'collections', 'containers',
-                     'artists', 'patches', 'tables']:
+        for attr in ['images', 'collections', 'artists', 'tables']:
             if len(getattr(ax, attr)) > 0:
                 warnings.warn("{0} not implemented.  "
                               "Elements will be ignored".format(attr))
+                import IPython; IPython.embed()
 
         if ax.legend_ is not None:
             warnings.warn("legend is not implemented: it will be ignored")
@@ -252,13 +254,15 @@ class D3Axes(D3Base):
                                             fontsize=fontsize_x)] +
                          [g.style() for g in self.grids] +
                          [l.style() for l in self.lines] +
-                         [t.style() for t in self.texts])
+                         [t.style() for t in self.texts] +
+                         [p.style() for p in self.patches])
 
     def html(self):
         elements = '\n'.join([elem.html() for elem in
-                              (self.grids + self.lines + self.texts)])
+                              (self.grids + self.patches + 
+                               self.lines + self.texts)])
         zooms = '\n'.join(elem.zoom() for elem in
-                          (self.grids + self.lines + self.texts))
+                          (self.grids + self.patches + self.lines + self.texts))
 
         axisbg = color_to_hex(self.ax.patch.get_facecolor())
 
@@ -462,9 +466,6 @@ class D3Line2D(D3Base):
 
     def html(self):
         data = self.line.get_xydata().tolist()
-        alpha = self.line.get_alpha()
-        if alpha is None:
-            alpha = 1
         result = self.DATA_TEMPLATE.format(lineid=self.lineid, data=data)
 
         if self.has_points():
@@ -571,3 +572,70 @@ class D3Text(D3Base):
                                rotation=rotation,
                                h_anchor=h_anchor)
         
+class D3Polygon(D3Base):
+    """Class for representing matplotlib polygons in D3js"""
+    STYLE = """
+    div#figure{figid}
+    path.polygon{elid} {{
+        stroke: {linecolor};
+        stroke-width: {linewidth};
+        stroke-dasharray: {dasharray};
+        fill: {fillcolor};
+        stroke-opacity: {alpha};
+        fill-opacity: {alpha};
+    }}
+    """
+
+    TEMPLATE = """
+    var data_{elid} = {data}
+
+    var polygon_{elid} = d3.svg.line()
+         .x(function(d) {{return x_{axid}(d[0]);}})
+         .y(function(d) {{return y_{axid}(d[1]);}})
+         .interpolate("linear");
+
+    axes_{axid}.append("svg:path")
+                   .attr("d", polygon_{elid}(data_{elid}))
+                   .attr('class', 'polygon{elid}');
+    """
+
+    ZOOM = """
+        axes_{axid}.select(".polygon{elid}")
+                       .attr("d", polygon_{elid}(data_{elid}));
+    """
+    def __init__(self, parent, patch, i=''):
+        self._initialize(parent=parent, patch=patch)
+        self.elid = "{0}{1}".format(self.axid, i)
+
+    def zoom(self):
+        return self.ZOOM.format(axid=self.axid,
+                                elid=self.elid)
+
+    def style(self):
+        ec = self.patch.get_edgecolor()
+        if self.patch.get_fill():
+            fc = color_to_hex(self.patch.get_facecolor())
+        else:
+            fc = "none"
+
+        alpha = self.patch.get_alpha()
+        if alpha is None:
+            alpha = 1
+        lc = color_to_hex(self.patch.get_edgecolor())
+        lw = self.patch.get_linewidth()
+        dasharray = get_dasharray(self.patch)
+
+        return self.STYLE.format(figid=self.figid,
+                                 elid=self.elid,
+                                 linecolor=lc,
+                                 linewidth=lw,
+                                 fillcolor=fc,
+                                 dasharray=dasharray,
+                                 alpha=alpha)
+
+    def html(self):
+        path = self.patch.get_path()
+        transform = self.patch.get_patch_transform()
+        data = path.transformed(transform).vertices.tolist()
+        return self.TEMPLATE.format(axid=self.axid, elid=self.elid, data=data)
+    

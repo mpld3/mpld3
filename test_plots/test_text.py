@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 
 def main():
     fig, ax = plt.subplots()
-    ax.grid(color='lightgray')
+    ax.grid(color='gray')
 
     # test font sizes
     x = 0.1
