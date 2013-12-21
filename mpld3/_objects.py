@@ -1,9 +1,11 @@
+import os
 import abc
 import uuid
 import warnings
+import tempfile
 
 from ._utils import get_figtext_coordinates, color_to_hex, get_dasharray
-
+from ._html_utils import BUTTON_TEMPLATE, BUTTON_SCRIPT, BUTTON_STYLE
 
 class D3Base(object):
     """Abstract Base Class for D3js objects"""
@@ -62,6 +64,10 @@ class D3Figure(D3Base):
 
     FIGURE_TEMPLATE = """
     <div id='figure{figid}'></div>
+    {new_window_button_html}
+
+    {new_window_button_script}
+    {new_window_button_style}
 
     <script type="text/javascript">
     func{figid} = function(figure){{
@@ -94,21 +100,52 @@ class D3Figure(D3Base):
         self.axes = [D3Axes(self, ax, i + 1)
                      for i, ax in enumerate(fig.axes)]
 
-
     def style(self):
         return self.STYLE.format(styles='\n'.join([ax.style()
                                                    for ax in self.axes]))
 
-    def html(self, d3_url=None):
+    def html_to_tempfile(self):
+        f, path = tempfile.mkstemp()
+        html = bytes(self.html(new_window_button=False), 'utf-8')
+        os.write(f, html)
+        return path
+
+    def html(self, d3_url=None, new_window_button=True):
         if d3_url is None:
             d3_url = self.D3_WEB_LOC
         axes = '\n'.join(ax.html() for ax in self.axes)
-        fig = self.FIGURE_TEMPLATE.format(figid=self.figid,
-                                          figwidth=self.fig.get_figwidth(),
-                                          figheight=self.fig.get_figheight(),
-                                          dpi=self.fig.dpi,
-                                          axes=axes)
+
+        fig_template_args = dict(figid=self.figid,
+                                 figwidth=self.fig.get_figwidth(),
+                                 figheight=self.fig.get_figheight(),
+                                 dpi=self.fig.dpi,
+                                 axes=axes,
+                                 new_window_button_html="",
+                                 new_window_button_script="",
+                                 new_window_button_style="")
+
+        if new_window_button:
+
+            html_path = self.html_to_tempfile()
+
+            window_width = self.fig.get_figwidth() * self.fig.dpi
+            window_height = self.fig.get_figheight() * self.fig.dpi
+
+            button_template = BUTTON_TEMPLATE.format(figid=self.figid)
+            button_script = BUTTON_SCRIPT.format(figid=self.figid,
+                                                 fig_url_new_window=html_path,
+                                                 width=window_width,
+                                                 height=window_height,
+                                                 dpi=self.fig.dpi)
+            button_style = BUTTON_STYLE
+            button_args = dict(new_window_button_html=button_template,
+                               new_window_button_script=button_script,
+                               new_window_button_style=button_style)
+            fig_template_args.update(button_args)
+
+        fig = self.FIGURE_TEMPLATE.format(**fig_template_args)
         d3_import = self.D3_IMPORT.format(d3_url=d3_url)
+
         return d3_import + self.style() + fig
 
 
@@ -259,7 +296,7 @@ class D3Axes(D3Base):
 
     def html(self):
         elements = '\n'.join([elem.html() for elem in
-                              (self.grids + self.patches + 
+                              (self.grids + self.patches +
                                self.lines + self.texts)])
         zooms = '\n'.join(elem.zoom() for elem in
                           (self.grids + self.patches + self.lines + self.texts))
@@ -513,7 +550,7 @@ class D3Text(D3Base):
         .attr("fill", "{color}")
         .attr("transform", "rotate({rotation},{x}," + (figheight - {y}) + ")")
         .attr("style", "text-anchor: {h_anchor};")
-    """ 
+    """
 
     AXES_TEXT_ZOOM = """
         axes_{axid}.select(".text{textid}")
@@ -571,7 +608,7 @@ class D3Text(D3Base):
                                color=color,
                                rotation=rotation,
                                h_anchor=h_anchor)
-        
+
 class D3Patch(D3Base):
     """Class for representing matplotlib patches in D3js"""
     STYLE = """
@@ -638,4 +675,4 @@ class D3Patch(D3Base):
         transform = self.patch.get_patch_transform()
         data = path.transformed(transform).vertices.tolist()
         return self.TEMPLATE.format(axid=self.axid, elid=self.elid, data=data)
-    
+
