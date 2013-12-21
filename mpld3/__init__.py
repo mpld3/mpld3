@@ -1,4 +1,4 @@
-__all__ = ["fig_to_d3"]
+__all__ = ["fig_to_d3", "display_d3"]
 
 from ._objects import D3Figure
 
@@ -19,3 +19,5 @@ def fig_to_d3(fig, d3_url=None):
         the IPython HTML rich display of the figure.
     """
     return D3Figure(fig).html(d3_url)
+
+from .display import display_d3

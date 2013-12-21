@@ -238,7 +238,7 @@ class D3Axes(D3Base):
             if len(getattr(ax, attr)) > 0:
                 warnings.warn("{0} not implemented.  "
                               "Elements will be ignored".format(attr))
-                import IPython; IPython.embed()
+                #import IPython; IPython.embed()
 
         if ax.legend_ is not None:
             warnings.warn("legend is not implemented: it will be ignored")
