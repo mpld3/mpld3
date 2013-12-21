@@ -1,6 +1,7 @@
 import abc
 import uuid
 import warnings
+from collections import defaultdict
 
 from ._utils import get_figtext_coordinates, color_to_hex, get_dasharray
 
@@ -9,28 +10,36 @@ class D3Base(object):
     """Abstract Base Class for D3js objects"""
     __metaclass__ = abc.ABCMeta
 
+    # keep track of the number of children of each element:
+    # this assists in generating unique ids for all HTML elements
+    num_children_by_id = defaultdict(int)
+
+    @staticmethod
+    def generate_unique_id():
+        return str(uuid.uuid4()).replace('-', '')
+
     def _initialize(self, parent=None, **kwds):
+        # set attributes
         self.parent = parent
         for key, val in kwds.items():
             setattr(self, key, val)
 
-    @property
-    def figid(self):
-        if hasattr(self, '_figid'):
-            return self._figid
-        elif self.parent is not None and self.parent is not self:
-            return self.parent.figid
+        # create a unique element id
+        if parent is None:
+            self.elid = self.generate_unique_id()
         else:
-            raise AttributeError("no attribute figid")
+            self.num_children_by_id[self.parent.elid] += 1
+            self.elid = (self.parent.elid +
+                         str(self.num_children_by_id[self.parent.elid]))
 
-    @property
-    def axid(self):
-        if hasattr(self, '_axid'):
-            return self._axid
-        elif self.parent is not None and self.parent is not self:
-            return self.parent.axid
+    def __getattr__(self, attr):
+        if attr in ['fig', 'ax', 'figid', 'axid']:
+            if hasattr(self, '_' + attr):
+                return getattr(self, '_' + attr)
+            elif self.parent is not None and self.parent is not self:
+                return getattr(self.parent, attr)
         else:
-            raise AttributeError("no attribute axid")
+            raise AttributeError("no attribute {0}".format(attr))
 
     @abc.abstractmethod
     def html(self):
@@ -82,18 +91,12 @@ class D3Figure(D3Base):
     setTimeout(function(){{ func{figid}(d3.select('#figure{figid}')) }}, 0)
     </script>
     """
-    @staticmethod
-    def generate_figid():
-        return str(uuid.uuid4()).replace('-', '')
-
     def __init__(self, fig):
         # use time() to make sure multiple versions of this figure
         # don't cross-talk if used on the same page.
-        self._initialize(parent=None, fig=fig)
-        self._figid = self.generate_figid()
-        self.axes = [D3Axes(self, ax, i + 1)
-                     for i, ax in enumerate(fig.axes)]
-
+        self._initialize(parent=None, _fig=fig, _ax=None)
+        self._figid = self.elid
+        self.axes = [D3Axes(self, ax) for ax in fig.axes]
 
     def style(self):
         return self.STYLE.format(styles='\n'.join([ax.style()
@@ -221,16 +224,16 @@ class D3Axes(D3Base):
         {element_zooms}
     }}
     """
-    def __init__(self, parent, ax, i):
-        self._initialize(parent=parent, ax=ax)
-        self._axid = self.figid + str(i)
-        self.lines = [D3Line2D(self, line, i + 1)
-                      for i, line in enumerate(ax.lines)]
-        self.texts = [D3Text(self, ax, text, i + 1) for i, text in
-                      enumerate(ax.texts + [ax.xaxis.label,
-                                            ax.yaxis.label, ax.title])]
-        self.grids = [D3Grid(self, ax)]
-        self.patches = [D3Patch(self, patch, i)
+    def __init__(self, parent, ax):
+        self._initialize(parent=parent, _ax=ax)
+        self._axid = self.elid
+        self.lines = [D3Line2D(self, line) for line in ax.lines]
+        self.texts = [D3Text(self, text) for text in ax.texts]
+        self.texts += [D3Text(self, text) for text in [ax.xaxis.label,
+                                                       ax.yaxis.label,
+                                                       ax.title]]
+        self.grids = [D3Grid(self)]
+        self.patches = [D3Patch(self, patch)
                         for i, patch in enumerate(ax.patches)]
 
         # Some warnings for pieces of matplotlib which are not yet implemented
@@ -324,8 +327,8 @@ class D3Grid(D3Base):
             .tickSize(-(width_{axid}), 0, 0)
             .tickFormat(""));
     """
-    def __init__(self, parent, ax):
-        self._initialize(parent=parent, ax=ax)
+    def __init__(self, parent):
+        self._initialize(parent=parent)
 
     def zoom(self):
         ret = ""
@@ -420,9 +423,9 @@ class D3Line2D(D3Base):
               .attr("r", {markersize})
               .attr('class', 'points{lineid}');
     """
-    def __init__(self, parent, line, i=''):
+    def __init__(self, parent, line):
         self._initialize(parent=parent, line=line)
-        self.lineid = "{0}{1}".format(self.axid, i)
+        self.lineid = self.elid
 
     def has_line(self):
         return self.line.get_linestyle() not in ['', ' ', 'None',
@@ -520,9 +523,9 @@ class D3Text(D3Base):
                        .attr("x", x_{axid}({x}))
                        .attr("y", y_{axid}({y}))
     """
-    def __init__(self, parent, ax, text, i=''):
-        self._initialize(parent=parent, ax=ax, text=text)
-        self.textid = "{0}{1}".format(self.axid, i)
+    def __init__(self, parent, text):
+        self._initialize(parent=parent, text=text)
+        self.textid = self.elid
 
     def is_axes_text(self):
         return (self.text.get_transform() is self.ax.transData)
@@ -603,9 +606,9 @@ class D3Patch(D3Base):
         axes_{axid}.select(".patch{elid}")
                        .attr("d", patch_{elid}(data_{elid}));
     """
-    def __init__(self, parent, patch, i=''):
+    def __init__(self, parent, patch):
         self._initialize(parent=parent, patch=patch)
-        self.elid = "{0}{1}".format(self.axid, i)
+        self.patchid = self.elid
 
     def zoom(self):
         return self.ZOOM.format(axid=self.axid,
