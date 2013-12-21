@@ -6,6 +6,7 @@ from collections import defaultdict
 from ._utils import get_figtext_coordinates, color_to_hex, \
     get_dasharray, get_d3_shape_for_marker
 
+import matplotlib
 
 class D3Base(object):
     """Abstract Base Class for D3js objects"""
@@ -144,15 +145,37 @@ class D3Axes(D3Base):
     }}
     """
 
+    XAXIS_TEMPLATE = """
+    var x_{axid} = d3.scale.linear()
+                     .domain([{xlim[0]}, {xlim[1]}])
+                     .range([0, width_{axid}]);
+    var x_data_map{axid} = x_{axid};
+    """
+
+    DATE_XAXIS_TEMPLATE =    """
+    var start_date = new Date({d0[0]}, {d0[1]}, {d0[2]}, {d0[3]}, {d0[4]},
+                              {d0[5]}, {d0[6]});
+    var end_date = new Date({d1[0]}, {d1[1]}, {d1[2]}, {d1[3]}, {d1[4]},
+                            {d1[5]}, {d1[6]});
+
+    var x_{axid} = d3.time.scale()
+                      .domain([start_date, end_date])
+                      .range([0, width_{axid}]);
+
+    var x_reverse_date_scale_{axid} = d3.time.scale()
+                                        .domain([start_date, end_date])
+                                        .range([{xlim[0]}, {xlim[1]}]);
+
+    var x_data_map{axid} = function (x)
+                {{ return x_{axid}(x_reverse_date_scale_{axid}.invert(x));}}
+    """
+
     AXES_TEMPLATE = """
     // store the width and height of the axes
     var width_{axid} = {bbox[2]} * figwidth;
     var height_{axid} = {bbox[3]} * figheight
 
-    // create the x and y axis
-    var x_{axid} = d3.scale.linear()
-                       .domain([{xlim[0]}, {xlim[1]}])
-                       .range([0, width_{axid}]);
+    {xaxis_code}
 
     var y_{axid} = d3.scale.linear()
                        .domain([{ylim[0]}, {ylim[1]}])
@@ -292,9 +315,25 @@ class D3Axes(D3Base):
 
         axisbg = color_to_hex(self.ax.patch.get_facecolor())
 
+
+        if isinstance(self.ax.xaxis.converter, matplotlib.dates.DateConverter):
+            date0 = matplotlib.dates.num2date(self.ax.get_xlim()[0])
+            date1 = matplotlib.dates.num2date(self.ax.get_xlim()[1])
+            d0 = [date0.year, date0.month, date0.day, date0.hour, date0.minute,
+                  date0.second, 1000*date0.microsecond]
+            d1 = [date1.year, date1.month, date1.day, date1.hour, date1.minute,
+                  date1.second, 1000*date1.microsecond]
+            xaxis_code =  self.DATE_XAXIS_TEMPLATE.format(axid=self.axid,
+                                                          xlim=self.ax.get_xlim(),
+                                                          d0=d0, d1=d1)
+        else:
+
+            xaxis_code =  self.XAXIS_TEMPLATE.format(axid=self.axid,
+                                                     xlim=self.ax.get_xlim())
+
         return self.AXES_TEMPLATE.format(id=id(self.ax),
                                          axid=self.axid,
-                                         xlim=self.ax.get_xlim(),
+                                         xaxis_code=xaxis_code,
                                          ylim=self.ax.get_ylim(),
                                          bbox=self.ax.get_position().bounds,
                                          axesbg=axisbg,
@@ -428,7 +467,7 @@ class D3Line2D(D3Base):
 
     LINE_TEMPLATE = """
     var line_{lineid} = d3.svg.line()
-         .x(function(d) {{return x_{axid}(d[0]);}})
+         .x(function(d) {{return x_data_map{axid}(d[0]);}})
          .y(function(d) {{return y_{axid}(d[1]);}})
          .interpolate("linear");
 
@@ -535,7 +574,7 @@ class D3Text(D3Base):
     axes_{axid}.append("text")
         .text("{text}")
         .attr("class", "text{textid}")
-        .attr("x", x_{axid}({x}))
+        .attr("x", x_data_map{axid}({x}))
         .attr("y", y_{axid}({y}))
         .attr("font-size", "{fontsize}px")
         .attr("fill", "{color}")
@@ -545,7 +584,7 @@ class D3Text(D3Base):
 
     AXES_TEXT_ZOOM = """
         axes_{axid}.select(".text{textid}")
-                       .attr("x", x_{axid}({x}))
+                       .attr("x", x_data_map{axid}({x}))
                        .attr("y", y_{axid}({y}))
     """
 
@@ -620,7 +659,7 @@ class D3Patch(D3Base):
     var data_{elid} = {data}
 
     var patch_{elid} = d3.svg.line()
-         .x(function(d) {{return x_{axid}(d[0]);}})
+         .x(function(d) {{return x_data_map{axid}(d[0]);}})
          .y(function(d) {{return y_{axid}(d[1]);}})
          .interpolate("{interpolate}");
 
