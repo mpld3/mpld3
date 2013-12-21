@@ -319,10 +319,10 @@ class D3Axes(D3Base):
         if isinstance(self.ax.xaxis.converter, matplotlib.dates.DateConverter):
             date0 = matplotlib.dates.num2date(self.ax.get_xlim()[0])
             date1 = matplotlib.dates.num2date(self.ax.get_xlim()[1])
-            d0 = [date0.year, date0.month, date0.day, date0.hour, date0.minute,
-                  date0.second, 1000*date0.microsecond]
-            d1 = [date1.year, date1.month, date1.day, date1.hour, date1.minute,
-                  date1.second, 1000*date1.microsecond]
+            d0 = [date0.year, date0.month-1, date0.day, date0.hour, date0.minute,
+                  date0.second, date0.microsecond/1e3]
+            d1 = [date1.year, date1.month-1, date1.day, date1.hour, date1.minute,
+                  date1.second, date1.microsecond/1e3]
             xaxis_code =  self.DATE_XAXIS_TEMPLATE.format(axid=self.axid,
                                                           xlim=self.ax.get_xlim(),
                                                           d0=d0, d1=d1)
