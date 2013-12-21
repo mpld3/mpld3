@@ -98,21 +98,29 @@ class D3Figure(D3Base):
         self._figid = self.elid
         self.axes = [D3Axes(self, ax) for ax in fig.axes]
 
+    def d3_import(self, d3_url=None):
+        if d3_url is None:
+            d3_url = self.D3_WEB_LOC
+        return self.D3_IMPORT.format(d3_url=d3_url)
+
     def style(self):
         return self.STYLE.format(styles='\n'.join([ax.style()
                                                    for ax in self.axes]))
 
-    def html(self, d3_url=None):
-        if d3_url is None:
-            d3_url = self.D3_WEB_LOC
+    def html(self, d3_url=None, with_d3_import=True, with_style=True):
+        result = ""
+        if with_d3_import:
+            result += self.d3_import(d3_url)
+        if with_style:
+            result += self.style()
+
         axes = '\n'.join(ax.html() for ax in self.axes)
         fig = self.FIGURE_TEMPLATE.format(figid=self.figid,
                                           figwidth=self.fig.get_figwidth(),
                                           figheight=self.fig.get_figheight(),
                                           dpi=self.fig.dpi,
                                           axes=axes)
-        d3_import = self.D3_IMPORT.format(d3_url=d3_url)
-        return d3_import + self.style() + fig
+        return result + fig
 
 
 class D3Axes(D3Base):
@@ -595,7 +603,7 @@ class D3Patch(D3Base):
     var patch_{elid} = d3.svg.line()
          .x(function(d) {{return x_{axid}(d[0]);}})
          .y(function(d) {{return y_{axid}(d[1]);}})
-         .interpolate("linear");
+         .interpolate("{interpolate}");
 
     axes_{axid}.append("svg:path")
                    .attr("d", patch_{elid}(data_{elid}))
@@ -640,5 +648,8 @@ class D3Patch(D3Base):
         path = self.patch.get_path()
         transform = self.patch.get_patch_transform()
         data = path.transformed(transform).vertices.tolist()
-        return self.TEMPLATE.format(axid=self.axid, elid=self.elid, data=data)
+        # TODO: use appropriate interpolations
+        interpolate = "linear"
+        return self.TEMPLATE.format(axid=self.axid, elid=self.elid,
+                                    data=data, interpolate=interpolate)
     
