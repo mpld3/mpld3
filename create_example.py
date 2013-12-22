@@ -21,6 +21,6 @@ ax.grid(True, color='white', linestyle='solid')
 
 filename = "example.html"
 print "Writing output to {0}".format(filename)
-open(filename, 'w').write(fig_to_d3(fig, d3_location='d3.v3.min.js'))
+open(filename, 'w').write(fig_to_d3(fig, 'd3.v3.min.js'))
 
 plt.show()
