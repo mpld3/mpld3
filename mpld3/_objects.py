@@ -403,7 +403,9 @@ class D3Line2D(D3Base):
 
     POINTS_ZOOM = """
         axes_{axid}.selectAll(".points{lineid}")
-              .attr("transform", function(d) {{ return "translate(" + x_{axid}(d[0]) + "," + y_{axid}(d[1]) + ")"; }});
+              .attr("transform", function(d) 
+                {{ return "translate(" + x_{axid}(d[0]) + "," 
+                    + y_{axid}(d[1]) + ")"; }});
     """
 
     LINE_TEMPLATE = """
@@ -424,8 +426,12 @@ class D3Line2D(D3Base):
           .data(data_{lineid})
           .enter().append("svg:path")
               .attr('class', 'points{lineid}')
-              .attr("d", d3.svg.symbol().type("{markershape}").size({markersize}))
-              .attr("transform", function(d) {{ return "translate(" + x_{axid}(d[0]) + "," + y_{axid}(d[1]) + ")"; }});
+              .attr("d", d3.svg.symbol()
+                            .type("{markershape}")
+                            .size({markersize}))
+              .attr("transform", function(d) 
+                  {{ return "translate(" + x_{axid}(d[0]) 
+                        + "," + y_{axid}(d[1]) + ")"; }});
 
     """
     def __init__(self, parent, line):
