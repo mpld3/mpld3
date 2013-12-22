@@ -6,6 +6,7 @@ from collections import defaultdict
 from ._utils import get_figtext_coordinates, color_to_hex, \
     get_dasharray, get_d3_shape_for_marker
 
+
 class D3Base(object):
     """Abstract Base Class for D3js objects"""
     __metaclass__ = abc.ABCMeta
@@ -91,6 +92,7 @@ class D3Figure(D3Base):
     setTimeout(function(){{ func{figid}(d3.select('#figure{figid}')) }}, 0)
     </script>
     """
+
     def __init__(self, fig):
         # use time() to make sure multiple versions of this figure
         # don't cross-talk if used on the same page.
@@ -232,6 +234,7 @@ class D3Axes(D3Base):
         {element_zooms}
     }}
     """
+
     def __init__(self, parent, ax):
         # import here in case people call matplotlib.use()
         import matplotlib as mpl
@@ -281,7 +284,7 @@ class D3Axes(D3Base):
 
     def html(self):
         elements = '\n'.join([elem.html() for elem in
-                              (self.grids + self.patches + 
+                              (self.grids + self.patches +
                                self.lines + self.texts + self.collections)])
         zooms = '\n'.join(elem.zoom() for elem in
                           (self.grids + self.patches +
@@ -347,6 +350,7 @@ class D3Grid(D3Base):
             .tickSize(-(width_{axid}), 0, 0)
             .tickFormat(""));
     """
+
     def __init__(self, parent):
         self._initialize(parent=parent)
 
@@ -417,8 +421,8 @@ class D3Line2D(D3Base):
 
     POINTS_ZOOM = """
         axes_{axid}.selectAll(".points{lineid}")
-              .attr("transform", function(d) 
-                {{ return "translate(" + x_{axid}(d[0]) + "," + 
+              .attr("transform", function(d)
+                {{ return "translate(" + x_{axid}(d[0]) + "," +
                    y_{axid}(d[1]) + ")"; }});
     """
 
@@ -443,11 +447,12 @@ class D3Line2D(D3Base):
               .attr("d", d3.svg.symbol()
                             .type("{markershape}")
                             .size({markersize}))
-              .attr("transform", function(d) 
-                  {{ return "translate(" + x_{axid}(d[0]) + 
+              .attr("transform", function(d)
+                  {{ return "translate(" + x_{axid}(d[0]) +
                      "," + y_{axid}(d[1]) + ")"; }});
 
     """
+
     def __init__(self, parent, line):
         self._initialize(parent=parent, line=line)
         self.lineid = self.elid
@@ -536,13 +541,14 @@ class D3Text(D3Base):
         .attr("fill", "{color}")
         .attr("transform", "rotate({rotation},{x}," + (figheight - {y}) + ")")
         .attr("style", "text-anchor: {h_anchor};")
-    """ 
+    """
 
     AXES_TEXT_ZOOM = """
         axes_{axid}.select(".text{textid}")
                        .attr("x", x_{axid}({x}))
                        .attr("y", y_{axid}({y}))
     """
+
     def __init__(self, parent, text):
         self._initialize(parent=parent, text=text)
         self.textid = self.elid
@@ -573,14 +579,14 @@ class D3Text(D3Base):
             x, y = get_figtext_coordinates(self.text)
             template = self.FIG_TEXT_TEMPLATE
 
-        color =  color_to_hex(self.text.get_color())
+        color = color_to_hex(self.text.get_color())
         fontsize = self.text.get_size()
         rotation = -self.text.get_rotation()
 
         # TODO: fix vertical anchor point
-        h_anchor = {'left':'start',
-                    'center':'middle',
-                    'right':'end'}[self.text.get_horizontalalignment()]
+        h_anchor = {'left': 'start',
+                    'center': 'middle',
+                    'right': 'end'}[self.text.get_horizontalalignment()]
 
         # hack for y-label alignment
         if self.text is self.ax.yaxis.label:
@@ -594,7 +600,8 @@ class D3Text(D3Base):
                                color=color,
                                rotation=rotation,
                                h_anchor=h_anchor)
-        
+
+
 class D3Patch(D3Base):
     """Class for representing matplotlib patches in D3js"""
     STYLE = """
@@ -626,6 +633,7 @@ class D3Patch(D3Base):
         axes_{axid}.select(".patch{elid}")
                        .attr("d", patch_{elid}(data_{elid}));
     """
+
     def __init__(self, parent, patch):
         self._initialize(parent=parent, patch=patch)
         self.patchid = self.elid
@@ -664,7 +672,7 @@ class D3Patch(D3Base):
         interpolate = "linear"
         return self.TEMPLATE.format(axid=self.axid, elid=self.elid,
                                     data=data, interpolate=interpolate)
-    
+
 
 class D3PatchCollection(D3Base):
     """Class for representing matplotlib patche collections in D3js"""
@@ -697,6 +705,7 @@ class D3PatchCollection(D3Base):
         axes_{axid}.select(".patch{pathid}")
                        .attr("d", patch_{elid}(data_{pathid}));
     """
+
     def __init__(self, parent, collection):
         self._initialize(parent=parent, collection=collection)
         self.n_paths = len(collection.get_paths())
@@ -742,7 +751,7 @@ class D3PatchCollection(D3Base):
             results.append(self.TEMPLATE.format(axid=self.axid,
                                                 elid=self.elid,
                                                 pathid=self.pathid(i),
-                                                i = i + 1,
+                                                i=i + 1,
                                                 data=data,
                                                 interpolate=interpolate))
         return '\n'.join(results)
