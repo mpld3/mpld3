@@ -39,6 +39,12 @@ Alternatively, check out the
 [IPython notebook examples](http://nbviewer.ipython.org/github/jakevdp/mpld3/tree/master/examples/)
 available in the ``examples`` directory.
 
+Test Plots
+----------
+To explore the comparison between D3 renderings and matplotlib renderings for
+various plot types, run the script ``process_testplots.py``.  This will generate
+an html page with the D3 renderings beside corresponding matplotlib renderings.
+
 Features
 --------
 ### Currently Supported

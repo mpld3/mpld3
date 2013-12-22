@@ -24,7 +24,6 @@ TEMPLATE = """
 }}
 
 .right_col {{
-    background-color: Aqua;
     margin-left: 50%;
     width: 50%;
 }}
@@ -85,8 +84,14 @@ def combine_testplots(wildcard='test_plots/*.py',
                                 right_col="".join(fig_names)))
 
 if __name__ == '__main__':
+    import webbrowser
+    import os
     import sys
+    outfile = 'test_plots.html'
     d3_url = None if len(sys.argv) == 1 else sys.argv[1]
     combine_testplots(wildcard='test_plots/*.py',
-                      outfile='test_plots.html',
+                      outfile=outfile,
                       d3_url=d3_url)
+    
+    # Open local file (works on OSX; maybe not on others)
+    webbrowser.open_new('file://localhost' + os.path.abspath(outfile))
