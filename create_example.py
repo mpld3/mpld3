@@ -1,7 +1,17 @@
+import os
+import urllib2
 import numpy as np
 import matplotlib.pyplot as plt
 from mpld3 import fig_to_d3
 
+# Download d3 file locally
+d3_filename = 'd3.v3.min.js'
+if not os.path.exists(d3_filename):
+    page = urllib2.urlopen('http://d3js.org/d3.v3.min.js')
+    with open(d3_filename, 'w') as f:
+        f.write(page.read())
+
+# create a plot
 fig, ax = plt.subplots(subplot_kw={'axisbg':'#EEEEEE'}, facecolor='white')
 ax.plot(np.random.random(10),
         np.random.random(10),
@@ -21,6 +31,6 @@ ax.grid(True, color='white', linestyle='solid')
 
 filename = "example.html"
 print "Writing output to {0}".format(filename)
-open(filename, 'w').write(fig_to_d3(fig, 'd3.v3.min.js'))
+open(filename, 'w').write(fig_to_d3(fig, d3_filename))
 
-plt.show()
+#plt.show()
