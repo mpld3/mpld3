@@ -6,6 +6,8 @@ from collections import defaultdict
 from ._utils import get_figtext_coordinates, color_to_hex, \
     get_dasharray, get_d3_shape_for_marker
 
+import matplotlib
+
 
 class D3Base(object):
     """Abstract Base Class for D3js objects"""
@@ -144,19 +146,80 @@ class D3Axes(D3Base):
     }}
     """
 
+    XAXIS_TEMPLATE = """
+    var x_{axid} = d3.scale.linear()
+                     .domain([{xlim[0]}, {xlim[1]}])
+                     .range([0, width_{axid}]);
+    var x_data_map{axid} = x_{axid};
+    """
+
+    LOG_XAXIS_TEMPLATE = """
+    var x_{axid} = d3.scale.log()
+                     .domain([{xlim[0]}, {xlim[1]}])
+                     .range([0, width_{axid}]);
+    var x_data_map{axid} = x_{axid};
+    """
+
+    DATE_XAXIS_TEMPLATE = """
+    var start_date_x{axid} = new Date({d0[0]}, {d0[1]}, {d0[2]}, {d0[3]},
+                                      {d0[4]}, {d0[5]}, {d0[6]});
+    var end_date_x{axid} = new Date({d1[0]}, {d1[1]}, {d1[2]}, {d1[3]},
+                                    {d1[4]}, {d1[5]}, {d1[6]});
+
+    var x_{axid} = d3.time.scale()
+                      .domain([start_date_x{axid}, end_date_x{axid}])
+                      .range([0, width_{axid}]);
+
+    var x_reverse_date_scale_{axid} = d3.time.scale()
+                                        .domain([start_date_x{axid},
+                                                 end_date_x{axid}])
+                                        .range([{xlim[0]}, {xlim[1]}]);
+
+    var x_data_map{axid} = function (x)
+                {{ return x_{axid}(x_reverse_date_scale_{axid}.invert(x));}}
+    """
+
+    YAXIS_TEMPLATE = """
+    var y_{axid} = d3.scale.linear()
+                           .domain([{ylim[0]}, {ylim[1]}])
+                           .range([height_{axid}, 0]);
+    var y_data_map{axid} = y_{axid};
+    """
+
+    LOG_YAXIS_TEMPLATE = """
+    var y_{axid} = d3.scale.log()
+                           .domain([{ylim[0]}, {ylim[1]}])
+                           .range([height_{axid}, 0]);
+    var y_data_map{axid} = y_{axid};
+    """
+
+    DATE_YAXIS_TEMPLATE = """
+    var start_date_y{axid} = new Date({d0[0]}, {d0[1]}, {d0[2]}, {d0[3]},
+                                      {d0[4]}, {d0[5]}, {d0[6]});
+    var end_date_y{axid} = new Date({d1[0]}, {d1[1]}, {d1[2]}, {d1[3]},
+                                    {d1[4]}, {d1[5]}, {d1[6]});
+
+    var y_{axid} = d3.time.scale()
+                      .domain([end_date_y{axid}, start_date_y{axid}])
+                      .range([0, width_{axid}]);
+
+    var y_reverse_date_scale_{axid} = d3.time.scale()
+                                             .domain([start_date_y{axid},
+                                                      end_date_y{axid}])
+                                             .range([{ylim[0]}, {ylim[1]}]);
+
+    var y_data_map{axid} = function (y)
+                {{ return y_{axid}(y_reverse_date_scale_{axid}.invert(y));}}
+    """
+
     AXES_TEMPLATE = """
     // store the width and height of the axes
     var width_{axid} = {bbox[2]} * figwidth;
     var height_{axid} = {bbox[3]} * figheight
 
-    // create the x and y axis
-    var x_{axid} = d3.scale.linear()
-                       .domain([{xlim[0]}, {xlim[1]}])
-                       .range([0, width_{axid}]);
+    {xaxis_code}
+    {yaxis_code}
 
-    var y_{axid} = d3.scale.linear()
-                       .domain([{ylim[0]}, {ylim[1]}])
-                       .range([height_{axid}, 0]);
 
     // zoom object for the axes
     var zoom{axid} = d3.behavior.zoom()
@@ -292,10 +355,50 @@ class D3Axes(D3Base):
 
         axisbg = color_to_hex(self.ax.patch.get_facecolor())
 
+        if isinstance(self.ax.xaxis.converter, matplotlib.dates.DateConverter):
+            date0, date1 = matplotlib.dates.num2date(self.ax.get_xlim())
+            d0 = [date0.year, date0.month - 1, date0.day, date0.hour,
+                  date0.minute, date0.second, date0.microsecond / 1e3]
+            d1 = [date1.year, date1.month - 1, date1.day, date1.hour,
+                  date1.minute, date1.second, date1.microsecond / 1e3]
+            template = self.DATE_XAXIS_TEMPLATE
+            xaxis_code = template.format(axid=self.axid,
+                                         xlim=self.ax.get_xlim(),
+                                         d0=d0, d1=d1)
+        else:
+            if self.ax.get_xscale() == 'log':
+                template = self.LOG_XAXIS_TEMPLATE
+            elif self.ax.get_xscale() == 'linear':
+                template = self.XAXIS_TEMPLATE
+            else:
+                assert False, "unknown axis scale"
+            xaxis_code = template.format(axid=self.axid,
+                                         xlim=self.ax.get_xlim())
+
+        if isinstance(self.ax.yaxis.converter, matplotlib.dates.DateConverter):
+            date0, date1 = matplotlib.dates.num2date(self.ax.get_ylim())
+            d0 = [date0.year, date0.month - 1, date0.day, date0.hour,
+                  date0.minute, date0.second, date0.microsecond / 1e3]
+            d1 = [date1.year, date1.month - 1, date1.day, date1.hour,
+                  date1.minute, date1.second, date1.microsecond / 1e3]
+            template = self.DATE_YAXIS_TEMPLATE
+            yaxis_code = template.format(axid=self.axid,
+                                         ylim=self.ax.get_ylim(),
+                                         d0=d0, d1=d1)
+        else:
+            if self.ax.get_yscale() == 'log':
+                template = self.LOG_YAXIS_TEMPLATE
+            elif self.ax.get_yscale() == 'linear':
+                template = self.YAXIS_TEMPLATE
+            else:
+                assert False, "unknown axis scale"
+            yaxis_code = template.format(axid=self.axid,
+                                         ylim=self.ax.get_ylim())
+
         return self.AXES_TEMPLATE.format(id=id(self.ax),
                                          axid=self.axid,
-                                         xlim=self.ax.get_xlim(),
-                                         ylim=self.ax.get_ylim(),
+                                         xaxis_code=xaxis_code,
+                                         yaxis_code=yaxis_code,
                                          bbox=self.ax.get_position().bounds,
                                          axesbg=axisbg,
                                          elements=elements,
@@ -422,14 +525,14 @@ class D3Line2D(D3Base):
     POINTS_ZOOM = """
         axes_{axid}.selectAll(".points{lineid}")
               .attr("transform", function(d)
-                {{ return "translate(" + x_{axid}(d[0]) + "," +
-                   y_{axid}(d[1]) + ")"; }});
+                {{ return "translate(" + x_data_map{axid}(d[0]) + "," +
+                   y_data_map{axid}(d[1]) + ")"; }});
     """
 
     LINE_TEMPLATE = """
     var line_{lineid} = d3.svg.line()
-         .x(function(d) {{return x_{axid}(d[0]);}})
-         .y(function(d) {{return y_{axid}(d[1]);}})
+         .x(function(d) {{return x_data_map{axid}(d[0]);}})
+         .y(function(d) {{return y_data_map{axid}(d[1]);}})
          .interpolate("linear");
 
     axes_{axid}.append("svg:path")
@@ -448,9 +551,8 @@ class D3Line2D(D3Base):
                             .type("{markershape}")
                             .size({markersize}))
               .attr("transform", function(d)
-                  {{ return "translate(" + x_{axid}(d[0]) +
-                     "," + y_{axid}(d[1]) + ")"; }});
-
+                  {{ return "translate(" + x_data_map{axid}(d[0]) +
+                     "," + y_data_map{axid}(d[1]) + ")"; }});
     """
 
     def __init__(self, parent, line):
@@ -535,8 +637,8 @@ class D3Text(D3Base):
     axes_{axid}.append("text")
         .text("{text}")
         .attr("class", "text{textid}")
-        .attr("x", x_{axid}({x}))
-        .attr("y", y_{axid}({y}))
+        .attr("x", x_data_map{axid}({x}))
+        .attr("y", y_data_map{axid}({y}))
         .attr("font-size", "{fontsize}px")
         .attr("fill", "{color}")
         .attr("transform", "rotate({rotation},{x}," + (figheight - {y}) + ")")
@@ -545,8 +647,8 @@ class D3Text(D3Base):
 
     AXES_TEXT_ZOOM = """
         axes_{axid}.select(".text{textid}")
-                       .attr("x", x_{axid}({x}))
-                       .attr("y", y_{axid}({y}))
+                       .attr("x", x_data_map{axid}({x}))
+                       .attr("y", y_data_map{axid}({y}))
     """
 
     def __init__(self, parent, text):
@@ -620,8 +722,8 @@ class D3Patch(D3Base):
     var data_{elid} = {data}
 
     var patch_{elid} = d3.svg.line()
-         .x(function(d) {{return x_{axid}(d[0]);}})
-         .y(function(d) {{return y_{axid}(d[1]);}})
+         .x(function(d) {{return x_data_map{axid}(d[0]);}})
+         .y(function(d) {{return y_data_map{axid}(d[1]);}})
          .interpolate("{interpolate}");
 
     axes_{axid}.append("svg:path")
@@ -692,8 +794,8 @@ class D3PatchCollection(D3Base):
     var data_{pathid} = {data}
 
     var patch_{pathid} = d3.svg.line()
-         .x(function(d) {{return x_{axid}(d[0]);}})
-         .y(function(d) {{return y_{axid}(d[1]);}})
+         .x(function(d) {{return x_data_map{axid}(d[0]);}})
+         .y(function(d) {{return y_data_map{axid}(d[1]);}})
          .interpolate("{interpolate}");
 
     axes_{axid}.append("svg:path")
