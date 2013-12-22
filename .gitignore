@@ -43,5 +43,6 @@ nosetests.xml
 .ipynb_checkpoints
 
 # temporary files
-tmp.*
-example.html
+*.js
+*.html
+*.png

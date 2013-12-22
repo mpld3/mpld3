@@ -11,6 +11,38 @@ from mpld3 import fig_to_d3
 import matplotlib
 matplotlib.use('Agg') #don't display plots
 import pylab as plt
+plt.rcParams['figure.figsize'] = (6, 4.5)
+plt.rcParams['savefig.dpi'] = 80
+
+TEMPLATE = """
+<html>
+<head>
+<style type="text/css">
+.left_col {{
+    float: left;
+    width: 50%;
+}}
+
+.right_col {{
+    background-color: Aqua;
+    margin-left: 50%;
+    width: 50%;
+}}
+</style>
+</head>
+
+<body>
+<div id="wrap">
+    <div class="left_col">
+        {left_col}
+    </div>
+    <div class="right_col">
+        {right_col}
+    </div>
+</div>
+</body>
+</html>
+"""
 
 
 def combine_testplots(wildcard='test_plots/*.py',
@@ -29,6 +61,7 @@ def combine_testplots(wildcard='test_plots/*.py',
         address will be used.
     """
     fig_html = []
+    fig_names = []
     for filename in glob.glob('test_plots/*.py'):
         dirname, fname = os.path.split(filename)
         modulename = os.path.splitext(fname)[0]
@@ -41,14 +74,15 @@ def combine_testplots(wildcard='test_plots/*.py',
             fig = f.main()
             fig_html.append(fig_to_d3(fig, d3_url))
 
-    print "writing results to {0}".format(outfile)
-    template = '<html>\n{content}\n</html>'
-    with open(outfile, 'w') as f:
-        f.write('<html>\n\n')
-        for fig in fig_html:
-            f.write(fig)
-        f.write('\n\n</html>')
+            fig_png = os.path.splitext(filename)[0] + '.png'
+            fig.savefig(fig_png)
+            fig_names.append("\n<div class='fig'><img src={0}>"
+                             "</div>\n".format(fig_png))
 
+    print "writing results to {0}".format(outfile)
+    with open(outfile, 'w') as f:
+        f.write(TEMPLATE.format(left_col="".join(fig_html),
+                                right_col="".join(fig_names)))
 
 if __name__ == '__main__':
     import sys
