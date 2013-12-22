@@ -3,7 +3,8 @@ import uuid
 import warnings
 from collections import defaultdict
 
-from ._utils import get_figtext_coordinates, color_to_hex, get_dasharray, get_d3_shape_for_marker
+from ._utils import get_figtext_coordinates, color_to_hex, \
+    get_dasharray, get_d3_shape_for_marker
 
 class D3Base(object):
     """Abstract Base Class for D3js objects"""
@@ -404,8 +405,8 @@ class D3Line2D(D3Base):
     POINTS_ZOOM = """
         axes_{axid}.selectAll(".points{lineid}")
               .attr("transform", function(d) 
-                {{ return "translate(" + x_{axid}(d[0]) + "," 
-                    + y_{axid}(d[1]) + ")"; }});
+                {{ return "translate(" + x_{axid}(d[0]) + "," + 
+                   y_{axid}(d[1]) + ")"; }});
     """
 
     LINE_TEMPLATE = """
@@ -430,8 +431,8 @@ class D3Line2D(D3Base):
                             .type("{markershape}")
                             .size({markersize}))
               .attr("transform", function(d) 
-                  {{ return "translate(" + x_{axid}(d[0]) 
-                        + "," + y_{axid}(d[1]) + ")"; }});
+                  {{ return "translate(" + x_{axid}(d[0]) + 
+                     "," + y_{axid}(d[1]) + ")"; }});
 
     """
     def __init__(self, parent, line):
@@ -461,7 +462,6 @@ class D3Line2D(D3Base):
             alpha = 1
         lc = color_to_hex(self.line.get_color())
         lw = self.line.get_linewidth()
-        ms = 10. * self.line.get_markersize()
         mc = color_to_hex(self.line.get_markerfacecolor())
         mec = color_to_hex(self.line.get_markeredgecolor())
         mew = self.line.get_markeredgewidth()
@@ -471,7 +471,6 @@ class D3Line2D(D3Base):
                                  lineid=self.lineid,
                                  linecolor=lc,
                                  linewidth=lw,
-                                 markersize=ms,
                                  markeredgewidth=mew,
                                  markeredgecolor=mec,
                                  markercolor=mc,
@@ -485,7 +484,7 @@ class D3Line2D(D3Base):
         if self.has_points():
             marker = self.line.get_marker()
             msh = get_d3_shape_for_marker(marker)
-            ms = 10. * self.line.get_markersize()
+            ms = self.line.get_markersize() ** 2
             result += self.POINTS_TEMPLATE.format(lineid=self.lineid,
                                                   axid=self.axid,
                                                   markersize=ms,

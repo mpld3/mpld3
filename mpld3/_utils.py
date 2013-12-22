@@ -45,7 +45,9 @@ MARKER_SHAPES = {'o':'circle',
 
 def get_d3_shape_for_marker(marker):
     """
-    Convert a matplotlib marker ('+','o',...) into a d3 shape name. There are fewer to choose from so we're overloading and falling back to circle.
+    Convert a matplotlib marker ('+','o',...) into a d3 shape name. 
+    There are fewer to choose from so we're overloading and falling 
+    back to circle.
     https://github.com/mbostock/d3/wiki/SVG-Shapes#wiki-symbol_type
     """
     if marker in MARKER_SHAPES:
