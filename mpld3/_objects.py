@@ -702,8 +702,8 @@ class D3PatchCollection(D3Base):
     """
 
     ZOOM = """
-        axes_{axid}.select(".patch{pathid}")
-                       .attr("d", patch_{elid}(data_{pathid}));
+        axes_{axid}.select(".coll{elid}.patch{i}")
+                       .attr("d", patch_{pathid}(data_{pathid}));
     """
 
     def __init__(self, parent, collection):
@@ -715,6 +715,7 @@ class D3PatchCollection(D3Base):
 
     def zoom(self):
         return "".join([self.ZOOM.format(axid=self.axid,
+                                         i=i + 1,
                                          pathid=self.pathid(i),
                                          elid=self.elid)
                         for i in range(self.n_paths)])
