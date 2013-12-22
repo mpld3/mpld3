@@ -233,6 +233,9 @@ class D3Axes(D3Base):
     }}
     """
     def __init__(self, parent, ax):
+        # import here in case people call matplotlib.use()
+        import matplotlib as mpl
+
         self._initialize(parent=parent, _ax=ax)
         self._axid = self.elid
         self.lines = [D3Line2D(self, line) for line in ax.lines]
@@ -243,9 +246,17 @@ class D3Axes(D3Base):
         self.grids = [D3Grid(self)]
         self.patches = [D3Patch(self, patch)
                         for i, patch in enumerate(ax.patches)]
+        self.collections = []
+
+        for collection in ax.collections:
+            if isinstance(collection, mpl.collections.PolyCollection):
+                self.collections.append(D3PatchCollection(self, collection))
+            else:
+                warnings.warn("{0} not implemented.  "
+                              "Elements will be ignored".format(collection))
 
         # Some warnings for pieces of matplotlib which are not yet implemented
-        for attr in ['images', 'collections', 'artists', 'tables']:
+        for attr in ['images', 'artists', 'tables']:
             if len(getattr(ax, attr)) > 0:
                 warnings.warn("{0} not implemented.  "
                               "Elements will be ignored".format(attr))
@@ -265,14 +276,16 @@ class D3Axes(D3Base):
                          [g.style() for g in self.grids] +
                          [l.style() for l in self.lines] +
                          [t.style() for t in self.texts] +
-                         [p.style() for p in self.patches])
+                         [p.style() for p in self.patches] +
+                         [c.style() for c in self.collections])
 
     def html(self):
         elements = '\n'.join([elem.html() for elem in
                               (self.grids + self.patches + 
-                               self.lines + self.texts)])
+                               self.lines + self.texts + self.collections)])
         zooms = '\n'.join(elem.zoom() for elem in
-                          (self.grids + self.patches + self.lines + self.texts))
+                          (self.grids + self.patches +
+                           self.lines + self.texts + self.collections))
 
         axisbg = color_to_hex(self.ax.patch.get_facecolor())
 
@@ -652,3 +665,84 @@ class D3Patch(D3Base):
         return self.TEMPLATE.format(axid=self.axid, elid=self.elid,
                                     data=data, interpolate=interpolate)
     
+
+class D3PatchCollection(D3Base):
+    """Class for representing matplotlib patche collections in D3js"""
+    STYLE = """
+    div#figure{figid}
+    path.coll{elid}.patch{i} {{
+        stroke: {linecolor};
+        stroke-width: {linewidth};
+        stroke-dasharray: {dasharray};
+        fill: {fillcolor};
+        stroke-opacity: {alpha};
+        fill-opacity: {alpha};
+    }}
+    """
+
+    TEMPLATE = """
+    var data_{pathid} = {data}
+
+    var patch_{pathid} = d3.svg.line()
+         .x(function(d) {{return x_{axid}(d[0]);}})
+         .y(function(d) {{return y_{axid}(d[1]);}})
+         .interpolate("{interpolate}");
+
+    axes_{axid}.append("svg:path")
+                   .attr("d", patch_{pathid}(data_{pathid}))
+                   .attr('class', 'coll{elid} patch{i}');
+    """
+
+    ZOOM = """
+        axes_{axid}.select(".patch{pathid}")
+                       .attr("d", patch_{elid}(data_{pathid}));
+    """
+    def __init__(self, parent, collection):
+        self._initialize(parent=parent, collection=collection)
+        self.n_paths = len(collection.get_paths())
+
+    def pathid(self, i):
+        return self.elid + str(i + 1)
+
+    def zoom(self):
+        return "".join([self.ZOOM.format(axid=self.axid,
+                                         pathid=self.pathid(i),
+                                         elid=self.elid)
+                        for i in range(self.n_paths)])
+
+    def style(self):
+        alpha = self.collection.get_alpha()
+        if alpha is None:
+            alpha = 1
+
+        ec = self.collection.get_edgecolor()
+        fc = self.collection.get_facecolor()
+        lc = self.collection.get_edgecolor()
+        lw = self.collection.get_linewidth()
+
+        styles = []
+        for i in range(self.n_paths):
+            dasharray = get_dasharray(self.collection, i)
+            styles.append(self.STYLE.format(figid=self.figid,
+                                            elid=self.elid,
+                                            i=i + 1,
+                                            linecolor=color_to_hex(lc[i]),
+                                            linewidth=lw[i],
+                                            fillcolor=color_to_hex(fc[i]),
+                                            dasharray=dasharray,
+                                            alpha=alpha))
+        return '\n'.join(styles)
+
+    def html(self):
+        results = []
+        for i, path in enumerate(self.collection.get_paths()):
+            data = path.vertices.tolist()
+            # TODO: use appropriate interpolations
+            interpolate = "linear"
+            results.append(self.TEMPLATE.format(axid=self.axid,
+                                                elid=self.elid,
+                                                pathid=self.pathid(i),
+                                                i = i + 1,
+                                                data=data,
+                                                interpolate=interpolate))
+        return '\n'.join(results)

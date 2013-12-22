@@ -59,9 +59,14 @@ def combine_testplots(wildcard='test_plots/*.py',
         the URL of the d3 library to use.  If not specified, a standard web
         address will be used.
     """
+    if isinstance(wildcard, basestring):
+        filenames = glob.glob(wildcard)
+    else:
+        filenames = sum([glob.glob(w) for w in wildcard], [])
+
     fig_html = []
     fig_names = []
-    for filename in glob.glob('test_plots/*.py'):
+    for filename in filenames:
         dirname, fname = os.path.split(filename)
         modulename = os.path.splitext(fname)[0]
         if dirname not in sys.path:
@@ -83,15 +88,37 @@ def combine_testplots(wildcard='test_plots/*.py',
         f.write(TEMPLATE.format(left_col="".join(fig_html),
                                 right_col="".join(fig_names)))
 
+
+def run_main():
+    import argparse
+    parser = argparse.ArgumentParser(description=("Run files and convert "
+                                                  "output to D3"))
+    parser.add_argument("files", nargs='*', type=str)
+    parser.add_argument("-d", "--d3-url",
+                        help="location of d3 library",
+                        type=str, default=None)
+    parser.add_argument("-o", "--output",
+                        help="output filename",
+                        type=str, default='test_plots.html')
+    args = parser.parse_args()
+
+    if len(args.files) == 0:
+        wildcard = 'test_plots/*.py'
+    else:
+        wildcard = args.files
+
+    combine_testplots(wildcard=wildcard,
+                      outfile=args.output,
+                      d3_url=args.d3_url)
+    return args.output
+    
+
 if __name__ == '__main__':
     import webbrowser
     import os
     import sys
-    outfile = 'test_plots.html'
-    d3_url = None if len(sys.argv) == 1 else sys.argv[1]
-    combine_testplots(wildcard='test_plots/*.py',
-                      outfile=outfile,
-                      d3_url=d3_url)
+
+    outfile = run_main()
     
-    # Open local file (works on OSX; maybe not on others)
+    # Open local file (works on OSX; maybe not on other systems)
     webbrowser.open_new('file://localhost' + os.path.abspath(outfile))
