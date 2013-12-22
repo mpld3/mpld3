@@ -3,8 +3,8 @@ import uuid
 import warnings
 from collections import defaultdict
 
-from ._utils import get_figtext_coordinates, color_to_hex, get_dasharray
-
+from ._utils import get_figtext_coordinates, color_to_hex, \
+    get_dasharray, get_d3_shape_for_marker
 
 class D3Base(object):
     """Abstract Base Class for D3js objects"""
@@ -260,7 +260,6 @@ class D3Axes(D3Base):
             if len(getattr(ax, attr)) > 0:
                 warnings.warn("{0} not implemented.  "
                               "Elements will be ignored".format(attr))
-                import IPython; IPython.embed()
 
         if ax.legend_ is not None:
             warnings.warn("legend is not implemented: it will be ignored")
@@ -402,7 +401,7 @@ class D3Line2D(D3Base):
     }}
 
     div#figure{figid}
-    circle.points{lineid} {{
+    path.points{lineid} {{
         stroke-width: {markeredgewidth};
         stroke: {markeredgecolor};
         fill: {markercolor};
@@ -418,8 +417,9 @@ class D3Line2D(D3Base):
 
     POINTS_ZOOM = """
         axes_{axid}.selectAll(".points{lineid}")
-                  .attr("cx", function (d,i) {{ return x_{axid}(d[0]); }} )
-                  .attr("cy", function (d) {{ return y_{axid}(d[1]); }} );
+              .attr("transform", function(d) 
+                {{ return "translate(" + x_{axid}(d[0]) + "," + 
+                   y_{axid}(d[1]) + ")"; }});
     """
 
     LINE_TEMPLATE = """
@@ -438,11 +438,15 @@ class D3Line2D(D3Base):
 
     g_{lineid}.selectAll("scatter-dots-{lineid}")
           .data(data_{lineid})
-          .enter().append("svg:circle")
-              .attr("cx", function (d,i) {{ return x_{axid}(d[0]); }} )
-              .attr("cy", function (d) {{ return y_{axid}(d[1]); }} )
-              .attr("r", {markersize})
-              .attr('class', 'points{lineid}');
+          .enter().append("svg:path")
+              .attr('class', 'points{lineid}')
+              .attr("d", d3.svg.symbol()
+                            .type("{markershape}")
+                            .size({markersize}))
+              .attr("transform", function(d) 
+                  {{ return "translate(" + x_{axid}(d[0]) + 
+                     "," + y_{axid}(d[1]) + ")"; }});
+
     """
     def __init__(self, parent, line):
         self._initialize(parent=parent, line=line)
@@ -471,7 +475,6 @@ class D3Line2D(D3Base):
             alpha = 1
         lc = color_to_hex(self.line.get_color())
         lw = self.line.get_linewidth()
-        ms = 2. / 3. * self.line.get_markersize()
         mc = color_to_hex(self.line.get_markerfacecolor())
         mec = color_to_hex(self.line.get_markeredgecolor())
         mew = self.line.get_markeredgewidth()
@@ -481,7 +484,6 @@ class D3Line2D(D3Base):
                                  lineid=self.lineid,
                                  linecolor=lc,
                                  linewidth=lw,
-                                 markersize=ms,
                                  markeredgewidth=mew,
                                  markeredgecolor=mec,
                                  markercolor=mc,
@@ -493,16 +495,13 @@ class D3Line2D(D3Base):
         result = self.DATA_TEMPLATE.format(lineid=self.lineid, data=data)
 
         if self.has_points():
-            # TODO: use actual marker, not simply circles
             marker = self.line.get_marker()
-            if marker != 'o':
-                warnings.warn("Only marker='o' is currently supported. "
-                              "Defaulting to this.")
-
-            ms = 2. / 3. * self.line.get_markersize()
+            msh = get_d3_shape_for_marker(marker)
+            ms = self.line.get_markersize() ** 2
             result += self.POINTS_TEMPLATE.format(lineid=self.lineid,
                                                   axid=self.axid,
                                                   markersize=ms,
+                                                  markershape=msh,
                                                   data=data)
         if self.has_line():
             # TODO: use actual line style

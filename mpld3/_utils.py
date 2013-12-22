@@ -38,3 +38,27 @@ def get_dasharray(obj, i=None):
                       "defaulting to solid.".format(ls))
         dasharray=LINESTYLES['-']
     return dasharray
+
+MARKER_SHAPES = {'o':'circle',
+                  '^':'triangle-up',
+                  'v':'triangle-down',
+                  '+':'cross',
+                  'd':'diamond',
+                  's':'square'}
+
+def get_d3_shape_for_marker(marker):
+    """
+    Convert a matplotlib marker ('+','o',...) into a d3 shape name. 
+    There are fewer to choose from so we're overloading and falling 
+    back to circle.
+    https://github.com/mbostock/d3/wiki/SVG-Shapes#wiki-symbol_type
+    """
+    if marker in MARKER_SHAPES:
+        return MARKER_SHAPES[marker]
+    else:
+        warnings.warn("""
+            Only markers 'o' (circle), '^' (triangle-up), 
+            'v' (triangle-down), '+' (cross), 'd' (diamond), 
+            and 's' (square) are currently supported.  
+            Defaulting to 'circle'.""")
+        return 'circle'
