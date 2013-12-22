@@ -477,7 +477,6 @@ class D3Line2D(D3Base):
         result = self.DATA_TEMPLATE.format(lineid=self.lineid, data=data)
 
         if self.has_points():
-            # TODO: use actual marker, not simply circles
             marker = self.line.get_marker()
             msh = get_d3_shape_for_marker(marker)
             ms = 10. * self.line.get_markersize()
