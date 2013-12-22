@@ -501,8 +501,8 @@ class D3Line2D(D3Base):
     POINTS_ZOOM = """
         axes_{axid}.selectAll(".points{lineid}")
               .attr("transform", function(d)
-                {{ return "translate(" + x_{axid}(d[0]) + "," +
-                   y_{axid}(d[1]) + ")"; }});
+                {{ return "translate(" + x_data_map{axid}(d[0]) + "," +
+                   y_data_map{axid}(d[1]) + ")"; }});
     """
 
     LINE_TEMPLATE = """
@@ -527,8 +527,8 @@ class D3Line2D(D3Base):
                             .type("{markershape}")
                             .size({markersize}))
               .attr("transform", function(d)
-                  {{ return "translate(" + x_{axid}(d[0]) +
-                     "," + y_{axid}(d[1]) + ")"; }});
+                  {{ return "translate(" + x_data_map{axid}(d[0]) +
+                     "," + y_data_map{axid}(d[1]) + ")"; }});
     """
 
     def __init__(self, parent, line):
@@ -770,8 +770,8 @@ class D3PatchCollection(D3Base):
     var data_{pathid} = {data}
 
     var patch_{pathid} = d3.svg.line()
-         .x(function(d) {{return x_{axid}(d[0]);}})
-         .y(function(d) {{return y_{axid}(d[1]);}})
+         .x(function(d) {{return x_data_map{axid}(d[0]);}})
+         .y(function(d) {{return y_data_map{axid}(d[1]);}})
          .interpolate("{interpolate}");
 
     axes_{axid}.append("svg:path")
