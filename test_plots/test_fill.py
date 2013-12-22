@@ -18,6 +18,8 @@ def main():
     ax.set_xlim(0, 4 * np.pi)
     ax.set_ylim(-1.1, 1.1)
 
+    ax.set_title("fill() and fill_between()", size=18)
+
     return fig
 
 if __name__ == '__main__':
