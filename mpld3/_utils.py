@@ -20,15 +20,18 @@ def many_to_one(input_dict):
                 for keys, val in input_dict.items()
                 for key in keys)
 
-LINESTYLES = many_to_one({('solid', '-'): "10,0",
+LINESTYLES = many_to_one({('solid', '-', (None, None)): "10,0",
                           ('dashed', '--'): "6,6",
                           ('dotted', ':'): "2,2",
                           ('dashdot', '-.'): "4,4,2,4",
                           ('', ' ', 'None', 'none'): "none"})
 
-def get_dasharray(line):
+def get_dasharray(obj, i=None):
     """Get an SVG dash array for the given matplotlib linestyle"""
-    ls = line.get_linestyle()
+    ls = obj.get_linestyle()
+    if i is not None:
+        ls = ls[i]
+
     dasharray = LINESTYLES.get(ls, None)
     if dasharray is None:
         warnings.warn("dash style '{0}' not understood: "
