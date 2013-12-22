@@ -153,6 +153,13 @@ class D3Axes(D3Base):
     var x_data_map{axid} = x_{axid};
     """
 
+    LOG_XAXIS_TEMPLATE = """
+    var x_{axid} = d3.scale.log()
+                     .domain([{xlim[0]}, {xlim[1]}])
+                     .range([0, width_{axid}]);
+    var x_data_map{axid} = x_{axid};
+    """
+
     DATE_XAXIS_TEMPLATE = """
     var start_date_x{axid} = new Date({d0[0]}, {d0[1]}, {d0[2]}, {d0[3]},
                                       {d0[4]}, {d0[5]}, {d0[6]});
@@ -174,8 +181,15 @@ class D3Axes(D3Base):
 
     YAXIS_TEMPLATE = """
     var y_{axid} = d3.scale.linear()
-                       .domain([{ylim[0]}, {ylim[1]}])
-                       .range([height_{axid}, 0]);
+                           .domain([{ylim[0]}, {ylim[1]}])
+                           .range([height_{axid}, 0]);
+    var y_data_map{axid} = y_{axid};
+    """
+
+    LOG_YAXIS_TEMPLATE = """
+    var y_{axid} = d3.scale.log()
+                           .domain([{ylim[0]}, {ylim[1]}])
+                           .range([height_{axid}, 0]);
     var y_data_map{axid} = y_{axid};
     """
 
@@ -190,9 +204,9 @@ class D3Axes(D3Base):
                       .range([0, width_{axid}]);
 
     var y_reverse_date_scale_{axid} = d3.time.scale()
-                                        .domain([start_date_y{axid},
-                                                 end_date_y{axid}])
-                                        .range([{ylim[0]}, {ylim[1]}]);
+                                             .domain([start_date_y{axid},
+                                                      end_date_y{axid}])
+                                             .range([{ylim[0]}, {ylim[1]}]);
 
     var y_data_map{axid} = function (y)
                 {{ return y_{axid}(y_reverse_date_scale_{axid}.invert(y));}}
@@ -352,9 +366,14 @@ class D3Axes(D3Base):
                                          xlim=self.ax.get_xlim(),
                                          d0=d0, d1=d1)
         else:
-
-            xaxis_code = self.XAXIS_TEMPLATE.format(axid=self.axid,
-                                                    xlim=self.ax.get_xlim())
+            if self.ax.get_xscale() == 'log':
+                template = self.LOG_XAXIS_TEMPLATE
+            elif self.ax.get_xscale() == 'linear':
+                template = self.XAXIS_TEMPLATE
+            else:
+                assert False, "unknown axis scale"
+            xaxis_code = template.format(axid=self.axid,
+                                         xlim=self.ax.get_xlim())
 
         if isinstance(self.ax.yaxis.converter, matplotlib.dates.DateConverter):
             date0, date1 = matplotlib.dates.num2date(self.ax.get_ylim())
@@ -367,8 +386,14 @@ class D3Axes(D3Base):
                                          ylim=self.ax.get_ylim(),
                                          d0=d0, d1=d1)
         else:
-            yaxis_code = self.YAXIS_TEMPLATE.format(axid=self.axid,
-                                                    ylim=self.ax.get_ylim())
+            if self.ax.get_yscale() == 'log':
+                template = self.LOG_YAXIS_TEMPLATE
+            elif self.ax.get_yscale() == 'linear':
+                template = self.YAXIS_TEMPLATE
+            else:
+                assert False, "unknown axis scale"
+            yaxis_code = template.format(axid=self.axid,
+                                         ylim=self.ax.get_ylim())
 
         return self.AXES_TEMPLATE.format(id=id(self.ax),
                                          axid=self.axid,
