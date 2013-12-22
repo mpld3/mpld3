@@ -1,15 +1,14 @@
-import matplotlib.pyplot as plt
-from IPython.display import HTML
 from . import fig_to_d3
+import matplotlib.pyplot as plt
 
 
-def display_d3(fig, closefig=True, d3_url=None):
+def display_d3(fig=None, closefig=True, d3_url=None):
     """Display figure in IPython notebook via the HTML display hook
 
     Parameters
     ----------
     fig : matplotlib figure
-        The figure to display
+        The figure to display (grabs current figure if missing)
     closefig : boolean (default: True)
         If true, close the figure so that the IPython matplotlib mode will not
         display the png version of the figure.
@@ -22,6 +21,10 @@ def display_d3(fig, closefig=True, d3_url=None):
     fig_d3 : IPython.display.HTML object
         the IPython HTML rich display of the figure.
     """
+    # import here, in case users don't have requirements installed
+    from IPython.display import HTML
+    if fig is None:
+        fig = plt.gcf()
     if closefig:
         plt.close(fig)
     return HTML(fig_to_d3(fig, d3_url))
