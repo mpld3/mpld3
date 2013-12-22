@@ -8,6 +8,7 @@ from ._utils import get_figtext_coordinates, color_to_hex, \
 
 import matplotlib
 
+
 class D3Base(object):
     """Abstract Base Class for D3js objects"""
     __metaclass__ = abc.ABCMeta
@@ -152,11 +153,11 @@ class D3Axes(D3Base):
     var x_data_map{axid} = x_{axid};
     """
 
-    DATE_XAXIS_TEMPLATE =    """
-    var start_date_x{axid} = new Date({d0[0]}, {d0[1]}, {d0[2]}, {d0[3]}, {d0[4]},
-                              {d0[5]}, {d0[6]});
-    var end_date_x{axid} = new Date({d1[0]}, {d1[1]}, {d1[2]}, {d1[3]}, {d1[4]},
-                            {d1[5]}, {d1[6]});
+    DATE_XAXIS_TEMPLATE = """
+    var start_date_x{axid} = new Date({d0[0]}, {d0[1]}, {d0[2]}, {d0[3]},
+                                      {d0[4]}, {d0[5]}, {d0[6]});
+    var end_date_x{axid} = new Date({d1[0]}, {d1[1]}, {d1[2]}, {d1[3]},
+                                    {d1[4]}, {d1[5]}, {d1[6]});
 
     var x_{axid} = d3.time.scale()
                       .domain([start_date_x{axid}, end_date_x{axid}])
@@ -178,11 +179,11 @@ class D3Axes(D3Base):
     var y_data_map{axid} = y_{axid};
     """
 
-    DATE_YAXIS_TEMPLATE =    """
-    var start_date_y{axid} = new Date({d0[0]}, {d0[1]}, {d0[2]}, {d0[3]}, {d0[4]},
-                              {d0[5]}, {d0[6]});
-    var end_date_y{axid} = new Date({d1[0]}, {d1[1]}, {d1[2]}, {d1[3]}, {d1[4]},
-                            {d1[5]}, {d1[6]});
+    DATE_YAXIS_TEMPLATE = """
+    var start_date_y{axid} = new Date({d0[0]}, {d0[1]}, {d0[2]}, {d0[3]},
+                                      {d0[4]}, {d0[5]}, {d0[6]});
+    var end_date_y{axid} = new Date({d1[0]}, {d1[1]}, {d1[2]}, {d1[3]},
+                                    {d1[4]}, {d1[5]}, {d1[6]});
 
     var y_{axid} = d3.time.scale()
                       .domain([end_date_y{axid}, start_date_y{axid}])
@@ -196,8 +197,6 @@ class D3Axes(D3Base):
     var y_data_map{axid} = function (y)
                 {{ return y_{axid}(y_reverse_date_scale_{axid}.invert(y));}}
     """
-
-
 
     AXES_TEMPLATE = """
     // store the width and height of the axes
@@ -342,34 +341,34 @@ class D3Axes(D3Base):
 
         axisbg = color_to_hex(self.ax.patch.get_facecolor())
 
-
         if isinstance(self.ax.xaxis.converter, matplotlib.dates.DateConverter):
             date0, date1 = matplotlib.dates.num2date(self.ax.get_xlim())
-            d0 = [date0.year, date0.month-1, date0.day, date0.hour, date0.minute,
-                  date0.second, date0.microsecond/1e3]
-            d1 = [date1.year, date1.month-1, date1.day, date1.hour, date1.minute,
-                  date1.second, date1.microsecond/1e3]
-            xaxis_code =  self.DATE_XAXIS_TEMPLATE.format(axid=self.axid,
-                                                          xlim=self.ax.get_xlim(),
-                                                          d0=d0, d1=d1)
+            d0 = [date0.year, date0.month - 1, date0.day, date0.hour,
+                  date0.minute, date0.second, date0.microsecond / 1e3]
+            d1 = [date1.year, date1.month - 1, date1.day, date1.hour,
+                  date1.minute, date1.second, date1.microsecond / 1e3]
+            template = self.DATE_XAXIS_TEMPLATE
+            xaxis_code = template.format(axid=self.axid,
+                                         xlim=self.ax.get_xlim(),
+                                         d0=d0, d1=d1)
         else:
 
-            xaxis_code =  self.XAXIS_TEMPLATE.format(axid=self.axid,
-                                                     xlim=self.ax.get_xlim())
+            xaxis_code = self.XAXIS_TEMPLATE.format(axid=self.axid,
+                                                    xlim=self.ax.get_xlim())
 
         if isinstance(self.ax.yaxis.converter, matplotlib.dates.DateConverter):
             date0, date1 = matplotlib.dates.num2date(self.ax.get_ylim())
-            d0 = [date0.year, date0.month-1, date0.day, date0.hour, date0.minute,
-                  date0.second, date0.microsecond/1e3]
-            d1 = [date1.year, date1.month-1, date1.day, date1.hour, date1.minute,
-                  date1.second, date1.microsecond/1e3]
-            yaxis_code =  self.DATE_YAXIS_TEMPLATE.format(axid=self.axid,
-                                                          ylim=self.ax.get_ylim(),
-                                                          d0=d0, d1=d1)
+            d0 = [date0.year, date0.month - 1, date0.day, date0.hour,
+                  date0.minute, date0.second, date0.microsecond / 1e3]
+            d1 = [date1.year, date1.month - 1, date1.day, date1.hour,
+                  date1.minute, date1.second, date1.microsecond / 1e3]
+            template = self.DATE_YAXIS_TEMPLATE
+            yaxis_code = template.format(axid=self.axid,
+                                         ylim=self.ax.get_ylim(),
+                                         d0=d0, d1=d1)
         else:
-            yaxis_code =  self.YAXIS_TEMPLATE.format(axid=self.axid,
-                                                     ylim=self.ax.get_ylim())
-
+            yaxis_code = self.YAXIS_TEMPLATE.format(axid=self.axid,
+                                                    ylim=self.ax.get_ylim())
 
         return self.AXES_TEMPLATE.format(id=id(self.ax),
                                          axid=self.axid,
