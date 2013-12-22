@@ -153,22 +153,51 @@ class D3Axes(D3Base):
     """
 
     DATE_XAXIS_TEMPLATE =    """
-    var start_date = new Date({d0[0]}, {d0[1]}, {d0[2]}, {d0[3]}, {d0[4]},
+    var start_date_x{axid} = new Date({d0[0]}, {d0[1]}, {d0[2]}, {d0[3]}, {d0[4]},
                               {d0[5]}, {d0[6]});
-    var end_date = new Date({d1[0]}, {d1[1]}, {d1[2]}, {d1[3]}, {d1[4]},
+    var end_date_x{axid} = new Date({d1[0]}, {d1[1]}, {d1[2]}, {d1[3]}, {d1[4]},
                             {d1[5]}, {d1[6]});
 
     var x_{axid} = d3.time.scale()
-                      .domain([start_date, end_date])
+                      .domain([start_date_x{axid}, end_date_x{axid}])
                       .range([0, width_{axid}]);
 
     var x_reverse_date_scale_{axid} = d3.time.scale()
-                                        .domain([start_date, end_date])
+                                        .domain([start_date_x{axid},
+                                                 end_date_x{axid}])
                                         .range([{xlim[0]}, {xlim[1]}]);
 
     var x_data_map{axid} = function (x)
                 {{ return x_{axid}(x_reverse_date_scale_{axid}.invert(x));}}
     """
+
+    YAXIS_TEMPLATE = """
+    var y_{axid} = d3.scale.linear()
+                       .domain([{ylim[0]}, {ylim[1]}])
+                       .range([height_{axid}, 0]);
+    var y_data_map{axid} = y_{axid};
+    """
+
+    DATE_YAXIS_TEMPLATE =    """
+    var start_date_y{axid} = new Date({d0[0]}, {d0[1]}, {d0[2]}, {d0[3]}, {d0[4]},
+                              {d0[5]}, {d0[6]});
+    var end_date_y{axid} = new Date({d1[0]}, {d1[1]}, {d1[2]}, {d1[3]}, {d1[4]},
+                            {d1[5]}, {d1[6]});
+
+    var y_{axid} = d3.time.scale()
+                      .domain([end_date_y{axid}, start_date_y{axid}])
+                      .range([0, width_{axid}]);
+
+    var y_reverse_date_scale_{axid} = d3.time.scale()
+                                        .domain([start_date_y{axid},
+                                                 end_date_y{axid}])
+                                        .range([{ylim[0]}, {ylim[1]}]);
+
+    var y_data_map{axid} = function (y)
+                {{ return y_{axid}(y_reverse_date_scale_{axid}.invert(y));}}
+    """
+
+
 
     AXES_TEMPLATE = """
     // store the width and height of the axes
@@ -176,10 +205,8 @@ class D3Axes(D3Base):
     var height_{axid} = {bbox[3]} * figheight
 
     {xaxis_code}
+    {yaxis_code}
 
-    var y_{axid} = d3.scale.linear()
-                       .domain([{ylim[0]}, {ylim[1]}])
-                       .range([height_{axid}, 0]);
 
     // zoom object for the axes
     var zoom{axid} = d3.behavior.zoom()
@@ -317,8 +344,7 @@ class D3Axes(D3Base):
 
 
         if isinstance(self.ax.xaxis.converter, matplotlib.dates.DateConverter):
-            date0 = matplotlib.dates.num2date(self.ax.get_xlim()[0])
-            date1 = matplotlib.dates.num2date(self.ax.get_xlim()[1])
+            date0, date1 = matplotlib.dates.num2date(self.ax.get_xlim())
             d0 = [date0.year, date0.month-1, date0.day, date0.hour, date0.minute,
                   date0.second, date0.microsecond/1e3]
             d1 = [date1.year, date1.month-1, date1.day, date1.hour, date1.minute,
@@ -331,10 +357,24 @@ class D3Axes(D3Base):
             xaxis_code =  self.XAXIS_TEMPLATE.format(axid=self.axid,
                                                      xlim=self.ax.get_xlim())
 
+        if isinstance(self.ax.yaxis.converter, matplotlib.dates.DateConverter):
+            date0, date1 = matplotlib.dates.num2date(self.ax.get_ylim())
+            d0 = [date0.year, date0.month-1, date0.day, date0.hour, date0.minute,
+                  date0.second, date0.microsecond/1e3]
+            d1 = [date1.year, date1.month-1, date1.day, date1.hour, date1.minute,
+                  date1.second, date1.microsecond/1e3]
+            yaxis_code =  self.DATE_YAXIS_TEMPLATE.format(axid=self.axid,
+                                                          ylim=self.ax.get_ylim(),
+                                                          d0=d0, d1=d1)
+        else:
+            yaxis_code =  self.YAXIS_TEMPLATE.format(axid=self.axid,
+                                                     ylim=self.ax.get_ylim())
+
+
         return self.AXES_TEMPLATE.format(id=id(self.ax),
                                          axid=self.axid,
                                          xaxis_code=xaxis_code,
-                                         ylim=self.ax.get_ylim(),
+                                         yaxis_code=yaxis_code,
                                          bbox=self.ax.get_position().bounds,
                                          axesbg=axisbg,
                                          elements=elements,
@@ -468,7 +508,7 @@ class D3Line2D(D3Base):
     LINE_TEMPLATE = """
     var line_{lineid} = d3.svg.line()
          .x(function(d) {{return x_data_map{axid}(d[0]);}})
-         .y(function(d) {{return y_{axid}(d[1]);}})
+         .y(function(d) {{return y_data_map{axid}(d[1]);}})
          .interpolate("linear");
 
     axes_{axid}.append("svg:path")
@@ -489,7 +529,6 @@ class D3Line2D(D3Base):
               .attr("transform", function(d)
                   {{ return "translate(" + x_{axid}(d[0]) +
                      "," + y_{axid}(d[1]) + ")"; }});
-
     """
 
     def __init__(self, parent, line):
@@ -575,7 +614,7 @@ class D3Text(D3Base):
         .text("{text}")
         .attr("class", "text{textid}")
         .attr("x", x_data_map{axid}({x}))
-        .attr("y", y_{axid}({y}))
+        .attr("y", y_data_map{axid}({y}))
         .attr("font-size", "{fontsize}px")
         .attr("fill", "{color}")
         .attr("transform", "rotate({rotation},{x}," + (figheight - {y}) + ")")
@@ -585,7 +624,7 @@ class D3Text(D3Base):
     AXES_TEXT_ZOOM = """
         axes_{axid}.select(".text{textid}")
                        .attr("x", x_data_map{axid}({x}))
-                       .attr("y", y_{axid}({y}))
+                       .attr("y", y_data_map{axid}({y}))
     """
 
     def __init__(self, parent, text):
@@ -660,7 +699,7 @@ class D3Patch(D3Base):
 
     var patch_{elid} = d3.svg.line()
          .x(function(d) {{return x_data_map{axid}(d[0]);}})
-         .y(function(d) {{return y_{axid}(d[1]);}})
+         .y(function(d) {{return y_data_map{axid}(d[1]);}})
          .interpolate("{interpolate}");
 
     axes_{axid}.append("svg:path")
