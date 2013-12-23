@@ -2,6 +2,8 @@ import abc
 import uuid
 import warnings
 from collections import defaultdict
+import base64
+import io
 
 from ._utils import get_figtext_coordinates, color_to_hex, \
     get_dasharray, get_d3_shape_for_marker
@@ -309,6 +311,7 @@ class D3Axes(D3Base):
         self.texts += [D3Text(self, text) for text in [ax.xaxis.label,
                                                        ax.yaxis.label,
                                                        ax.title]]
+        self.images = [D3Image(self, ax, image) for image in ax.images]
         self.grids = [D3Grid(self)]
         self.patches = [D3Patch(self, patch)
                         for i, patch in enumerate(ax.patches)]
@@ -322,7 +325,7 @@ class D3Axes(D3Base):
                               "Elements will be ignored".format(collection))
 
         # Some warnings for pieces of matplotlib which are not yet implemented
-        for attr in ['images', 'artists', 'tables']:
+        for attr in ['artists', 'tables']:
             if len(getattr(ax, attr)) > 0:
                 warnings.warn("{0} not implemented.  "
                               "Elements will be ignored".format(attr))
@@ -347,10 +350,10 @@ class D3Axes(D3Base):
 
     def html(self):
         elements = '\n'.join([elem.html() for elem in
-                              (self.grids + self.patches +
+                              (self.images + self.grids + self.patches +
                                self.lines + self.texts + self.collections)])
         zooms = '\n'.join(elem.zoom() for elem in
-                          (self.grids + self.patches +
+                          (self.images + self.grids + self.patches +
                            self.lines + self.texts + self.collections))
 
         axisbg = color_to_hex(self.ax.patch.get_facecolor())
@@ -858,3 +861,53 @@ class D3PatchCollection(D3Base):
                                                 data=data,
                                                 interpolate=interpolate))
         return '\n'.join(results)
+
+
+class D3Image(D3Base):
+    """Class for representing matplotlib images in D3js"""
+    IMAGE_TEMPLATE = """
+    axes_{axid}.append("svg:image")
+        .attr('class', 'image{imageid}')
+        .attr("x", x_{axid}({x}))
+        .attr("y", y_{axid}({y}))
+        .attr("width", x_{axid}({width}) - x_{axid}({x}))
+        .attr("height", y_{axid}({height}) - y_{axid}({y}))
+        .attr("xlink:href", "data:image/png;base64," + "{base64_data}")
+        .attr("preserveAspectRatio", "none");
+    """
+
+    IMAGE_ZOOM = """
+        axes_{axid}.select(".image{imageid}")
+                   .attr("x", x_{axid}({x}))
+                   .attr("y", y_{axid}({y}))
+                   .attr("width", x_{axid}({width}) - x_{axid}({x}))
+                   .attr("height", y_{axid}({height}) - y_{axid}({y}));
+    """
+
+    def __init__(self, parent, ax, image, i=''):
+        self._initialize(parent=parent, ax=ax, image=image)
+        self.imageid = "{0}{1}".format(self.axid, i)
+
+    def zoom(self):
+        return self.IMAGE_ZOOM.format(imageid=self.imageid,
+                                      axid=self.axid,
+                                      x=self.x, y=self.y,
+                                      width=self.width, height=self.height)
+
+    def html(self):
+        # import here in case people call matplotlib.use()
+        from matplotlib.pyplot import imsave
+        self.x, self.y = 0, 0
+        data = self.image.get_array().data
+        self.height, self.width = data.shape
+
+        binary_buffer = io.BytesIO()
+        imsave(binary_buffer, data)
+        binary_buffer.seek(0)
+        base64_data = base64.b64encode(binary_buffer.read())
+
+        return self.IMAGE_TEMPLATE.format(axid=self.axid,
+                                          imageid=self.imageid,
+                                          base64_data=base64_data,
+                                          x=self.x, y=self.y,
+                                          width=self.width, height=self.height)
