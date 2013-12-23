@@ -322,7 +322,7 @@ class D3Axes(D3Base):
             if isinstance(collection, mpl.collections.PolyCollection):
                 self.collections.append(D3PatchCollection(self, collection))
             elif isinstance(collection, mpl.collections.LineCollection):
-                D3AddLineCollection(self, collection)
+                self.collections.append(D3LineCollection(self, collection))
             else:
                 warnings.warn("{0} not implemented.  "
                               "Elements will be ignored".format(collection))
@@ -625,29 +625,49 @@ class D3Line2D(D3Base):
         return result
 
 
-def D3AddLineCollection(d3axes, collection):
-    """Function for adding LineCollections to D3 plot"""
-    collection.update_scalarmappable()
-    colors = collection.get_colors()
-    linewidths = collection.get_linewidths()
-    styles = collection.get_linestyles()
-    get_linewidth = lambda i: linewidths[i % len(linewidths)]
-    get_color = lambda i: colors[i % len(colors)]
-    reverse_linestyle_lookup = {
-        (10, 0) : "-",
-        None : "-",
-        (6, 6) : "--",
-        (2, 2) : ":",
-        (4,4,2,4) : "-."}
-    get_style = lambda i: reverse_linestyle_lookup[styles[i % len(styles)][1]]
+class D3LineCollection(D3Base):
+    """Class to represent LineCollections in D3"""
+    def __init__(self, parent, collection):
+        self._initialize(parent=parent, collection=collection)
+        self.lines = []
 
-    for i, path in enumerate(collection.get_paths()):
-        line_segment = Line2D(path.vertices[:, 0], path.vertices[:, 1],
-                              linewidth=get_linewidth(i), color=get_color(i),
-                              linestyle=get_style(i))
-        d3axes.lines.append(D3Line2D(d3axes, line_segment))
+        collection.update_scalarmappable()
+        colors = collection.get_colors()
+        linewidths = collection.get_linewidths()
+        styles = collection.get_linestyles()
+        get_linewidth = lambda i: linewidths[i % len(linewidths)]
+        get_color = lambda i: colors[i % len(colors)]
+        linestyle_lookup = {
+            (10, 0): "-",
+            None: "-",
+            (6, 6): "--",
+            (2, 2): ":",
+            (4, 4, 2, 4): "-."}
+        get_style = lambda i: linestyle_lookup[styles[i % len(styles)][1]]
 
+        for i, path in enumerate(collection.get_paths()):
+            line_segment = Line2D(path.vertices[:, 0], path.vertices[:, 1],
+                                  linewidth=get_linewidth(i),
+                                  color=get_color(i), linestyle=get_style(i))
+            self.lines.append(D3Line2D(parent, line_segment))
 
+    def zoom(self):
+        ret = ""
+        for line in self.lines:
+            ret += line.zoom()
+        return ret
+
+    def style(self):
+        ret = ""
+        for line in self.lines:
+            ret += line.style()
+        return ret
+
+    def html(self):
+        ret = ""
+        for line in self.lines:
+            ret += line.html()
+        return ret
 
 
 class D3Text(D3Base):
