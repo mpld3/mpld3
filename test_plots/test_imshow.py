@@ -6,7 +6,8 @@ def main():
     fig, ax = plt.subplots()
     ax.grid(color='gray')
 
-    ax.imshow(np.random.randn(50, 30))
+    im = ax.imshow(np.random.randn(50, 30))
+    fig.colorbar(im, ax=ax)
 
     ax.set_title('An Image', size=20)
 
