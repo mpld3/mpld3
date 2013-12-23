@@ -66,3 +66,17 @@ def get_d3_shape_for_marker(marker):
             and 's' (square) are currently supported.
             Defaulting to 'circle'.""")
         return 'circle'
+
+
+# This is still broken...
+#def get_svg_path(path):
+#    """Get an SVG patch string from a matplotlib path instance"""
+#    path_codes = {path.CLOSEPOLY: 'z',
+#                  path.CURVE3: 'C',
+#                  path.CURVE4: 'C',
+#                  path.LINETO: 'L',
+#                  path.MOVETO: 'M',
+#                  path.STOP: 'S'}
+#
+#    return ' '.join(sum([[path_codes[c]] + map(str, d)
+#                         for d, c in path.iter_segments()], []))

@@ -811,6 +811,14 @@ class D3PatchCollection(D3Base):
                        .attr("d", patch_{pathid}(data_{pathid}));
     """
 
+    # TODO: there are special D3 classes for many common patch types
+    #       (i.e. circle, ellipse, rectangle, polygon, etc.)  We should
+    #       use these where possible.  Also, it would be better to use the
+    #       SVG path codes available via path.iter_segments() to exactly
+    #       duplicate what's in matplotlib.  This gets difficult, however,
+    #       because the values need to be appropriately transformed via the
+    #       D3 axes instances.
+
     def __init__(self, parent, collection):
         self._initialize(parent=parent, collection=collection)
         self.n_paths = len(collection.get_paths())
@@ -852,14 +860,12 @@ class D3PatchCollection(D3Base):
         results = []
         for i, path in enumerate(self.collection.get_paths()):
             data = path.vertices.tolist()
-            # TODO: use appropriate interpolations
-            interpolate = "linear"
             results.append(self.TEMPLATE.format(axid=self.axid,
                                                 elid=self.elid,
                                                 pathid=self.pathid(i),
                                                 i=i + 1,
                                                 data=data,
-                                                interpolate=interpolate))
+                                                interpolate="linear"))
         return '\n'.join(results)
 
 
