@@ -30,16 +30,19 @@ LINESTYLES = many_to_one({('solid', '-', (None, None)): "10,0",
 
 def get_dasharray(obj, i=None):
     """Get an SVG dash array for the given matplotlib linestyle"""
-    ls = obj.get_linestyle()
-    if i is not None:
-        ls = ls[i]
+    if obj.__dict__.get('_dashSeq', None) is not None:
+        return ','.join(map(str, obj._dashSeq))
+    else:
+        ls = obj.get_linestyle()
+        if i is not None:
+            ls = ls[i]
 
-    dasharray = LINESTYLES.get(ls, None)
-    if dasharray is None:
-        warnings.warn("dash style '{0}' not understood: "
-                      "defaulting to solid.".format(ls))
-        dasharray = LINESTYLES['-']
-    return dasharray
+        dasharray = LINESTYLES.get(ls, None)
+        if dasharray is None:
+            warnings.warn("dash style '{0}' not understood: "
+                          "defaulting to solid.".format(ls))
+            dasharray = LINESTYLES['-']
+        return dasharray
 
 
 MARKER_SHAPES = {'o': 'circle',
