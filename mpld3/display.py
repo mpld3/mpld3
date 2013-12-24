@@ -77,3 +77,35 @@ def show_d3(fig=None, d3_url=None, tmpfile='_tmp.html'):
 
     # Open local file (works on OSX; maybe not on others)
     webbrowser.open_new('file://localhost' + os.path.abspath(tmpfile))
+
+
+def enable_notebook():
+    """Enable the automatic display of figures in the IPython Notebook.
+    
+    This function should be used with the inline Matplotlib backend
+    that ships with IPython that can be enabled with `%pylab inline`
+    or `%matplotlib inline`. This works by adding an HTML formatter
+    for Figure objects; the existing SVG/PNG formatters will remain
+    enabled.
+    """
+    try:
+        from IPython.core.getipython import get_ipython
+        from matplotlib.figure import Figure
+    except ImportError:
+        raise ImportError('This feature requires IPython and Matplotlib')
+    ip = get_ipython()
+    formatter = ip.display_formatter.formatters['text/html']
+    formatter.for_type(Figure, lambda fig: fig_to_d3(fig))
+
+
+def disable_notebook():
+    """Disable the automatic display of figures in the IPython Notebook."""
+    try:
+        from IPython.core.getipython import get_ipython
+        from matplotlib.figure import Figure
+    except ImportError:
+        raise ImportError('This feature requires IPython and Matplotlib')
+    ip = get_ipython()
+    formatter = ip.display_formatter.formatters['text/html']
+    formatter.type_printers.pop(Figure, None)
+
