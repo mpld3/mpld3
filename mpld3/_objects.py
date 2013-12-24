@@ -635,39 +635,23 @@ class D3LineCollection(D3Base):
         colors = collection.get_colors()
         linewidths = collection.get_linewidths()
         styles = collection.get_linestyles()
-        get_linewidth = lambda i: linewidths[i % len(linewidths)]
-        get_color = lambda i: colors[i % len(colors)]
-        linestyle_lookup = {
-            (10, 0): "-",
-            None: "-",
-            (6, 6): "--",
-            (2, 2): ":",
-            (4, 4, 2, 4): "-."}
-        get_style = lambda i: linestyle_lookup[styles[i % len(styles)][1]]
-
         for i, path in enumerate(collection.get_paths()):
             line_segment = Line2D(path.vertices[:, 0], path.vertices[:, 1],
-                                  linewidth=get_linewidth(i),
-                                  color=get_color(i), linestyle=get_style(i))
+                                  linewidth=linewidths[i % len(linewidths)],
+                                  color=colors[i % len(colors)])
+            style = styles[i % len(styles)][1]
+            if style is not None:
+                line_segment.set_dashes(style)
             self.lines.append(D3Line2D(parent, line_segment))
 
     def zoom(self):
-        ret = ""
-        for line in self.lines:
-            ret += line.zoom()
-        return ret
+        return "\n".join([line.zoom() for line in self.lines])
 
     def style(self):
-        ret = ""
-        for line in self.lines:
-            ret += line.style()
-        return ret
+        return "\n".join([line.style() for line in self.lines])
 
     def html(self):
-        ret = ""
-        for line in self.lines:
-            ret += line.html()
-        return ret
+        return "\n".join([line.html() for line in self.lines])
 
 
 class D3Text(D3Base):
