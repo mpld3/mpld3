@@ -4,11 +4,12 @@ import warnings
 from collections import defaultdict
 import base64
 import io
+from matplotlib.collections import LineCollection
+from matplotlib.lines import Line2D
+import matplotlib
 
 from ._utils import get_figtext_coordinates, color_to_hex, \
     get_dasharray, get_d3_shape_for_marker
-
-import matplotlib
 
 
 class D3Base(object):
@@ -320,6 +321,8 @@ class D3Axes(D3Base):
         for collection in ax.collections:
             if isinstance(collection, mpl.collections.PolyCollection):
                 self.collections.append(D3PatchCollection(self, collection))
+            elif isinstance(collection, mpl.collections.LineCollection):
+                self.collections.append(D3LineCollection(self, collection))
             else:
                 warnings.warn("{0} not implemented.  "
                               "Elements will be ignored".format(collection))
@@ -622,6 +625,35 @@ class D3Line2D(D3Base):
         return result
 
 
+class D3LineCollection(D3Base):
+    """Class to represent LineCollections in D3"""
+    def __init__(self, parent, collection):
+        self._initialize(parent=parent, collection=collection)
+        self.lines = []
+
+        collection.update_scalarmappable()
+        colors = collection.get_colors()
+        linewidths = collection.get_linewidths()
+        styles = collection.get_linestyles()
+        for i, path in enumerate(collection.get_paths()):
+            line_segment = Line2D(path.vertices[:, 0], path.vertices[:, 1],
+                                  linewidth=linewidths[i % len(linewidths)],
+                                  color=colors[i % len(colors)])
+            style = styles[i % len(styles)][1]
+            if style is not None:
+                line_segment.set_dashes(style)
+            self.lines.append(D3Line2D(parent, line_segment))
+
+    def zoom(self):
+        return "\n".join([line.zoom() for line in self.lines])
+
+    def style(self):
+        return "\n".join([line.style() for line in self.lines])
+
+    def html(self):
+        return "\n".join([line.html() for line in self.lines])
+
+
 class D3Text(D3Base):
     """Class for representing matplotlib text in D3js"""
     FIG_TEXT_TEMPLATE = """
@@ -780,7 +812,7 @@ class D3Patch(D3Base):
 
 
 class D3PatchCollection(D3Base):
-    """Class for representing matplotlib patche collections in D3js"""
+    """Class for representing matplotlib patch collections in D3js"""
     STYLE = """
     div#figure{figid}
     path.coll{elid}.patch{i} {{
