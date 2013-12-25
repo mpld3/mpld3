@@ -18,7 +18,7 @@ def main():
 
     fig, ax = plt.subplots()
     CS = ax.contour(X, Y, Z)
-    ax.clabel(CS, inline=1, fontsize=10)
+    ax.clabel(CS, inline=True, fontsize=10)
     return fig
 
 if __name__ == '__main__':
