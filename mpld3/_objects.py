@@ -6,7 +6,7 @@ import base64
 import io
 from matplotlib.collections import LineCollection
 from matplotlib.lines import Line2D
-import matplotlib
+import matplotlib as mpl
 
 from ._utils import get_figtext_coordinates, color_to_hex, \
     get_dasharray, get_d3_shape_for_marker
@@ -361,8 +361,8 @@ class D3Axes(D3Base):
 
         axisbg = color_to_hex(self.ax.patch.get_facecolor())
 
-        if isinstance(self.ax.xaxis.converter, matplotlib.dates.DateConverter):
-            date0, date1 = matplotlib.dates.num2date(self.ax.get_xlim())
+        if isinstance(self.ax.xaxis.converter, mpl.dates.DateConverter):
+            date0, date1 = mpl.dates.num2date(self.ax.get_xlim())
             d0 = [date0.year, date0.month - 1, date0.day, date0.hour,
                   date0.minute, date0.second, date0.microsecond / 1e3]
             d1 = [date1.year, date1.month - 1, date1.day, date1.hour,
@@ -381,8 +381,8 @@ class D3Axes(D3Base):
             xaxis_code = template.format(axid=self.axid,
                                          xlim=self.ax.get_xlim())
 
-        if isinstance(self.ax.yaxis.converter, matplotlib.dates.DateConverter):
-            date0, date1 = matplotlib.dates.num2date(self.ax.get_ylim())
+        if isinstance(self.ax.yaxis.converter, mpl.dates.DateConverter):
+            date0, date1 = mpl.dates.num2date(self.ax.get_ylim())
             d0 = [date0.year, date0.month - 1, date0.day, date0.hour,
                   date0.minute, date0.second, date0.microsecond / 1e3]
             d1 = [date1.year, date1.month - 1, date1.day, date1.hour,
@@ -765,7 +765,7 @@ class D3Patch(D3Base):
                    .attr("d", patch_{elid}(data_{elid}))
                    .attr('class', 'patch{elid}');
     """
-
+    
     ZOOM = """
         axes_{axid}.select(".patch{elid}")
                        .attr("d", patch_{elid}(data_{elid}));
@@ -775,9 +775,15 @@ class D3Patch(D3Base):
         self._initialize(parent=parent, patch=patch)
         self.patchid = self.elid
 
+    def zoomable(self):
+        return self.patch.get_transform().contains_branch(self.ax.transData)
+
     def zoom(self):
-        return self.ZOOM.format(axid=self.axid,
-                                elid=self.elid)
+        if self.zoomable():
+            return self.ZOOM.format(axid=self.axid,
+                                    elid=self.elid)
+        else:
+            return ""
 
     def style(self):
         ec = self.patch.get_edgecolor()
@@ -802,10 +808,14 @@ class D3Patch(D3Base):
                                  alpha=alpha)
 
     def html(self):
-        path = self.patch.get_path()
-        transform = self.patch.get_patch_transform()
-        data = path.transformed(transform).vertices.tolist()
+        # transform path to data coordinates
+        path = self.patch.get_path().transformed(self.patch.get_transform()
+                                                 - self.ax.transData)
+        data = path.vertices.tolist()
+
         # TODO: use appropriate interpolations
+        #       This can be done using ``path.iter_segments()`` and making
+        #       use of the appropriate SVG path codes.
         interpolate = "linear"
         return self.TEMPLATE.format(axid=self.axid, elid=self.elid,
                                     data=data, interpolate=interpolate)

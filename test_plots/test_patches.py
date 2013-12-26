@@ -19,7 +19,7 @@ def main():
                           [2, 2.75], [1.75, 3]]),
          patches.Wedge((3, 1), 0.4, 0, 270),
          patches.Ellipse((3, 2), 0.6, 0.4),
-         patches.Arc((3, 3), 0.5, 0.5, 270, 90)
+         patches.Arc((3, 3), 0.5, 0.5, 270, 90),
     ]
 
     for patch in p:
@@ -28,6 +28,11 @@ def main():
         patch.set_alpha(0.5)
         patch.set_linewidth(2)
         ax.add_patch(patch)
+
+    # add a static patch
+    ax.add_patch(patches.Rectangle((0.3, 0.3), 0.4, 0.4,
+                                   fc='yellow', ec='black', alpha=0.3,
+                                   transform=ax.transAxes))
 
     # make sure axes ratio is equal
     ax.set_xlim(0.5, 0.5 + 3. * 4. / 3.)
