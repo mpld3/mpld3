@@ -565,6 +565,9 @@ class D3Line2D(D3Base):
         self._initialize(parent=parent, line=line)
         self.lineid = self.elid
 
+    def zoomable(self):
+        return self.line.get_transform().contains_branch(self.ax.transData)
+
     def has_line(self):
         return self.line.get_linestyle() not in ['', ' ', 'None',
                                                  'none', None]
@@ -574,12 +577,13 @@ class D3Line2D(D3Base):
 
     def zoom(self):
         ret = ""
-        if self.has_points():
-            ret += self.POINTS_ZOOM.format(lineid=self.lineid,
-                                           axid=self.axid)
-        if self.has_line():
-            ret += self.LINE_ZOOM.format(lineid=self.lineid,
-                                         axid=self.axid)
+        if self.zoomable():
+            if self.has_points():
+                ret += self.POINTS_ZOOM.format(lineid=self.lineid,
+                                               axid=self.axid)
+            if self.has_line():
+                ret += self.LINE_ZOOM.format(lineid=self.lineid,
+                                             axid=self.axid)
         return ret
 
     def style(self):
@@ -604,7 +608,9 @@ class D3Line2D(D3Base):
                                  alpha=alpha)
 
     def html(self):
-        data = self.line.get_xydata().tolist()
+        transform = self.line.get_transform() - self.ax.transData
+        data = transform.transform(self.line.get_xydata()).tolist()
+
         result = self.DATA_TEMPLATE.format(lineid=self.lineid, data=data)
 
         if self.has_points():
