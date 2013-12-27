@@ -6,6 +6,7 @@ save them as D3js to a single HTML file for inspection.
 """
 import os
 import glob
+import sys
 from mpld3 import fig_to_d3
 
 import matplotlib
@@ -115,8 +116,6 @@ def run_main():
 
 if __name__ == '__main__':
     import webbrowser
-    import os
-    import sys
 
     outfile = run_main()
     
