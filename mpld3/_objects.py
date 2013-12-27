@@ -644,7 +644,8 @@ class D3LineCollection(D3Base):
         for i, path in enumerate(collection.get_paths()):
             line_segment = Line2D(path.vertices[:, 0], path.vertices[:, 1],
                                   linewidth=linewidths[i % len(linewidths)],
-                                  color=colors[i % len(colors)])
+                                  color=colors[i % len(colors)],
+                                  transform=collection.get_transform())
             style = styles[i % len(styles)][1]
             if style is not None:
                 line_segment.set_dashes(style)
