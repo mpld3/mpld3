@@ -14,10 +14,6 @@ matplotlib's features.  It should be considered a proof-of-concept, for now.
 
 Installation
 ------------
-To install the dependencies:
-
-    [~]$pip install -r requirements.txt
-
 To install the library system-wide
 
     [~]$ python setup.py install
