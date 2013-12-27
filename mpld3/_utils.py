@@ -2,6 +2,7 @@
 import warnings
 
 from matplotlib.colors import colorConverter
+from matplotlib.path import Path
 
 
 def get_figtext_coordinates(txt):
@@ -71,15 +72,25 @@ def get_d3_shape_for_marker(marker):
         return 'circle'
 
 
-# This is still broken...
-#def get_svg_path(path):
-#    """Get an SVG patch string from a matplotlib path instance"""
-#    path_codes = {path.CLOSEPOLY: 'z',
-#                  path.CURVE3: 'C',
-#                  path.CURVE4: 'C',
-#                  path.LINETO: 'L',
-#                  path.MOVETO: 'M',
-#                  path.STOP: 'S'}
-#
-#    return ' '.join(sum([[path_codes[c]] + map(str, d)
-#                         for d, c in path.iter_segments()], []))
+PATH_DICT = {Path.LINETO: 'L',
+             Path.MOVETO: 'M',
+             Path.STOP: 'STOP',
+             Path.CURVE3: 'S',
+             Path.CURVE4: 'C',
+             Path.CLOSEPOLY: 'Z'}
+
+
+def construct_svg_path(path, transform=None):
+    """Construct an SVG path from a (transformed) matplotlib path"""
+    if transform is None:
+        transform = IdentityTransform()
+
+    steps = []
+    for vert, code in path.iter_segments():
+        vert = transform.transform(vert.reshape(-1, 2)).ravel()
+        step = PATH_DICT[code]
+        if step != 'Z':
+            step += ' '.join(map(str, vert))
+        steps.append(step)
+
+    return ' '.join(steps)
