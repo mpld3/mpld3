@@ -9,7 +9,7 @@ from matplotlib.lines import Line2D
 import matplotlib as mpl
 
 from ._utils import get_figtext_coordinates, color_to_hex, \
-    get_dasharray, get_d3_shape_for_marker
+    get_dasharray, get_d3_shape_for_marker, PATH_DICT
 
 
 class D3Base(object):
@@ -761,21 +761,41 @@ class D3Patch(D3Base):
     """
 
     TEMPLATE = """
-    var data_{elid} = {data}
+    var data_{elid} = {data};
 
-    var patch_{elid} = d3.svg.line()
-         .x(function(d) {{return x_data_map{axid}(d[0]);}})
-         .y(function(d) {{return y_data_map{axid}(d[1]);}})
-         .interpolate("{interpolate}");
+    // This function constructs a mapped SVG path
+    // from an input data array
+    var construct_SVG_path = function(data, xmap, ymap){{
+       var result = "";
+       for (var i=0;i<data.length;i++){{
+          result += data[i][0];
+          if(data[i][0] == 'Z'){{
+            continue;
+          }}
+          for (var j=0;j<data[i][1].length;j++){{
+            if(j % 2 == 0){{
+               result += " " + xmap(data[i][1][j]);
+            }}else{{
+               result += " " + ymap(data[i][1][j]);
+            }}
+          }}
+          result += " ";
+       }}
+       return result;
+     }};
 
     axes_{axid}.append("svg:path")
-                   .attr("d", patch_{elid}(data_{elid}))
+                   .attr("d", construct_SVG_path(data_{elid},
+                                                 x_data_map{axid},
+                                                 y_data_map{axid}))
                    .attr('class', 'patch{elid}');
     """
-    
+
     ZOOM = """
         axes_{axid}.select(".patch{elid}")
-                       .attr("d", patch_{elid}(data_{elid}));
+              .attr("transform", "translate(" + d3.event.translate[0] + ","
+                                 + d3.event.translate[1] + ") scale("
+                                 + d3.event.scale + ")");
     """
 
     def __init__(self, parent, patch):
@@ -818,14 +838,14 @@ class D3Patch(D3Base):
         # transform path to data coordinates
         path = self.patch.get_path().transformed(self.patch.get_transform()
                                                  - self.ax.transData)
-        data = path.vertices.tolist()
 
-        # TODO: use appropriate interpolations
-        #       This can be done using ``path.iter_segments()`` and making
-        #       use of the appropriate SVG path codes.
-        interpolate = "linear"
+        # construct data array to be passed to javascript
+        # construct_SVG_path() function
+        data = [[PATH_DICT[code], verts.tolist()]
+                for verts, code in path.iter_segments()]
+
         return self.TEMPLATE.format(axid=self.axid, elid=self.elid,
-                                    data=data, interpolate=interpolate)
+                                    data=data)
 
 
 class D3PatchCollection(D3Base):
