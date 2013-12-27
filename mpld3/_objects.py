@@ -788,6 +788,7 @@ class D3Patch(D3Base):
                    .attr("d", construct_SVG_path(data_{elid},
                                                  x_data_map{axid},
                                                  y_data_map{axid}))
+                   .attr("vector-effect", "non-scaling-stroke")
                    .attr('class', 'patch{elid}');
     """
 
