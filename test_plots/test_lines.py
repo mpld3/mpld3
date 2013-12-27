@@ -7,15 +7,18 @@ def main():
     x = [0, 1]
 
     for i, color in enumerate(['red', 'green', '#0000FF']):
+        x = 1 + 6 * i
         for j, alpha in enumerate([0.3, 0.6, 1.0]):
             for k, linestyle in enumerate(['solid', 'dashed',
-                                           'dashdot', 'dotted']):
-                x = 1 + 6 * i
+                                           'dashdot', 'dotted', '--']):
                 y = 0.5 + k + 0.33 * j
-                ax.plot([x, x + 2.5, x + 5], [y, y + 0.2, y], lw=6 * alpha,
-                        c=color, ls=linestyle, alpha=alpha)
+                lines = ax.plot([x, x + 2.5, x + 5], [y, y + 0.2, y],
+                                lw=6 * alpha,
+                                c=color, ls=linestyle, alpha=alpha)
+                if linestyle == '--':
+                    lines[0].set_dashes([8, 4, 2, 4, 2, 4])
 
-    ax.set_ylim(0, 4.5)
+    ax.set_ylim(0, 5.5)
     ax.set_title("Line Styles, Widths, Transparencies", size=20)
     return fig
 

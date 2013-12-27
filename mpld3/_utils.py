@@ -30,16 +30,19 @@ LINESTYLES = many_to_one({('solid', '-', (None, None)): "10,0",
 
 def get_dasharray(obj, i=None):
     """Get an SVG dash array for the given matplotlib linestyle"""
-    ls = obj.get_linestyle()
-    if i is not None:
-        ls = ls[i]
+    if obj.__dict__.get('_dashSeq', None) is not None:
+        return ','.join(map(str, obj._dashSeq))
+    else:
+        ls = obj.get_linestyle()
+        if i is not None:
+            ls = ls[i]
 
-    dasharray = LINESTYLES.get(ls, None)
-    if dasharray is None:
-        warnings.warn("dash style '{0}' not understood: "
-                      "defaulting to solid.".format(ls))
-        dasharray = LINESTYLES['-']
-    return dasharray
+        dasharray = LINESTYLES.get(ls, None)
+        if dasharray is None:
+            warnings.warn("dash style '{0}' not understood: "
+                          "defaulting to solid.".format(ls))
+            dasharray = LINESTYLES['-']
+        return dasharray
 
 
 MARKER_SHAPES = {'o': 'circle',
@@ -66,3 +69,17 @@ def get_d3_shape_for_marker(marker):
             and 's' (square) are currently supported.
             Defaulting to 'circle'.""")
         return 'circle'
+
+
+# This is still broken...
+#def get_svg_path(path):
+#    """Get an SVG patch string from a matplotlib path instance"""
+#    path_codes = {path.CLOSEPOLY: 'z',
+#                  path.CURVE3: 'C',
+#                  path.CURVE4: 'C',
+#                  path.LINETO: 'L',
+#                  path.MOVETO: 'M',
+#                  path.STOP: 'S'}
+#
+#    return ' '.join(sum([[path_codes[c]] + map(str, d)
+#                         for d, c in path.iter_segments()], []))

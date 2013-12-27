@@ -2,11 +2,14 @@ import abc
 import uuid
 import warnings
 from collections import defaultdict
+import base64
+import io
+from matplotlib.collections import LineCollection
+from matplotlib.lines import Line2D
+import matplotlib as mpl
 
 from ._utils import get_figtext_coordinates, color_to_hex, \
     get_dasharray, get_d3_shape_for_marker
-
-import matplotlib
 
 
 class D3Base(object):
@@ -309,6 +312,7 @@ class D3Axes(D3Base):
         self.texts += [D3Text(self, text) for text in [ax.xaxis.label,
                                                        ax.yaxis.label,
                                                        ax.title]]
+        self.images = [D3Image(self, ax, image) for image in ax.images]
         self.grids = [D3Grid(self)]
         self.patches = [D3Patch(self, patch)
                         for i, patch in enumerate(ax.patches)]
@@ -317,12 +321,14 @@ class D3Axes(D3Base):
         for collection in ax.collections:
             if isinstance(collection, mpl.collections.PolyCollection):
                 self.collections.append(D3PatchCollection(self, collection))
+            elif isinstance(collection, mpl.collections.LineCollection):
+                self.collections.append(D3LineCollection(self, collection))
             else:
                 warnings.warn("{0} not implemented.  "
                               "Elements will be ignored".format(collection))
 
         # Some warnings for pieces of matplotlib which are not yet implemented
-        for attr in ['images', 'artists', 'tables']:
+        for attr in ['artists', 'tables']:
             if len(getattr(ax, attr)) > 0:
                 warnings.warn("{0} not implemented.  "
                               "Elements will be ignored".format(attr))
@@ -347,16 +353,16 @@ class D3Axes(D3Base):
 
     def html(self):
         elements = '\n'.join([elem.html() for elem in
-                              (self.grids + self.patches +
+                              (self.images + self.grids + self.patches +
                                self.lines + self.texts + self.collections)])
         zooms = '\n'.join(elem.zoom() for elem in
-                          (self.grids + self.patches +
+                          (self.images + self.grids + self.patches +
                            self.lines + self.texts + self.collections))
 
         axisbg = color_to_hex(self.ax.patch.get_facecolor())
 
-        if isinstance(self.ax.xaxis.converter, matplotlib.dates.DateConverter):
-            date0, date1 = matplotlib.dates.num2date(self.ax.get_xlim())
+        if isinstance(self.ax.xaxis.converter, mpl.dates.DateConverter):
+            date0, date1 = mpl.dates.num2date(self.ax.get_xlim())
             d0 = [date0.year, date0.month - 1, date0.day, date0.hour,
                   date0.minute, date0.second, date0.microsecond / 1e3]
             d1 = [date1.year, date1.month - 1, date1.day, date1.hour,
@@ -375,8 +381,8 @@ class D3Axes(D3Base):
             xaxis_code = template.format(axid=self.axid,
                                          xlim=self.ax.get_xlim())
 
-        if isinstance(self.ax.yaxis.converter, matplotlib.dates.DateConverter):
-            date0, date1 = matplotlib.dates.num2date(self.ax.get_ylim())
+        if isinstance(self.ax.yaxis.converter, mpl.dates.DateConverter):
+            date0, date1 = mpl.dates.num2date(self.ax.get_ylim())
             d0 = [date0.year, date0.month - 1, date0.day, date0.hour,
                   date0.minute, date0.second, date0.microsecond / 1e3]
             d1 = [date1.year, date1.month - 1, date1.day, date1.hour,
@@ -559,6 +565,9 @@ class D3Line2D(D3Base):
         self._initialize(parent=parent, line=line)
         self.lineid = self.elid
 
+    def zoomable(self):
+        return self.line.get_transform().contains_branch(self.ax.transData)
+
     def has_line(self):
         return self.line.get_linestyle() not in ['', ' ', 'None',
                                                  'none', None]
@@ -568,12 +577,13 @@ class D3Line2D(D3Base):
 
     def zoom(self):
         ret = ""
-        if self.has_points():
-            ret += self.POINTS_ZOOM.format(lineid=self.lineid,
-                                           axid=self.axid)
-        if self.has_line():
-            ret += self.LINE_ZOOM.format(lineid=self.lineid,
-                                         axid=self.axid)
+        if self.zoomable():
+            if self.has_points():
+                ret += self.POINTS_ZOOM.format(lineid=self.lineid,
+                                               axid=self.axid)
+            if self.has_line():
+                ret += self.LINE_ZOOM.format(lineid=self.lineid,
+                                             axid=self.axid)
         return ret
 
     def style(self):
@@ -598,7 +608,9 @@ class D3Line2D(D3Base):
                                  alpha=alpha)
 
     def html(self):
-        data = self.line.get_xydata().tolist()
+        transform = self.line.get_transform() - self.ax.transData
+        data = transform.transform(self.line.get_xydata()).tolist()
+
         result = self.DATA_TEMPLATE.format(lineid=self.lineid, data=data)
 
         if self.has_points():
@@ -617,6 +629,35 @@ class D3Line2D(D3Base):
                                                 axid=self.axid,
                                                 data=data)
         return result
+
+
+class D3LineCollection(D3Base):
+    """Class to represent LineCollections in D3"""
+    def __init__(self, parent, collection):
+        self._initialize(parent=parent, collection=collection)
+        self.lines = []
+
+        collection.update_scalarmappable()
+        colors = collection.get_colors()
+        linewidths = collection.get_linewidths()
+        styles = collection.get_linestyles()
+        for i, path in enumerate(collection.get_paths()):
+            line_segment = Line2D(path.vertices[:, 0], path.vertices[:, 1],
+                                  linewidth=linewidths[i % len(linewidths)],
+                                  color=colors[i % len(colors)])
+            style = styles[i % len(styles)][1]
+            if style is not None:
+                line_segment.set_dashes(style)
+            self.lines.append(D3Line2D(parent, line_segment))
+
+    def zoom(self):
+        return "\n".join([line.zoom() for line in self.lines])
+
+    def style(self):
+        return "\n".join([line.style() for line in self.lines])
+
+    def html(self):
+        return "\n".join([line.html() for line in self.lines])
 
 
 class D3Text(D3Base):
@@ -730,7 +771,7 @@ class D3Patch(D3Base):
                    .attr("d", patch_{elid}(data_{elid}))
                    .attr('class', 'patch{elid}');
     """
-
+    
     ZOOM = """
         axes_{axid}.select(".patch{elid}")
                        .attr("d", patch_{elid}(data_{elid}));
@@ -740,9 +781,15 @@ class D3Patch(D3Base):
         self._initialize(parent=parent, patch=patch)
         self.patchid = self.elid
 
+    def zoomable(self):
+        return self.patch.get_transform().contains_branch(self.ax.transData)
+
     def zoom(self):
-        return self.ZOOM.format(axid=self.axid,
-                                elid=self.elid)
+        if self.zoomable():
+            return self.ZOOM.format(axid=self.axid,
+                                    elid=self.elid)
+        else:
+            return ""
 
     def style(self):
         ec = self.patch.get_edgecolor()
@@ -767,17 +814,21 @@ class D3Patch(D3Base):
                                  alpha=alpha)
 
     def html(self):
-        path = self.patch.get_path()
-        transform = self.patch.get_patch_transform()
-        data = path.transformed(transform).vertices.tolist()
+        # transform path to data coordinates
+        path = self.patch.get_path().transformed(self.patch.get_transform()
+                                                 - self.ax.transData)
+        data = path.vertices.tolist()
+
         # TODO: use appropriate interpolations
+        #       This can be done using ``path.iter_segments()`` and making
+        #       use of the appropriate SVG path codes.
         interpolate = "linear"
         return self.TEMPLATE.format(axid=self.axid, elid=self.elid,
                                     data=data, interpolate=interpolate)
 
 
 class D3PatchCollection(D3Base):
-    """Class for representing matplotlib patche collections in D3js"""
+    """Class for representing matplotlib patch collections in D3js"""
     STYLE = """
     div#figure{figid}
     path.coll{elid}.patch{i} {{
@@ -807,6 +858,14 @@ class D3PatchCollection(D3Base):
         axes_{axid}.select(".coll{elid}.patch{i}")
                        .attr("d", patch_{pathid}(data_{pathid}));
     """
+
+    # TODO: there are special D3 classes for many common patch types
+    #       (i.e. circle, ellipse, rectangle, polygon, etc.)  We should
+    #       use these where possible.  Also, it would be better to use the
+    #       SVG path codes available via path.iter_segments() to exactly
+    #       duplicate what's in matplotlib.  This gets difficult, however,
+    #       because the values need to be appropriately transformed via the
+    #       D3 axes instances.
 
     def __init__(self, parent, collection):
         self._initialize(parent=parent, collection=collection)
@@ -849,12 +908,60 @@ class D3PatchCollection(D3Base):
         results = []
         for i, path in enumerate(self.collection.get_paths()):
             data = path.vertices.tolist()
-            # TODO: use appropriate interpolations
-            interpolate = "linear"
             results.append(self.TEMPLATE.format(axid=self.axid,
                                                 elid=self.elid,
                                                 pathid=self.pathid(i),
                                                 i=i + 1,
                                                 data=data,
-                                                interpolate=interpolate))
+                                                interpolate="linear"))
         return '\n'.join(results)
+
+
+class D3Image(D3Base):
+    """Class for representing matplotlib images in D3js"""
+    IMAGE_TEMPLATE = """
+    axes_{axid}.append("svg:image")
+        .attr('class', 'image{imageid}')
+        .attr("x", x_{axid}({x}))
+        .attr("y", y_{axid}({y}))
+        .attr("width", x_{axid}({width}) - x_{axid}({x}))
+        .attr("height", y_{axid}({height}) - y_{axid}({y}))
+        .attr("xlink:href", "data:image/png;base64," + "{base64_data}")
+        .attr("preserveAspectRatio", "none");
+    """
+
+    IMAGE_ZOOM = """
+        axes_{axid}.select(".image{imageid}")
+                   .attr("x", x_{axid}({x}))
+                   .attr("y", y_{axid}({y}))
+                   .attr("width", x_{axid}({width}) - x_{axid}({x}))
+                   .attr("height", y_{axid}({height}) - y_{axid}({y}));
+    """
+
+    def __init__(self, parent, ax, image, i=''):
+        self._initialize(parent=parent, ax=ax, image=image)
+        self.imageid = "{0}{1}".format(self.axid, i)
+
+    def zoom(self):
+        return self.IMAGE_ZOOM.format(imageid=self.imageid,
+                                      axid=self.axid,
+                                      x=self.x, y=self.y,
+                                      width=self.width, height=self.height)
+
+    def html(self):
+        # import here in case people call matplotlib.use()
+        from matplotlib.pyplot import imsave
+        self.x, self.y = 0, 0
+        data = self.image.get_array().data
+        self.height, self.width = data.shape
+
+        binary_buffer = io.BytesIO()
+        imsave(binary_buffer, data)
+        binary_buffer.seek(0)
+        base64_data = base64.b64encode(binary_buffer.read())
+
+        return self.IMAGE_TEMPLATE.format(axid=self.axid,
+                                          imageid=self.imageid,
+                                          base64_data=base64_data,
+                                          x=self.x, y=self.y,
+                                          width=self.width, height=self.height)
