@@ -500,6 +500,7 @@ class D3Grid(D3Base):
 class D3Line2D(D3Base):
     """Class for representing a 2D matplotlib line in D3js"""
     DATA_TEMPLATE = """
+    // Python represents NaNs as "nan": translate this to JS NaN
     var nan = Number.NaN;
     var data_{lineid} = {data}
     """
