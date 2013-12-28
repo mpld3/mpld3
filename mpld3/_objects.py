@@ -4,6 +4,7 @@ import warnings
 from collections import defaultdict
 import base64
 import io
+import json
 from matplotlib.collections import LineCollection
 from matplotlib.lines import Line2D
 import matplotlib as mpl
@@ -501,8 +502,6 @@ class D3Grid(D3Base):
 class D3Line2D(D3Base):
     """Class for representing a 2D matplotlib line in D3js"""
     DATA_TEMPLATE = """
-    // Python represents NaNs as "nan": translate this to JS NaN
-    var nan = Number.NaN;
     var data_{lineid} = {data}
     """
 
@@ -617,7 +616,8 @@ class D3Line2D(D3Base):
         data = transform.transform(self.line.get_xydata()).tolist()
 
 
-        result = self.DATA_TEMPLATE.format(lineid=self.lineid, data=data)
+        result = self.DATA_TEMPLATE.format(lineid=self.lineid,
+                                           data=json.dumps(data))
 
         if self.has_line():
             # TODO: use actual line style
