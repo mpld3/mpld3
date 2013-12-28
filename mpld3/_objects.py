@@ -500,6 +500,7 @@ class D3Grid(D3Base):
 class D3Line2D(D3Base):
     """Class for representing a 2D matplotlib line in D3js"""
     DATA_TEMPLATE = """
+    var nan = Number.NaN;
     var data_{lineid} = {data}
     """
 
@@ -539,6 +540,7 @@ class D3Line2D(D3Base):
     var line_{lineid} = d3.svg.line()
          .x(function(d) {{return x_data_map{axid}(d[0]);}})
          .y(function(d) {{return y_data_map{axid}(d[1]);}})
+         .defined(function (d) {{return !isNaN(d[0]) && !isNaN(d[1]); }})
          .interpolate("linear");
 
     axes_{axid}.append("svg:path")
@@ -550,7 +552,8 @@ class D3Line2D(D3Base):
     var g_{lineid} = axes_{axid}.append("svg:g");
 
     g_{lineid}.selectAll("scatter-dots-{lineid}")
-          .data(data_{lineid})
+          .data(data_{lineid}.filter(
+            function(d) {{return !isNaN(d[0]) && !isNaN(d[1]); }}))
           .enter().append("svg:path")
               .attr('class', 'points{lineid}')
               .attr("d", d3.svg.symbol()
@@ -611,8 +614,15 @@ class D3Line2D(D3Base):
         transform = self.line.get_transform() - self.ax.transData
         data = transform.transform(self.line.get_xydata()).tolist()
 
+
         result = self.DATA_TEMPLATE.format(lineid=self.lineid, data=data)
 
+        if self.has_line():
+            # TODO: use actual line style
+            style = self.line.get_linestyle()
+            result += self.LINE_TEMPLATE.format(lineid=self.lineid,
+                                                axid=self.axid,
+                                                data=data)
         if self.has_points():
             marker = self.line.get_marker()
             msh = get_d3_shape_for_marker(marker)
@@ -622,12 +632,6 @@ class D3Line2D(D3Base):
                                                   markersize=ms,
                                                   markershape=msh,
                                                   data=data)
-        if self.has_line():
-            # TODO: use actual line style
-            style = self.line.get_linestyle()
-            result += self.LINE_TEMPLATE.format(lineid=self.lineid,
-                                                axid=self.axid,
-                                                data=data)
         return result
 
 
