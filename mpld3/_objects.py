@@ -1,10 +1,11 @@
 import abc
 import uuid
 import warnings
-from collections import defaultdict
 import base64
 import io
 import json
+from collections import defaultdict
+
 from matplotlib.collections import LineCollection
 from matplotlib.lines import Line2D
 import matplotlib as mpl
@@ -150,7 +151,7 @@ class D3Axes(D3Base):
     }}
     """
 
-    XAXIS_TEMPLATE = """
+    LINEAR_XAXIS_TEMPLATE = """
     var x_{axid} = d3.scale.linear()
                      .domain([{xlim[0]}, {xlim[1]}])
                      .range([0, width_{axid}]);
@@ -183,7 +184,7 @@ class D3Axes(D3Base):
                 {{ return x_{axid}(x_reverse_date_scale_{axid}.invert(x));}}
     """
 
-    YAXIS_TEMPLATE = """
+    LINEAR_YAXIS_TEMPLATE = """
     var y_{axid} = d3.scale.linear()
                            .domain([{ylim[0]}, {ylim[1]}])
                            .range([height_{axid}, 0]);
@@ -215,6 +216,14 @@ class D3Axes(D3Base):
     var y_data_map{axid} = function (y)
                 {{ return y_{axid}(y_reverse_date_scale_{axid}.invert(y));}}
     """
+
+    XAXIS_TEMPLATES = {'linear': LINEAR_XAXIS_TEMPLATE,
+                       'log': LOG_XAXIS_TEMPLATE,
+                       'date': DATE_XAXIS_TEMPLATE}
+
+    YAXIS_TEMPLATES = {'linear': LINEAR_YAXIS_TEMPLATE,
+                       'log': LOG_YAXIS_TEMPLATE,
+                       'date': DATE_YAXIS_TEMPLATE}
 
     AXES_TEMPLATE = """
     // store the width and height of the axes
@@ -296,6 +305,7 @@ class D3Axes(D3Base):
         //console.log(d3.event);  // for some reason this is sometimes null
         //console.log(zoom{axid}.translate());
         //console.log(zoom{axid}.scale());
+
         baseaxes_{axid}.select(".x.axis").call(xAxis_{axid});
         baseaxes_{axid}.select(".y.axis").call(yAxis_{axid});
 
@@ -304,27 +314,29 @@ class D3Axes(D3Base):
     """
 
     def __init__(self, parent, ax):
-        # import here in case people call matplotlib.use()
+        # import here in case users call matplotlib.use()
         import matplotlib as mpl
 
         self._initialize(parent=parent, _ax=ax)
         self._axid = self.elid
-        self.lines = [D3Line2D(self, line) for line in ax.lines]
-        self.texts = [D3Text(self, text) for text in ax.texts]
-        self.texts += [D3Text(self, text) for text in [ax.xaxis.label,
-                                                       ax.yaxis.label,
-                                                       ax.title]]
-        self.images = [D3Image(self, ax, image) for image in ax.images]
-        self.grids = [D3Grid(self)]
-        self.patches = [D3Patch(self, patch)
-                        for i, patch in enumerate(ax.patches)]
-        self.collections = []
+
+        self.children = []
+
+        self.children += [D3Image(self, ax, image) for image in ax.images]
+        self.children += [D3Grid(self)]
+        self.children += [D3Line2D(self, line) for line in ax.lines]
+        self.children += [D3Text(self, text) for text in ax.texts]
+        self.children += [D3Text(self, text) for text in [ax.xaxis.label,
+                                                          ax.yaxis.label,
+                                                          ax.title]]
+        self.children += [D3Patch(self, patch)
+                          for i, patch in enumerate(ax.patches)]
 
         for collection in ax.collections:
             if isinstance(collection, mpl.collections.PolyCollection):
-                self.collections.append(D3PatchCollection(self, collection))
+                self.children.append(D3PatchCollection(self, collection))
             elif isinstance(collection, mpl.collections.LineCollection):
-                self.collections.append(D3LineCollection(self, collection))
+                self.children.append(D3LineCollection(self, collection))
             else:
                 warnings.warn("{0} not implemented.  "
                               "Elements will be ignored".format(collection))
@@ -347,66 +359,46 @@ class D3Axes(D3Base):
         return '\n'.join([self.STYLE.format(axid=self.axid,
                                             figid=self.figid,
                                             fontsize=fontsize_x)] +
-                         [g.style() for g in self.grids] +
-                         [l.style() for l in self.lines] +
-                         [t.style() for t in self.texts] +
-                         [p.style() for p in self.patches] +
-                         [c.style() for c in self.collections])
+                         [c.style() for c in self.children])
 
     def html(self):
-        elements = '\n'.join([elem.html() for elem in
-                              (self.images + self.grids + self.patches +
-                               self.lines + self.texts + self.collections)])
-        zooms = '\n'.join(elem.zoom() for elem in
-                          (self.images + self.grids + self.patches +
-                           self.lines + self.texts + self.collections))
-
+        elements = '\n'.join(c.html() for c in self.children)
+        zooms = '\n'.join(c.zoom() for c in self.children)
         axisbg = color_to_hex(self.ax.patch.get_facecolor())
 
-        if isinstance(self.ax.xaxis.converter, mpl.dates.DateConverter):
-            date0, date1 = mpl.dates.num2date(self.ax.get_xlim())
-            d0 = [date0.year, date0.month - 1, date0.day, date0.hour,
-                  date0.minute, date0.second, date0.microsecond / 1e3]
-            d1 = [date1.year, date1.month - 1, date1.day, date1.hour,
-                  date1.minute, date1.second, date1.microsecond / 1e3]
-            template = self.DATE_XAXIS_TEMPLATE
-            xaxis_code = template.format(axid=self.axid,
-                                         xlim=self.ax.get_xlim(),
-                                         d0=d0, d1=d1)
-        else:
-            if self.ax.get_xscale() == 'log':
-                template = self.LOG_XAXIS_TEMPLATE
-            elif self.ax.get_xscale() == 'linear':
-                template = self.XAXIS_TEMPLATE
-            else:
-                assert False, "unknown axis scale"
-            xaxis_code = template.format(axid=self.axid,
-                                         xlim=self.ax.get_xlim())
+        codes = {}
+        axis = {'x': self.ax.xaxis,
+                'y': self.ax.yaxis}
+        templates = {'x': self.XAXIS_TEMPLATES,
+                     'y': self.YAXIS_TEMPLATES}
 
-        if isinstance(self.ax.yaxis.converter, mpl.dates.DateConverter):
-            date0, date1 = mpl.dates.num2date(self.ax.get_ylim())
-            d0 = [date0.year, date0.month - 1, date0.day, date0.hour,
-                  date0.minute, date0.second, date0.microsecond / 1e3]
-            d1 = [date1.year, date1.month - 1, date1.day, date1.hour,
-                  date1.minute, date1.second, date1.microsecond / 1e3]
-            template = self.DATE_YAXIS_TEMPLATE
-            yaxis_code = template.format(axid=self.axid,
-                                         ylim=self.ax.get_ylim(),
-                                         d0=d0, d1=d1)
-        else:
-            if self.ax.get_yscale() == 'log':
-                template = self.LOG_YAXIS_TEMPLATE
-            elif self.ax.get_yscale() == 'linear':
-                template = self.YAXIS_TEMPLATE
+        for xy in ['x', 'y']:
+            d0, d1 = None, None  # used only for date formatting
+
+            if isinstance(axis[xy].converter, mpl.dates.DateConverter):
+                date0, date1 = mpl.dates.num2date(self.ax.get_xlim())
+                d0 = [date0.year, date0.month - 1, date0.day, date0.hour,
+                      date0.minute, date0.second, date0.microsecond / 1e3]
+                d1 = [date1.year, date1.month - 1, date1.day, date1.hour,
+                      date1.minute, date1.second, date1.microsecond / 1e3]
+                template = templates[xy]['date']
+            elif axis[xy].get_scale() == 'log':
+                template = templates[xy]['log']
+            elif axis[xy].get_scale() == 'linear':
+                template = templates[xy]['linear']
             else:
-                assert False, "unknown axis scale"
-            yaxis_code = template.format(axid=self.axid,
-                                         ylim=self.ax.get_ylim())
+                raise ValueError("Unknown axis scale: "
+                                 "{0}".format(axis[xy].get_scale()))
+
+            codes[xy] = template.format(axid=self.axid,
+                                        xlim=self.ax.get_xlim(),
+                                        ylim=self.ax.get_ylim(),
+                                        d0=d0, d1=d1)
 
         return self.AXES_TEMPLATE.format(id=id(self.ax),
                                          axid=self.axid,
-                                         xaxis_code=xaxis_code,
-                                         yaxis_code=yaxis_code,
+                                         xaxis_code=codes['x'],
+                                         yaxis_code=codes['y'],
                                          bbox=self.ax.get_position().bounds,
                                          axesbg=axisbg,
                                          elements=elements,
@@ -615,16 +607,12 @@ class D3Line2D(D3Base):
         transform = self.line.get_transform() - self.ax.transData
         data = transform.transform(self.line.get_xydata()).tolist()
 
-
         result = self.DATA_TEMPLATE.format(lineid=self.lineid,
                                            data=json.dumps(data))
 
         if self.has_line():
-            # TODO: use actual line style
-            style = self.line.get_linestyle()
             result += self.LINE_TEMPLATE.format(lineid=self.lineid,
-                                                axid=self.axid,
-                                                data=data)
+                                                axid=self.axid)
         if self.has_points():
             marker = self.line.get_marker()
             msh = get_d3_shape_for_marker(marker)
@@ -632,8 +620,7 @@ class D3Line2D(D3Base):
             result += self.POINTS_TEMPLATE.format(lineid=self.lineid,
                                                   axid=self.axid,
                                                   markersize=ms,
-                                                  markershape=msh,
-                                                  data=data)
+                                                  markershape=msh)
         return result
 
 
@@ -852,7 +839,7 @@ class D3Patch(D3Base):
                 for verts, code in path.iter_segments()]
 
         return self.TEMPLATE.format(axid=self.axid, elid=self.elid,
-                                    data=data)
+                                    data=json.dumps(data))
 
 
 class D3PatchCollection(D3Base):
@@ -940,7 +927,7 @@ class D3PatchCollection(D3Base):
                                                 elid=self.elid,
                                                 pathid=self.pathid(i),
                                                 i=i + 1,
-                                                data=data,
+                                                data=json.dumps(data),
                                                 interpolate="linear"))
         return '\n'.join(results)
 
