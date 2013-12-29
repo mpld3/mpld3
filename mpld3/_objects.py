@@ -8,10 +8,11 @@ from collections import defaultdict
 
 from matplotlib.collections import LineCollection
 from matplotlib.lines import Line2D
+from matplotlib.image import imsave
 import matplotlib as mpl
 
-from ._utils import get_figtext_coordinates, color_to_hex, \
-    get_dasharray, get_d3_shape_for_marker, PATH_DICT
+from ._utils import (color_to_hex, get_dasharray, get_d3_shape_for_marker,
+                     PATH_DICT)
 
 
 class D3Base(object):
@@ -101,8 +102,6 @@ class D3Figure(D3Base):
     """
 
     def __init__(self, fig):
-        # use time() to make sure multiple versions of this figure
-        # don't cross-talk if used on the same page.
         self._initialize(parent=None, _fig=fig, _ax=None)
         self._figid = self.elid
         self.axes = [D3Axes(self, ax) for ax in fig.axes]
@@ -443,14 +442,14 @@ class D3Grid(D3Base):
     XZOOM = """
         axes_{axid}.select(".x.grid")
             .call(create_xAxis_{axid}()
-            .tickSize(-(height_{axid}), 0, 0)
+            .tickSize(-height_{axid}, 0, 0)
             .tickFormat(""));
     """
 
     YZOOM = """
         axes_{axid}.select(".y.grid")
             .call(create_yAxis_{axid}()
-            .tickSize(-(width_{axid}), 0, 0)
+            .tickSize(-width_{axid}, 0, 0)
             .tickFormat(""));
     """
 
@@ -461,22 +460,18 @@ class D3Grid(D3Base):
         ret = ""
         bbox = self.ax.get_position().bounds
         if self.ax.xaxis._gridOnMajor:
-            ret += self.XZOOM.format(axid=self.axid,
-                                     bbox=bbox)
+            ret += self.XZOOM.format(axid=self.axid, bbox=bbox)
         if self.ax.yaxis._gridOnMajor:
-            ret += self.YZOOM.format(axid=self.axid,
-                                     bbox=bbox)
+            ret += self.YZOOM.format(axid=self.axid, bbox=bbox)
         return ret
 
     def html(self):
         ret = ""
         bbox = self.ax.get_position().bounds
         if self.ax.xaxis._gridOnMajor:
-            ret += self.XGRID_TEMPLATE.format(axid=self.axid,
-                                              bbox=bbox)
+            ret += self.XGRID_TEMPLATE.format(axid=self.axid, bbox=bbox)
         if self.ax.yaxis._gridOnMajor:
-            ret += self.YGRID_TEMPLATE.format(axid=self.axid,
-                                              bbox=bbox)
+            ret += self.YGRID_TEMPLATE.format(axid=self.axid, bbox=bbox)
         return ret
 
     def style(self):
@@ -565,8 +560,7 @@ class D3Line2D(D3Base):
         return self.line.get_transform().contains_branch(self.ax.transData)
 
     def has_line(self):
-        return self.line.get_linestyle() not in ['', ' ', 'None',
-                                                 'none', None]
+        return self.line.get_linestyle() not in ['', ' ', 'None', 'none', None]
 
     def has_points(self):
         return self.line.get_marker() not in ['', ' ', 'None', 'none', None]
@@ -690,30 +684,30 @@ class D3Text(D3Base):
         self._initialize(parent=parent, text=text)
         self.textid = self.elid
 
-    def is_axes_text(self):
-        return (self.text.get_transform() is self.ax.transData)
+    def zoomable(self):
+        return self.text.get_transform().contains_branch(self.ax.transData)
 
     def zoom(self):
-        if self.is_axes_text():
+        if self.zoomable():
             x, y = self.text.get_position()
-            return self.AXES_TEXT_ZOOM.format(axid=self.axid,
-                                              textid=self.textid,
-                                              x=x, y=y)
+            return self.AXES_TEXT_ZOOM.format(x=x, y=y, axid=self.axid,
+                                              textid=self.textid)
         else:
             return ''
 
     def html(self):
         text_content = self.text.get_text()
+        x, y = self.text.get_position()
 
         if not text_content:
             return ''
 
-        if self.is_axes_text():
-            x, y = self.text.get_position()
+        if self.zoomable():
             template = self.AXES_TEXT_TEMPLATE
 
         else:
-            x, y = get_figtext_coordinates(self.text)
+            # convert (x, y) to figure coordinates
+            x, y = self.text.get_transform().transform((x, y))
             template = self.FIG_TEXT_TEMPLATE
 
         color = color_to_hex(self.text.get_color())
@@ -729,10 +723,9 @@ class D3Text(D3Base):
         if self.text is self.ax.yaxis.label:
             x += fontsize
 
-        return template.format(axid=self.axid,
+        return template.format(x=x, y=y, axid=self.axid,
                                textid=self.textid,
                                text=text_content,
-                               x=x, y=y,
                                fontsize=fontsize,
                                color=color,
                                rotation=rotation,
@@ -877,10 +870,7 @@ class D3PatchCollection(D3Base):
     # TODO: there are special D3 classes for many common patch types
     #       (i.e. circle, ellipse, rectangle, polygon, etc.)  We should
     #       use these where possible.  Also, it would be better to use the
-    #       SVG path codes available via path.iter_segments() to exactly
-    #       duplicate what's in matplotlib.  This gets difficult, however,
-    #       because the values need to be appropriately transformed via the
-    #       D3 axes instances.
+    #       SVG path codes as in D3Patch(), above.
 
     def __init__(self, parent, collection):
         self._initialize(parent=parent, collection=collection)
@@ -964,8 +954,6 @@ class D3Image(D3Base):
                                       width=self.width, height=self.height)
 
     def html(self):
-        # import here in case people call matplotlib.use()
-        from matplotlib.pyplot import imsave
         self.x, self.y = 0, 0
         data = self.image.get_array().data
         self.height, self.width = data.shape

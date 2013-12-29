@@ -5,11 +5,6 @@ from matplotlib.colors import colorConverter
 from matplotlib.path import Path
 
 
-def get_figtext_coordinates(txt):
-    """Get figure coordinates of a text instance"""
-    return txt.get_transform().transform(txt.get_position())
-
-
 def color_to_hex(color):
     """Convert rgb tuple to hex color code"""
     rgb = colorConverter.to_rgb(color)
