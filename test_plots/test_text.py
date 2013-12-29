@@ -17,6 +17,12 @@ def main():
                         ['left', 'center', 'right']):
         ax.text(x, y, align, ha=align, size=25)
 
+    # test colors
+    x = 0.7
+    for y, c in zip([0.3, 0.5, 0.7],
+                    ['red', 'blue', 'green']):
+        ax.text(x, y, c, size=18, color=c)
+
     ax.set_xlabel('x label')
     ax.set_ylabel('y label')
     ax.set_title('title', size=20)
