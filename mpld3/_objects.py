@@ -292,8 +292,9 @@ class D3Axes(D3Base):
     {elements}
 
     function zoomed{axid}() {{
-        //console.log(d3.event.translate);
-        //console.log(d3.event.scale);
+        //console.log(d3.event);  // for some reason this is sometimes null
+        //console.log(zoom{axid}.translate());
+        //console.log(zoom{axid}.scale());
         baseaxes_{axid}.select(".x.axis").call(xAxis_{axid});
         baseaxes_{axid}.select(".y.axis").call(yAxis_{axid});
 
@@ -799,9 +800,9 @@ class D3Patch(D3Base):
 
     ZOOM = """
         axes_{axid}.select(".patch{elid}")
-              .attr("transform", "translate(" + d3.event.translate[0] + ","
-                                 + d3.event.translate[1] + ") scale("
-                                 + d3.event.scale + ")");
+              .attr("transform", "translate(" + zoom{axid}.translate()[0] + ","
+                                 + zoom{axid}.translate()[1] + ") scale("
+                                 + zoom{axid}.scale() + ")");
     """
 
     def __init__(self, parent, patch):
