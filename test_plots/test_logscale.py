@@ -5,7 +5,7 @@ import numpy as np
 def main():
     fig, ax = plt.subplots(2, 2)
     fig.subplots_adjust(hspace=0.4, wspace=0.4)
-    x = np.linspace(1e-3, 1e3)
+    x = np.linspace(1, 1e2)
     y = x ** 2
 
     ax[0, 0].plot(x, y)
