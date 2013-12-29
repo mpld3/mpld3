@@ -800,9 +800,9 @@ class D3Patch(D3Base):
 
     ZOOM = """
         axes_{axid}.select(".patch{elid}")
-              .attr("transform", "translate(" + zoom{axid}.translate()[0] + ","
-                                 + zoom{axid}.translate()[1] + ") scale("
-                                 + zoom{axid}.scale() + ")");
+              .attr("d", construct_SVG_path(data_{elid},
+                                            x_data_map{axid},
+                                            y_data_map{axid}))
     """
 
     def __init__(self, parent, patch):
