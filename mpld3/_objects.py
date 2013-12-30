@@ -81,7 +81,10 @@ class D3Figure(D3Base):
     """
 
     FIGURE_TEMPLATE = """
-    <div id='figure{figid}'></div>
+    <div id='figure{figid}'>
+    <!-- Uncomment for a rudimentary reset button -->
+    <!-- <button id='reset{figid}'>Reset</button> -->
+    </div>
 
     <script type="text/javascript">
     func{figid} = function(figure){{
@@ -158,15 +161,17 @@ class D3Axes(D3Base):
     """
 
     LINEAR_XAXIS_TEMPLATE = """
+    var xdomain{axid} = [{xlim[0]}, {xlim[1]}];
     var x_{axid} = d3.scale.linear()
-                     .domain([{xlim[0]}, {xlim[1]}])
+                     .domain(xdomain{axid})
                      .range([0, width_{axid}]);
     var x_data_map{axid} = x_{axid};
     """
 
     LOG_XAXIS_TEMPLATE = """
+    var xdomain{axid} = [{xlim[0]}, {xlim[1]}];
     var x_{axid} = d3.scale.log()
-                     .domain([{xlim[0]}, {xlim[1]}])
+                     .domain(xdomain{axid})
                      .range([0, width_{axid}]);
     var x_data_map{axid} = x_{axid};
     """
@@ -176,14 +181,14 @@ class D3Axes(D3Base):
                                       {d0[4]}, {d0[5]}, {d0[6]});
     var end_date_x{axid} = new Date({d1[0]}, {d1[1]}, {d1[2]}, {d1[3]},
                                     {d1[4]}, {d1[5]}, {d1[6]});
+    var xdomain{axid} = [start_date_x{axid}, end_date_x{axid}];
 
     var x_{axid} = d3.time.scale()
-                      .domain([start_date_x{axid}, end_date_x{axid}])
+                      .domain(xdomain{axid})
                       .range([0, width_{axid}]);
 
     var x_reverse_date_scale_{axid} = d3.time.scale()
-                                        .domain([start_date_x{axid},
-                                                 end_date_x{axid}])
+                                        .domain(xdomain{axid})
                                         .range([{xlim[0]}, {xlim[1]}]);
 
     var x_data_map{axid} = function (x)
@@ -191,15 +196,17 @@ class D3Axes(D3Base):
     """
 
     LINEAR_YAXIS_TEMPLATE = """
+    var ydomain{axid} = [{ylim[0]}, {ylim[1]}];
     var y_{axid} = d3.scale.linear()
-                           .domain([{ylim[0]}, {ylim[1]}])
+                           .domain(ydomain{axid})
                            .range([height_{axid}, 0]);
     var y_data_map{axid} = y_{axid};
     """
 
     LOG_YAXIS_TEMPLATE = """
+    var ydomain{axid} = [{ylim[0]}, {ylim[1]}];
     var y_{axid} = d3.scale.log()
-                           .domain([{ylim[0]}, {ylim[1]}])
+                           .domain(ydomain{axid})
                            .range([height_{axid}, 0]);
     var y_data_map{axid} = y_{axid};
     """
@@ -209,14 +216,14 @@ class D3Axes(D3Base):
                                       {d0[4]}, {d0[5]}, {d0[6]});
     var end_date_y{axid} = new Date({d1[0]}, {d1[1]}, {d1[2]}, {d1[3]},
                                     {d1[4]}, {d1[5]}, {d1[6]});
+    var ydomain{axid} = [start_date_y{axid}, end_date_y{axid}];
 
     var y_{axid} = d3.time.scale()
-                      .domain([end_date_y{axid}, start_date_y{axid}])
+                      .domain(ydomain{axid})
                       .range([0, width_{axid}]);
 
     var y_reverse_date_scale_{axid} = d3.time.scale()
-                                             .domain([start_date_y{axid},
-                                                      end_date_y{axid}])
+                                             .domain(ydomain{axid})
                                              .range([{ylim[0]}, {ylim[1]}]);
 
     var y_data_map{axid} = function (y)
@@ -316,6 +323,19 @@ class D3Axes(D3Base):
 
         {element_zooms}
     }}
+
+    function reset{axid}() {{
+      d3.transition().duration(750).tween("zoom", function() {{
+        var ix = d3.interpolate(x_{axid}.domain(), xdomain{axid}),
+            iy = d3.interpolate(y_{axid}.domain(), ydomain{axid});
+        return function(t) {{
+          zoom{axid}.x(x_{axid}.domain(ix(t))).y(y_{axid}.domain(iy(t)));
+          zoomed{axid}();
+        }};
+      }});
+    }}
+
+    d3.select("#reset{figid}").on("click", reset{axid});
     """
 
     def __init__(self, parent, ax):
@@ -403,7 +423,7 @@ class D3Axes(D3Base):
                                         ylim=self.ax.get_ylim(),
                                         d0=d0, d1=d1)
 
-        return self.AXES_TEMPLATE.format(id=id(self.ax),
+        return self.AXES_TEMPLATE.format(figid=self.figid,
                                          axid=self.axid,
                                          xaxis_code=codes['x'],
                                          yaxis_code=codes['y'],
@@ -909,6 +929,10 @@ class D3PathCollection(D3Base):
 
     def html(self):
         template = self.TEMPLATE
+
+        if self.collection.get_transforms() != []:
+            warnings.warn("Collection: multiple transforms not implemented. "
+                          "They will be ignored.")
 
         if self.offset_zoomable():
             offset_transform = (self.collection.get_offset_transform()
