@@ -1,5 +1,6 @@
 """Utility Routines"""
 import warnings
+import json
 
 from matplotlib.colors import colorConverter
 from matplotlib.path import Path
@@ -97,3 +98,52 @@ def path_data(path, transform=None):
 
     return [(PATH_DICT[path_code], vertices.tolist())
             for vertices, path_code in path.iter_segments()]
+
+
+class Bunch(dict):
+    """Bunch is a simple dictionary wrapper which makes keys into attributes"""
+    def __getattr__(self, attr):
+        if attr in self:
+            return self[attr]
+        else:
+            raise AttributeError("No attribute {0}".format(attr))
+
+
+def collection_data(data, defaults):
+    """Prepare collection data.
+
+    data and defaults are dictionaries
+
+    Returns processed data and defaults
+    """
+    data_out = {}
+    defaults_out = {}
+
+    N = max(len(d) if hasattr(d, '__len__') else 0
+            for d in data.values())
+
+    for key, val in data.items():
+        defaults_out[key] = 'null'
+        if val is None:
+            if key not in defaults:
+                raise ValueError("default needed for {0}".format(key))
+            defaults_out[key] = defaults[key]
+        elif not hasattr(val, '__len__'):
+            defaults_out[key] = val
+        elif len(val) == 0:
+            if key not in defaults:
+                raise ValueError("default needed for {0}".format(key))
+            defaults_out[key] = defaults[key]
+        elif len(val) == 1:
+            defaults_out[key] = val[0]
+        elif len(val) == N:
+            data_out[key] = val
+        else:
+            raise ValueError("Length of values does not match")
+
+    data_out = [dict((key, data_out[key][i]) for key in data_out)
+                for i in range(N)]
+    defaults_out = dict([(key, json.dumps(val))
+                         for key, val in defaults_out.items()])
+
+    return data_out, Bunch(defaults_out)

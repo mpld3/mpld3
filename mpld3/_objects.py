@@ -13,7 +13,7 @@ from matplotlib.image import imsave
 import matplotlib as mpl
 
 from ._utils import (color_to_hex, get_dasharray, get_d3_shape_for_marker,
-                     path_data)
+                     path_data, collection_data)
 from ._js import CONSTRUCT_SVG_PATH
 
 
@@ -829,8 +829,8 @@ class D3PathCollection(D3Base):
 
     PATH_FUNC_NOZOOM = """
     var path_func_{elid} = function(d){{
-         var path = d.p ? d.p : {path_default};
-         var size = d.s ? d.s : {size_default};
+         var path = d.p ? d.p : {defaults.p};
+         var size = d.s ? d.s : {defaults.s};
          return construct_SVG_path(path,
                                    function(x){{return size * x;}},
                                    function(y){{return size * y;}});
@@ -839,8 +839,8 @@ class D3PathCollection(D3Base):
 
     PATH_FUNC_ZOOM = """
     var path_func_{elid} = function(d){{
-         var path = d.p ? d.p : {path_default};
-         var size = d.s ? d.s : {size_default};
+         var path = d.p ? d.p : {defaults.p};
+         var size = d.s ? d.s : {defaults.s};
          return construct_SVG_path(path,
                          function(x){{return x_data_map{axid}(size * x);}},
                          function(y){{return y_data_map{axid}(size * y);}});
@@ -849,41 +849,33 @@ class D3PathCollection(D3Base):
 
     OFFSET_FUNC_NOZOOM = """
     var offset_func_{elid} = function(d){{
-         var offset = d.o ? d.o : {offset_default};
+         var offset = d.o ? d.o : {defaults.o};
          return "translate(" + offset + ")";
     }}
     """
 
     OFFSET_FUNC_ZOOM = """
     var offset_func_{elid} = function(d){{
-         var offset = d.o ? d.o : {offset_default};
+         var offset = d.o ? d.o : {defaults.o};
          return "translate(" + x_data_map{axid}(offset[0]) +
                            "," + y_data_map{axid}(offset[1]) + ")";
     }}
     """
 
     TEMPLATE = """
-    // data[i] is a dictionary {{o: (x, y),                // o = offset
-    //                          p: [(code, vertices),
-    //                              (code, vertices)...]  // p = path
-    //                         }}
-    // if either o (offset) or p (path) is null, we use the default.
     var data_{elid} = {data}
 
     {construct_SVG_path}
 
     var g_{elid} = axes_{axid}.append("svg:g");
 
-
-
     var style_func_{elid} = function(d){{
-       console.log(d.ec);
-       console.log(d.fc);
-       var edgecolor = d.ec ? d.ec : "{edgecolor_default}";
-       var facecolor = d.fc ? d.fc : "{facecolor_default}";
+       var edgecolor = d.ec ? d.ec : {defaults.ec};
+       var facecolor = d.fc ? d.fc : {defaults.fc};
        return "stroke: " + edgecolor + "; " +
               "fill: " + facecolor + "; " +
-              "stroke-opacity: {alpha}; fill-opacity: {alpha}";
+              "stroke-opacity: {defaults.alpha}; " +
+              "fill-opacity: {defaults.alpha}";
     }}
 
     g_{elid}.selectAll("paths-{elid}")
@@ -939,65 +931,33 @@ class D3PathCollection(D3Base):
         paths = [path_data(path, path_transform)
                  for path in self.collection.get_paths()]
 
-        self.collection.update_scalarmappable()
-        edgecolors = map(color_to_hex, self.collection.get_edgecolors())
-        facecolors = map(color_to_hex, self.collection.get_facecolors())
+        data = {'o': offsets,
+                'p': paths}
+        defaults = {}
 
-        alpha = self.collection.get_alpha()
-        if alpha is None:
-            alpha = 1
+        self.collection.update_scalarmappable()  # this updates colors
+        data['ec'] = map(color_to_hex, self.collection.get_edgecolors())
+        defaults['ec'] = 'none'
 
+        data['fc'] = map(color_to_hex, self.collection.get_facecolors())
+        defaults['fc'] = 'none'
+
+        defaults['alpha'] = 1
+        data['alpha'] = self.collection.get_alpha()
+
+        defaults['s'] = 1
         sizes = self.collection.get_sizes()
-        if sizes is None:
-            sizes = np.ones(1)
-        sizes = (self.fig.dpi / 72.0 * np.sqrt(sizes)).tolist()
+        if sizes is not None:
+            sizes = np.sqrt(sizes) * self.fig.dpi / 72.
+        data['s'] = sizes
 
-        N_paths = max(len(offsets), len(paths))
-        path_default = None
-        offset_default = None
-        edgecolor_default = 'none'
-        facecolor_default = color_to_hex(mpl.rcParams['patch.facecolor'])
-        size_default = 1
-
-        data_dict = {}
-
-        if len(paths) == N_paths:
-            data_dict['p'] = paths
-        else:
-            path_default = paths[0]
-
-        if len(offsets) == N_paths:
-            data_dict['o'] = offsets
-        else:
-            offset_default = offsets[0]
-
-        if len(sizes) == N_paths:
-            data_dict['s'] = sizes
-        else:
-            size_default = sizes[0]
-
-        if len(edgecolors) == N_paths:
-            data_dict['ec'] = edgecolors
-        elif len(edgecolors) == 1:
-            edgecolor_default = edgecolors[0]
-
-        if len(facecolors) == N_paths:
-            data_dict['fc'] = facecolors
-        elif len(facecolors) == 1:
-            facecolor_default = facecolors[0]
-
-        data = [dict((key, data_dict[key][i]) for key in data_dict)
-                for i in range(N_paths)]
+        # process the data and defaults
+        data, defaults = collection_data(data, defaults)
 
         return template.format(elid=self.elid, axid=self.axid,
                                construct_SVG_path=CONSTRUCT_SVG_PATH,
-                               path_default=json.dumps(path_default),
-                               offset_default=json.dumps(offset_default),
-                               size_default=size_default,
-                               facecolor_default=facecolor_default,
-                               edgecolor_default=edgecolor_default,
-                               alpha=alpha,
-                               data=json.dumps(data))
+                               data=json.dumps(data),
+                               defaults=defaults)
 
     def zoom(self):
         zoom = self.ZOOM_BASE

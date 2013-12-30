@@ -12,6 +12,7 @@ def main():
                s = 1000 * np.random.random(size=N),
                alpha=0.3,
                cmap=plt.cm.jet)
+    ax.grid(alpha=0.2)
 
     ax.set_title("Scatter Plot", size=20)
     return fig
