@@ -89,3 +89,11 @@ def construct_svg_path(path, transform=None):
         steps.append(step)
 
     return ' '.join(steps)
+
+
+def path_data(path, transform=None):
+    if transform is not None:
+        path = path.transformed(transform)
+
+    return [(PATH_DICT[path_code], vertices.tolist())
+            for vertices, path_code in path.iter_segments()]

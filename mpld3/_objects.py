@@ -12,7 +12,8 @@ from matplotlib.image import imsave
 import matplotlib as mpl
 
 from ._utils import (color_to_hex, get_dasharray, get_d3_shape_for_marker,
-                     PATH_DICT)
+                     path_data)
+from ._js import CONSTRUCT_SVG_PATH
 
 
 class D3Base(object):
@@ -749,26 +750,7 @@ class D3Patch(D3Base):
     TEMPLATE = """
     var data_{elid} = {data};
 
-    // This function constructs a mapped SVG path
-    // from an input data array
-    var construct_SVG_path = function(data, xmap, ymap){{
-       var result = "";
-       for (var i=0;i<data.length;i++){{
-          result += data[i][0];
-          if(data[i][0] == 'Z'){{
-            continue;
-          }}
-          for (var j=0;j<data[i][1].length;j++){{
-            if(j % 2 == 0){{
-               result += " " + xmap(data[i][1][j]);
-            }}else{{
-               result += " " + ymap(data[i][1][j]);
-            }}
-          }}
-          result += " ";
-       }}
-       return result;
-     }};
+    {construct_SVG_path}
 
     axes_{axid}.append("svg:path")
                    .attr("d", construct_SVG_path(data_{elid},
@@ -823,15 +805,10 @@ class D3Patch(D3Base):
 
     def html(self):
         # transform path to data coordinates
-        path = self.patch.get_path().transformed(self.patch.get_transform()
-                                                 - self.ax.transData)
-
-        # construct data array to be passed to javascript
-        # construct_SVG_path() function
-        data = [[PATH_DICT[code], verts.tolist()]
-                for verts, code in path.iter_segments()]
-
+        transform = self.patch.get_transform() - self.ax.transData
+        data = path_data(self.patch.get_path(), transform)
         return self.TEMPLATE.format(axid=self.axid, elid=self.elid,
+                                    construct_SVG_path=CONSTRUCT_SVG_PATH,
                                     data=json.dumps(data))
 
 

@@ -81,7 +81,7 @@ def show_d3(fig=None, d3_url=None, tmpfile='_tmp.html'):
 
 def enable_notebook():
     """Enable the automatic display of figures in the IPython Notebook.
-    
+
     This function should be used with the inline Matplotlib backend
     that ships with IPython that can be enabled with `%pylab inline`
     or `%matplotlib inline`. This works by adding an HTML formatter
@@ -108,4 +108,3 @@ def disable_notebook():
     ip = get_ipython()
     formatter = ip.display_formatter.formatters['text/html']
     formatter.type_printers.pop(Figure, None)
-
