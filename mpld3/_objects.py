@@ -6,7 +6,8 @@ import io
 import json
 from collections import defaultdict
 
-from matplotlib.collections import LineCollection
+import numpy as np
+
 from matplotlib.lines import Line2D
 from matplotlib.image import imsave
 import matplotlib as mpl
@@ -337,6 +338,8 @@ class D3Axes(D3Base):
                 self.children.append(D3PatchCollection(self, collection))
             elif isinstance(collection, mpl.collections.LineCollection):
                 self.children.append(D3LineCollection(self, collection))
+            elif isinstance(collection, mpl.collections.PathCollection):
+                self.children.append(D3PathCollection(self, collection))
             else:
                 warnings.warn("{0} not implemented.  "
                               "Elements will be ignored".format(collection))
@@ -803,13 +806,203 @@ class D3Patch(D3Base):
                                  dasharray=dasharray,
                                  alpha=alpha)
 
-    def html(self):
+    def data(self):
         # transform path to data coordinates
         transform = self.patch.get_transform() - self.ax.transData
-        data = path_data(self.patch.get_path(), transform)
+        return path_data(self.patch.get_path(), transform)
+
+    def html(self):
         return self.TEMPLATE.format(axid=self.axid, elid=self.elid,
                                     construct_SVG_path=CONSTRUCT_SVG_PATH,
-                                    data=json.dumps(data))
+                                    data=json.dumps(self.data()))
+
+
+class D3PathCollection(D3Base):
+    """Class for representing matplotlib path collections in D3js"""
+
+    # TODO: when all paths have same offset, or all offsets have same paths,
+    #       this can be done more efficiently.
+
+    PATH_FUNC_NOZOOM = """
+    var path_func_{elid} = function(d){{
+         var path = d.p ? d.p : {path_default};
+         var size = d.s ? d.s : {size_default};
+         return construct_SVG_path(path,
+                                   function(x){{return size * x;}},
+                                   function(y){{return size * y;}});
+    }}
+    """
+
+    PATH_FUNC_ZOOM = """
+    var path_func_{elid} = function(d){{
+         var path = d.p ? d.p : {path_default};
+         var size = d.s ? d.s : {size_default};
+         return construct_SVG_path(path,
+                         function(x){{return x_data_map{axid}(size * x);}},
+                         function(y){{return y_data_map{axid}(size * y);}});
+    }}
+    """
+
+    OFFSET_FUNC_NOZOOM = """
+    var offset_func_{elid} = function(d){{
+         var offset = d.o ? d.o : {offset_default};
+         return "translate(" + offset + ")";
+    }}
+    """
+
+    OFFSET_FUNC_ZOOM = """
+    var offset_func_{elid} = function(d){{
+         var offset = d.o ? d.o : {offset_default};
+         return "translate(" + x_data_map{axid}(offset[0]) +
+                           "," + y_data_map{axid}(offset[1]) + ")";
+    }}
+    """
+
+    TEMPLATE = """
+    // data[i] is a dictionary {{o: (x, y),                // o = offset
+    //                          p: [(code, vertices),
+    //                              (code, vertices)...]  // p = path
+    //                         }}
+    // if either o (offset) or p (path) is null, we use the default.
+    var data_{elid} = {data}
+
+    {construct_SVG_path}
+
+    var g_{elid} = axes_{axid}.append("svg:g");
+
+
+
+    var style_func_{elid} = function(d){{
+       var edgecolor = d.ec ? d.ec : "{edgecolor_default}";
+       var facecolor = d.fc ? d.fc : "{facecolor_default}";
+       return "stroke: " + edgecolor + "; " +
+              "fill: " + facecolor + "; " +
+              "stroke-opacity: {alpha}; fill-opacity: {alpha}";
+    }}
+
+    g_{elid}.selectAll("paths-{elid}")
+          .data(data_{elid})
+          .enter().append("svg:path")
+              .attr('class', 'paths{elid}')
+              .attr("d", path_func_{elid})
+              .attr("style", style_func_{elid})
+              .attr("transform", offset_func_{elid});
+    """
+
+    ZOOM_BASE = """
+        axes_{axid}.selectAll(".paths{elid}")"""
+
+    ZOOM_PATH = """
+              .attr("d", path_func_{elid})"""
+
+    ZOOM_OFFSET = """
+              .attr("transform", offset_func_{elid})"""
+
+    def __init__(self, parent, collection):
+        self._initialize(parent, collection=collection)
+
+    def offset_zoomable(self):
+        transform = self.collection.get_offset_transform()
+        return transform.contains_branch(self.ax.transData)
+
+    def path_zoomable(self):
+        transform = self.collection.get_transform()
+        return transform.contains_branch(self.ax.transData)
+
+    def html(self):
+        template = self.TEMPLATE
+
+        if self.offset_zoomable():
+            offset_transform = (self.collection.get_offset_transform()
+                                - self.ax.transData)
+            template = self.OFFSET_FUNC_ZOOM + template
+        else:
+            offset_transform = self.collection.get_offset_transform()
+            template = self.OFFSET_FUNC_NOZOOM + template
+
+        if self.path_zoomable():
+            path_transform = (self.collection.get_transform()
+                              - self.ax.transData)
+            template = self.PATH_FUNC_ZOOM + template
+        else:
+            path_transform = self.collection.get_transform()
+            template = self.PATH_FUNC_NOZOOM + template
+
+        offsets = [offset_transform.transform(offset).tolist()
+                   for offset in self.collection.get_offsets()]
+        paths = [path_data(path, path_transform)
+                 for path in self.collection.get_paths()]
+
+        self.collection.update_scalarmappable()
+        edgecolors = map(color_to_hex, self.collection.get_edgecolors())
+        facecolors = map(color_to_hex, self.collection.get_facecolors())
+
+        alpha = self.collection.get_alpha()
+        if alpha is None:
+            alpha = 1
+
+        sizes = self.collection.get_sizes()
+        if sizes is None:
+            sizes = np.ones(1)
+        sizes = (self.fig.dpi / 72.0 * np.sqrt(sizes)).tolist()
+
+        N_paths = max(len(offsets), len(paths))
+        path_default = None
+        offset_default = None
+        edgecolor_default = 'none'
+        facecolor_default = color_to_hex(mpl.rcParams['patch.facecolor'])
+        size_default = 1
+
+        data_dict = {}
+
+        if len(paths) == N_paths:
+            data_dict['p'] = paths
+        else:
+            path_default = paths[0]
+
+        if len(offsets) == N_paths:
+            data_dict['o'] = offsets
+        else:
+            offset_default = offsets[0]
+
+        if len(sizes) == N_paths:
+            data_dict['s'] = sizes
+        else:
+            size_default = sizes[0]
+
+        if len(edgecolors) == N_paths:
+            data_dict['ec'] = edgecolors
+        elif len(edgecolors) == 1:
+            edgecolor_default = edgecolors[0]
+
+        if len(facecolors) == N_paths:
+            data_dict['fc'] = facecolors
+        elif len(edgecolors) == 1:
+            facecolor_default = facecolors[0]
+
+        data = [dict((key, data_dict[key][i]) for key in data_dict)
+                for i in range(N_paths)]
+
+        return template.format(elid=self.elid, axid=self.axid,
+                               construct_SVG_path=CONSTRUCT_SVG_PATH,
+                               path_default=json.dumps(path_default),
+                               offset_default=json.dumps(offset_default),
+                               size_default=size_default,
+                               facecolor_default=facecolor_default,
+                               edgecolor_default=edgecolor_default,
+                               alpha=alpha,
+                               data=json.dumps(data))
+
+    def zoom(self):
+        zoom = self.ZOOM_BASE
+        if self.path_zoomable():
+            zoom += self.ZOOM_PATH
+        if self.offset_zoomable():
+            zoom += self.ZOOM_OFFSET
+        return zoom.format(elid=self.elid, axid=self.axid)
+
+    def style(self):
+        return ""
 
 
 class D3PatchCollection(D3Base):
