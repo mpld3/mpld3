@@ -877,6 +877,8 @@ class D3PathCollection(D3Base):
 
 
     var style_func_{elid} = function(d){{
+       console.log(d.ec);
+       console.log(d.fc);
        var edgecolor = d.ec ? d.ec : "{edgecolor_default}";
        var facecolor = d.fc ? d.fc : "{facecolor_default}";
        return "stroke: " + edgecolor + "; " +
@@ -981,7 +983,7 @@ class D3PathCollection(D3Base):
 
         if len(facecolors) == N_paths:
             data_dict['fc'] = facecolors
-        elif len(edgecolors) == 1:
+        elif len(facecolors) == 1:
             facecolor_default = facecolors[0]
 
         data = [dict((key, data_dict[key][i]) for key in data_dict)
