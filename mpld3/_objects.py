@@ -150,6 +150,11 @@ class D3Axes(D3Base):
         fill: black;
         stroke: none;
     }}
+
+    div#figure{figid}
+    .bg{axid}{{
+        fill: {axesbg};
+    }}
     """
 
     LINEAR_XAXIS_TEMPLATE = """
@@ -254,8 +259,7 @@ class D3Axes(D3Base):
     baseaxes_{axid}.append("svg:rect")
                       .attr("width", width_{axid})
                       .attr("height", height_{axid})
-                      .attr("class", "bg{axid}")
-                      .attr("fill", "{axesbg}");
+                      .attr("class", "bg{axid}");
 
     // axis factory functions: used for grid lines & axes
     var create_xAxis_{axid} = function(){{
@@ -354,6 +358,7 @@ class D3Axes(D3Base):
             warnings.warn("legend is not implemented: it will be ignored")
 
     def style(self):
+        axesbg = color_to_hex(self.ax.patch.get_facecolor())
         ticks = self.ax.xaxis.get_ticklabels() + self.ax.yaxis.get_ticklabels()
         if len(ticks) == 0:
             fontsize_x = 11
@@ -361,13 +366,13 @@ class D3Axes(D3Base):
             fontsize_x = ticks[0].properties()['size']
         return '\n'.join([self.STYLE.format(axid=self.axid,
                                             figid=self.figid,
+                                            axesbg=axesbg,
                                             fontsize=fontsize_x)] +
                          [c.style() for c in self.children])
 
     def html(self):
         elements = '\n'.join(c.html() for c in self.children)
         zooms = '\n'.join(c.zoom() for c in self.children)
-        axisbg = color_to_hex(self.ax.patch.get_facecolor())
 
         codes = {}
         axis = {'x': self.ax.xaxis,
@@ -403,7 +408,6 @@ class D3Axes(D3Base):
                                          xaxis_code=codes['x'],
                                          yaxis_code=codes['y'],
                                          bbox=self.ax.get_position().bounds,
-                                         axesbg=axisbg,
                                          elements=elements,
                                          element_zooms=zooms)
 
