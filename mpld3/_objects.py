@@ -10,6 +10,7 @@ import numpy as np
 
 from matplotlib.lines import Line2D
 from matplotlib.image import imsave
+from matplotlib.path import Path
 import matplotlib as mpl
 
 from ._utils import (color_to_hex, get_dasharray, get_d3_shape_for_marker,
@@ -891,7 +892,11 @@ class D3Collection(D3Base):
     var style_func_{elid} = function(d){{
        var edgecolor = d.ec ? d.ec : {defaults.ec};
        var facecolor = d.fc ? d.fc : {defaults.fc};
+       var linewidth = d.lw ? d.lw : {defaults.lw};
+       var dasharray = d.ls ? d.ls : {defaults.ls};
        return "stroke: " + edgecolor + "; " +
+              "stroke-width: " + linewidth + "; " +
+              "stroke-dasharray: " + dasharray + "; " +
               "fill: " + facecolor + "; " +
               "stroke-opacity: {defaults.alpha}; " +
               "fill-opacity: {defaults.alpha}";
@@ -968,10 +973,17 @@ class D3Collection(D3Base):
         data['fc'] = map(color_to_hex, self.collection.get_facecolors())
         defaults['fc'] = 'none'
 
-        defaults['alpha'] = 1
         data['alpha'] = self.collection.get_alpha()
+        defaults['alpha'] = 1
 
-        # make the size default equal to 1
+        data['lw'] = self.collection.get_linewidths()
+        defaults['lw'] = 1
+
+        data['ls'] = [get_dasharray(self.collection, i)
+                      for i in range(len(self.collection.get_linestyles()))]
+        defaults['ls'] = "10,0"
+
+        # make the size scaling default equal to 1
         data['s'] = 1
 
         # process the data and defaults
@@ -1009,6 +1021,15 @@ class D3QuadMesh(D3Collection):
     def __init__(self, *args, **kwargs):
         warnings.warn("Not all QuadMesh features are yet implemented")
         D3Collection.__init__(self, *args, **kwargs)
+
+
+class _D3LineCollection(D3Collection):
+    def _update_data(self, data, defaults):
+        # Hack to make length of paths match length of colors.
+        # not sure why there is one more color than the number of paths.
+        data['p'].append([['M', [0, 0]]])
+
+        return data, defaults
 
 
 class D3PatchCollection(D3Base):

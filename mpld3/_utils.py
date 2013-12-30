@@ -117,13 +117,13 @@ def collection_data(data, defaults):
     Returns processed data and defaults
     """
     data_out = {}
-    defaults_out = {}
+    defaults_out = dict((key, val) for key, val in defaults.items())
 
     N = max(len(d) if hasattr(d, '__len__') else 0
             for d in data.values())
 
     for key, val in data.items():
-        defaults_out[key] = 'null'
+        defaults_out[key] = defaults.get(key, 'null')
         if val is None:
             if key not in defaults:
                 raise ValueError("default needed for {0}".format(key))
@@ -139,7 +139,8 @@ def collection_data(data, defaults):
         elif len(val) == N:
             data_out[key] = val
         else:
-            raise ValueError("Length of values does not match")
+            raise ValueError("Length of values for {key} "
+                             "does not match".format(key=key))
 
     data_out = [dict((key, data_out[key][i]) for key in data_out)
                 for i in range(N)]
