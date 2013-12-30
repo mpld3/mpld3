@@ -339,9 +339,6 @@ class D3Axes(D3Base):
     """
 
     def __init__(self, parent, ax):
-        # import here in case users call matplotlib.use()
-        import matplotlib as mpl
-
         self._initialize(parent=parent, _ax=ax)
         self._axid = self.elid
 
@@ -362,6 +359,8 @@ class D3Axes(D3Base):
                 self.children.append(D3PatchCollection(self, collection))
             elif isinstance(collection, mpl.collections.LineCollection):
                 self.children.append(D3LineCollection(self, collection))
+            elif isinstance(collection, mpl.collections.QuadMesh):
+                self.children.append(D3QuadMesh(self, collection))
             elif isinstance(collection, mpl.collections.PathCollection):
                 self.children.append(D3PathCollection(self, collection))
             else:
@@ -841,7 +840,7 @@ class D3Patch(D3Base):
                                     data=json.dumps(self.data()))
 
 
-class D3PathCollection(D3Base):
+class D3Collection(D3Base):
     """Class for representing matplotlib path collections in D3js"""
 
     # TODO: when all paths have same offset, or all offsets have same paths,
@@ -919,6 +918,9 @@ class D3PathCollection(D3Base):
     def __init__(self, parent, collection):
         self._initialize(parent, collection=collection)
 
+    def _update_data(self, data, defaults):
+        return data, defaults
+
     def offset_zoomable(self):
         transform = self.collection.get_offset_transform()
         return transform.contains_branch(self.ax.transData)
@@ -969,13 +971,11 @@ class D3PathCollection(D3Base):
         defaults['alpha'] = 1
         data['alpha'] = self.collection.get_alpha()
 
-        defaults['s'] = 1
-        sizes = self.collection.get_sizes()
-        if sizes is not None:
-            sizes = np.sqrt(sizes) * self.fig.dpi / 72.
-        data['s'] = sizes
+        # make the size default equal to 1
+        data['s'] = 1
 
         # process the data and defaults
+        data, defaults = self._update_data(data, defaults)
         data, defaults = collection_data(data, defaults)
 
         return template.format(elid=self.elid, axid=self.axid,
@@ -993,6 +993,22 @@ class D3PathCollection(D3Base):
 
     def style(self):
         return ""
+
+
+class D3PathCollection(D3Collection):
+    def _update_data(self, data, defaults):
+        defaults['s'] = 1
+        sizes = self.collection.get_sizes()
+        if sizes is not None:
+            sizes = np.sqrt(sizes) * self.fig.dpi / 72.
+        data['s'] = sizes
+        return data, defaults
+
+
+class D3QuadMesh(D3Collection):
+    def __init__(self, *args, **kwargs):
+        warnings.warn("Not all QuadMesh features are yet implemented")
+        D3Collection.__init__(self, *args, **kwargs)
 
 
 class D3PatchCollection(D3Base):
