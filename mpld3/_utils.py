@@ -57,7 +57,9 @@ def get_d3_shape_for_marker(marker):
     back to circle.
     https://github.com/mbostock/d3/wiki/SVG-Shapes#wiki-symbol_type
     """
-    if marker in MARKER_SHAPES:
+    if marker in ['none', 'None', '', ' ', None]:
+        return None
+    elif marker in MARKER_SHAPES:
         return MARKER_SHAPES[marker]
     else:
         warnings.warn("""

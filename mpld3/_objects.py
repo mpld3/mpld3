@@ -397,19 +397,19 @@ class D3Axes(D3Base):
 
 class D3Grid(D3Base):
     """Class for representing a matplotlib Axes grid in D3js"""
-    STYLE = """
-    div#figure{figid}
-    .grid .tick {{
-      stroke: {color};
-      stroke-dasharray: {dasharray};
-      stroke-opacity: {alpha};
-    }}
+    STYLE = jinja2.Template("""
+    div#figure{{ figid }}
+    .grid .tick {
+      stroke: {{ color }};
+      stroke-dasharray: {{ dasharray }};
+      stroke-opacity: {{ alpha }};
+    }
 
-    div#figure{figid}
-    .grid path {{
+    div#figure{{ figid }}
+    .grid path {
       stroke-width: 0;
-    }}
-    """
+    }
+    """)
 
     TEMPLATE = jinja2.Template("""
     {% if gridx %}
@@ -467,7 +467,7 @@ class D3Grid(D3Base):
         color = color_to_hex(gridlines[0].get_color())
         alpha = gridlines[0].get_alpha()
         dasharray = get_dasharray(gridlines[0])
-        return self.STYLE.format(color=color,
+        return self.STYLE.render(color=color,
                                  alpha=alpha,
                                  figid=self.figid,
                                  dasharray=dasharray)
@@ -475,69 +475,74 @@ class D3Grid(D3Base):
 
 class D3Line2D(D3Base):
     """Class for representing a 2D matplotlib line in D3js"""
-    DATA_TEMPLATE = """
-    var data_{lineid} = {data}
-    """
 
-    STYLE = """
-    div#figure{figid}
-    path.line{lineid} {{
-        stroke: {linecolor};
-        stroke-width: {linewidth};
-        stroke-dasharray: {dasharray};
+    STYLE = jinja2.Template("""
+    div#figure{{ figid }}
+    path.line{{ lineid }} {
+        stroke: {{ linecolor }};
+        stroke-width: {{ linewidth }};
+        stroke-dasharray: {{ dasharray }};
         fill: none;
-        stroke-opacity: {alpha};
-    }}
+        stroke-opacity: {{ alpha }};
+    }
 
-    div#figure{figid}
-    path.points{lineid} {{
-        stroke-width: {markeredgewidth};
-        stroke: {markeredgecolor};
-        fill: {markercolor};
-        fill-opacity: {alpha};
-        stroke-opacity: {alpha};
-    }}
-    """
+    div#figure{{ figid }}
+    path.points{{ lineid }} {
+        stroke-width: {{ markeredgewidth }};
+        stroke: {{ markeredgecolor }};
+        fill: {{ markercolor }};
+        fill-opacity: {{ alpha }};
+        stroke-opacity: {{ alpha }};
+    }
+    """)
 
-    LINE_ZOOM = """
-        axes_{axid}.select(".line{lineid}")
-                       .attr("d", line_{lineid}(data_{lineid}));
-    """
-
-    POINTS_ZOOM = """
-        axes_{axid}.selectAll(".points{lineid}")
+    ZOOM = jinja2.Template("""
+    {% if line.zoomable() %}
+      {% if line.has_line() %}
+        axes_{{ axid }}.select(".line{{ lineid }}")
+                       .attr("d", line_{{ lineid }}(data_{{ lineid }}));
+      {% endif %}
+      {% if line.has_points() %}
+        axes_{{ axid }}.selectAll(".points{{ lineid }}")
               .attr("transform", function(d)
-                {{ return "translate(" + x_data_map{axid}(d[0]) + "," +
-                   y_data_map{axid}(d[1]) + ")"; }});
-    """
+                { return "translate(" + x_data_map{{ axid }}(d[0]) + "," +
+                                        y_data_map{{ axid }}(d[1]) + ")"; });
+      {% endif %}
+    {% endif %}
+    """)
 
-    LINE_TEMPLATE = """
-    var line_{lineid} = d3.svg.line()
-         .x(function(d) {{return x_data_map{axid}(d[0]);}})
-         .y(function(d) {{return y_data_map{axid}(d[1]);}})
-         .defined(function (d) {{return !isNaN(d[0]) && !isNaN(d[1]); }})
-         .interpolate("linear");
+    TEMPLATE = jinja2.Template("""
+    var data_{{ lineid }} = {{ data }};
 
-    axes_{axid}.append("svg:path")
-                   .attr("d", line_{lineid}(data_{lineid}))
-                   .attr('class', 'line{lineid}');
-    """
+    {% if line.zoomable() %}
+      {% if line.has_line() %}
+        var line_{{ lineid }} = d3.svg.line()
+             .x(function(d) {return x_data_map{{ axid }}(d[0]);})
+             .y(function(d) {return y_data_map{{ axid }}(d[1]);})
+             .interpolate("linear")
+             .defined(function (d) {return !isNaN(d[0]) && !isNaN(d[1]); });
 
-    POINTS_TEMPLATE = """
-    var g_{lineid} = axes_{axid}.append("svg:g");
+        axes_{{ axid }}.append("svg:path")
+                       .attr("d", line_{{ lineid }}(data_{{ lineid }}))
+                       .attr('class', 'line{{ lineid }}');
+      {% endif %}
+      {% if line.has_points() %}
+        var g_{{ lineid }} = axes_{{ axid }}.append("svg:g");
 
-    g_{lineid}.selectAll("scatter-dots-{lineid}")
-          .data(data_{lineid}.filter(
-            function(d) {{return !isNaN(d[0]) && !isNaN(d[1]); }}))
-          .enter().append("svg:path")
-              .attr('class', 'points{lineid}')
-              .attr("d", d3.svg.symbol()
-                            .type("{markershape}")
-                            .size({markersize}))
-              .attr("transform", function(d)
-                  {{ return "translate(" + x_data_map{axid}(d[0]) +
-                     "," + y_data_map{axid}(d[1]) + ")"; }});
-    """
+        g_{{ lineid }}.selectAll("scatter-dots-{{ lineid }}")
+              .data(data_{{ lineid }}.filter(
+                          function(d) {return !isNaN(d[0]) && !isNaN(d[1]); }))
+              .enter().append("svg:path")
+                  .attr('class', 'points{{ lineid }}')
+                  .attr("d", d3.svg.symbol()
+                                .type("{{ markershape }}")
+                                .size({{ markersize }}))
+                  .attr("transform", function(d)
+                      { return "translate(" + x_data_map{{ axid }}(d[0]) +
+                         "," + y_data_map{{ axid }}(d[1]) + ")"; });
+      {% endif %}
+    {% endif %}
+    """)
 
     def __init__(self, parent, line):
         self._initialize(parent=parent, line=line)
@@ -553,15 +558,9 @@ class D3Line2D(D3Base):
         return self.line.get_marker() not in ['', ' ', 'None', 'none', None]
 
     def zoom(self):
-        ret = ""
-        if self.zoomable():
-            if self.has_points():
-                ret += self.POINTS_ZOOM.format(lineid=self.lineid,
-                                               axid=self.axid)
-            if self.has_line():
-                ret += self.LINE_ZOOM.format(lineid=self.lineid,
-                                             axid=self.axid)
-        return ret
+        return self.ZOOM.render(line=self,
+                                lineid=self.lineid,
+                                axid=self.axid)
 
     def style(self):
         alpha = self.line.get_alpha()
@@ -574,7 +573,7 @@ class D3Line2D(D3Base):
         mew = self.line.get_markeredgewidth()
         dasharray = get_dasharray(self.line)
 
-        return self.STYLE.format(figid=self.figid,
+        return self.STYLE.render(figid=self.figid,
                                  lineid=self.lineid,
                                  linecolor=lc,
                                  linewidth=lw,
@@ -587,22 +586,15 @@ class D3Line2D(D3Base):
     def html(self):
         transform = self.line.get_transform() - self.ax.transData
         data = transform.transform(self.line.get_xydata()).tolist()
+        msh = get_d3_shape_for_marker(self.line.get_marker())
+        ms = self.line.get_markersize() ** 2
 
-        result = self.DATA_TEMPLATE.format(lineid=self.lineid,
-                                           data=json.dumps(data))
-
-        if self.has_line():
-            result += self.LINE_TEMPLATE.format(lineid=self.lineid,
-                                                axid=self.axid)
-        if self.has_points():
-            marker = self.line.get_marker()
-            msh = get_d3_shape_for_marker(marker)
-            ms = self.line.get_markersize() ** 2
-            result += self.POINTS_TEMPLATE.format(lineid=self.lineid,
-                                                  axid=self.axid,
-                                                  markersize=ms,
-                                                  markershape=msh)
-        return result
+        return self.TEMPLATE.render(line=self,
+                                    lineid=self.lineid,
+                                    axid=self.axid,
+                                    data=json.dumps(data),
+                                    markersize=ms,
+                                    markershape=msh)
 
 
 class D3LineCollection(D3Base):
