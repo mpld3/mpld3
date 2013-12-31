@@ -773,80 +773,73 @@ class D3Collection(D3Base):
     """Class for representing matplotlib path collections in D3js"""
 
     # TODO: when all paths have same offset, or all offsets have same paths,
-    #       this can be done more efficiently.
+    #       this can be done more efficiently.  Also, defaults should be
+    #       done at the template level rather than the javascript level.
 
-    PATH_FUNC_NOZOOM = """
-    var path_func_{elid} = function(d){{
-         var path = d.p ? d.p : {defaults.p};
-         var size = d.s ? d.s : {defaults.s};
+    TEMPLATE = jinja2.Template("""
+    var data_{{ elid }} = {{ data }};
+
+    {{ construct_SVG_path }}
+
+    var offset_func_{{ elid }} = function(d){
+         var offset = d.o ? d.o : {{ defaults.o }};
+         return "translate(" +
+              {% if obj.offset_zoomable() %}
+                    x_data_map{{ axid }}(offset[0]) + "," +
+                    y_data_map{{ axid }}(offset[1])
+              {% else %}
+                    offset
+              {% endif %}
+                    + ")";
+    }
+
+    var path_func_{{ elid }} = function(d){
+         var path = d.p ? d.p : {{ defaults.p }};
+         var size = d.s ? d.s : {{ defaults.s }};
          return construct_SVG_path(path,
-                                   function(x){{return size * x;}},
-                                   function(y){{return size * y;}});
-    }}
-    """
+                {% if obj.path_zoomable() %}
+                         function(x){return x_data_map{{ axid }}(size * x);},
+                         function(y){return y_data_map{{ axid }}(size * y);});
 
-    PATH_FUNC_ZOOM = """
-    var path_func_{elid} = function(d){{
-         var path = d.p ? d.p : {defaults.p};
-         var size = d.s ? d.s : {defaults.s};
-         return construct_SVG_path(path,
-                         function(x){{return x_data_map{axid}(size * x);}},
-                         function(y){{return y_data_map{axid}(size * y);}});
-    }}
-    """
+                {% else %}
+                         function(x){return size * x;},
+                         function(y){return size * y;});
+                {% endif %}
+    }
 
-    OFFSET_FUNC_NOZOOM = """
-    var offset_func_{elid} = function(d){{
-         var offset = d.o ? d.o : {defaults.o};
-         return "translate(" + offset + ")";
-    }}
-    """
-
-    OFFSET_FUNC_ZOOM = """
-    var offset_func_{elid} = function(d){{
-         var offset = d.o ? d.o : {defaults.o};
-         return "translate(" + x_data_map{axid}(offset[0]) +
-                           "," + y_data_map{axid}(offset[1]) + ")";
-    }}
-    """
-
-    TEMPLATE = """
-    var data_{elid} = {data}
-
-    {construct_SVG_path}
-
-    var g_{elid} = axes_{axid}.append("svg:g");
-
-    var style_func_{elid} = function(d){{
-       var edgecolor = d.ec ? d.ec : {defaults.ec};
-       var facecolor = d.fc ? d.fc : {defaults.fc};
-       var linewidth = d.lw ? d.lw : {defaults.lw};
-       var dasharray = d.ls ? d.ls : {defaults.ls};
+    var style_func_{{ elid }} = function(d){
+       var edgecolor = d.ec ? d.ec : {{ defaults.ec }};
+       var facecolor = d.fc ? d.fc : {{ defaults.fc }};
+       var linewidth = d.lw ? d.lw : {{ defaults.lw }};
+       var dasharray = d.ls ? d.ls : {{ defaults.ls }};
        return "stroke: " + edgecolor + "; " +
               "stroke-width: " + linewidth + "; " +
               "stroke-dasharray: " + dasharray + "; " +
               "fill: " + facecolor + "; " +
-              "stroke-opacity: {defaults.alpha}; " +
-              "fill-opacity: {defaults.alpha}";
-    }}
+              "stroke-opacity: {{ defaults.alpha }}; " +
+              "fill-opacity: {{ defaults.alpha }}";
+    }
 
-    g_{elid}.selectAll("paths-{elid}")
-          .data(data_{elid})
+    var g_{{ elid }} = axes_{{ axid }}.append("svg:g");
+
+    g_{{ elid }}.selectAll("paths-{{ elid }}")
+          .data(data_{{ elid }})
           .enter().append("svg:path")
-              .attr('class', 'paths{elid}')
-              .attr("d", path_func_{elid})
-              .attr("style", style_func_{elid})
-              .attr("transform", offset_func_{elid});
-    """
+              .attr('class', 'paths{{ elid }}')
+              .attr("d", path_func_{{ elid }})
+              .attr("style", style_func_{{ elid }})
+              .attr("transform", offset_func_{{ elid }});
+    """)
 
-    ZOOM_BASE = """
-        axes_{axid}.selectAll(".paths{elid}")"""
-
-    ZOOM_PATH = """
-              .attr("d", path_func_{elid})"""
-
-    ZOOM_OFFSET = """
-              .attr("transform", offset_func_{elid})"""
+    ZOOM = jinja2.Template("""
+        axes_{{ axid }}.selectAll(".paths{{ elid }}")
+                 {% if obj.path_zoomable() %}
+                   .attr("d", path_func_{{ elid }})
+                 {% endif %}
+                 {% if obj.offset_zoomable() %}
+                   .attr("transform", offset_func_{{ elid }})
+                 {% endif %};
+    """)
 
     def __init__(self, parent, collection):
         self._initialize(parent, collection=collection)
@@ -858,32 +851,25 @@ class D3Collection(D3Base):
         transform = self.collection.get_offset_transform()
         return transform.contains_branch(self.ax.transData)
 
+    def get_offset_transform(self):
+        if self.offset_zoomable():
+            return self.collection.get_offset_transform() - self.ax.transData
+        else:
+            return self.collection.get_offset_transform()
+
     def path_zoomable(self):
         transform = self.collection.get_transform()
         return transform.contains_branch(self.ax.transData)
 
-    def html(self):
-        template = self.TEMPLATE
-
-        if self.collection.get_transforms() != []:
-            warnings.warn("Collection: multiple transforms not implemented. "
-                          "They will be ignored.")
-
-        if self.offset_zoomable():
-            offset_transform = (self.collection.get_offset_transform()
-                                - self.ax.transData)
-            template = self.OFFSET_FUNC_ZOOM + template
-        else:
-            offset_transform = self.collection.get_offset_transform()
-            template = self.OFFSET_FUNC_NOZOOM + template
-
+    def get_path_transform(self):
         if self.path_zoomable():
-            path_transform = (self.collection.get_transform()
-                              - self.ax.transData)
-            template = self.PATH_FUNC_ZOOM + template
+            return self.collection.get_transform() - self.ax.transData
         else:
-            path_transform = self.collection.get_transform()
-            template = self.PATH_FUNC_NOZOOM + template
+            return self.collection.get_transform()
+
+    def get_data_defaults(self):
+        offset_transform = self.get_offset_transform()
+        path_transform = self.get_path_transform()
 
         offsets = [offset_transform.transform(offset).tolist()
                    for offset in self.collection.get_offsets()]
@@ -918,18 +904,23 @@ class D3Collection(D3Base):
         data, defaults = self._update_data(data, defaults)
         data, defaults = collection_data(data, defaults)
 
-        return template.format(elid=self.elid, axid=self.axid,
-                               construct_SVG_path=CONSTRUCT_SVG_PATH,
-                               data=json.dumps(data),
-                               defaults=defaults)
+        return data, defaults
+
+    def html(self):
+        if self.collection.get_transforms() != []:
+            warnings.warn("Collection: multiple transforms not implemented. "
+                          "They will be ignored.")
+
+        data, defaults = self.get_data_defaults()
+
+        return self.TEMPLATE.render(obj=self,
+                                    elid=self.elid, axid=self.axid,
+                                    construct_SVG_path=CONSTRUCT_SVG_PATH,
+                                    data=json.dumps(data),
+                                    defaults=defaults)
 
     def zoom(self):
-        zoom = self.ZOOM_BASE
-        if self.path_zoomable():
-            zoom += self.ZOOM_PATH
-        if self.offset_zoomable():
-            zoom += self.ZOOM_OFFSET
-        return zoom.format(elid=self.elid, axid=self.axid)
+        return self.ZOOM.render(obj=self, elid=self.elid, axid=self.axid)
 
     def style(self):
         return ""
