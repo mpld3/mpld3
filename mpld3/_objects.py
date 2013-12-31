@@ -629,35 +629,44 @@ class D3LineCollection(D3Base):
 
 class D3Text(D3Base):
     """Class for representing matplotlib text in D3js"""
-    FIG_TEXT_TEMPLATE = """
-    canvas.append("text")
-        .text("{text}")
-        .attr("class", "text{textid}")
-        .attr("x", {x})
-        .attr("y", figheight - {y})
-        .attr("font-size", "{fontsize}px")
-        .attr("fill", "{color}")
-        .attr("transform", "rotate({rotation},{x}," + (figheight - {y}) + ")")
-        .attr("style", "text-anchor: {h_anchor};")
-    """
 
-    AXES_TEXT_TEMPLATE = """
-    axes_{axid}.append("text")
-        .text("{text}")
-        .attr("class", "text{textid}")
-        .attr("x", x_data_map{axid}({x}))
-        .attr("y", y_data_map{axid}({y}))
-        .attr("font-size", "{fontsize}px")
-        .attr("fill", "{color}")
-        .attr("transform", "rotate({rotation},{x}," + (figheight - {y}) + ")")
-        .attr("style", "text-anchor: {h_anchor};")
-    """
+    TEMPLATE = jinja2.Template("""
+    {% if text %}
+     {% if zoomable %}
+      axes_{{ axid }}.append("text")
+          .text("{{ text }}")
+          .attr("class", "text{{ textid }}")
+          .attr("x", x_data_map{{ axid }}({{ position[0] }}))
+          .attr("y", y_data_map{{ axid }}({{ position[1] }}))
+          .attr("font-size", "{{ fontsize }}px")
+          .attr("fill", "{{ color }}")
+          .attr("transform", "rotate({{ rotation }},{{ position[0] }},"
+                             + (figheight - {{ position[1] }}) + ")")
+          .attr("style", "text-anchor: {{ h_anchor }};")
+     {% else %}
+      canvas.append("text")
+          .text("{{ text }}")
+          .attr("class", "text{{ textid }}")
+          .attr("x", {{ position[0] }})
+          .attr("y", figheight - {{ position[1] }})
+          .attr("font-size", "{{ fontsize }}px")
+          .attr("fill", "{{ color }}")
+          .attr("transform", "rotate({{ rotation }},{{ position[0] }},"
+                             + (figheight - {{ position[1] }}) + ")")
+          .attr("style", "text-anchor: {{ h_anchor }};")
+     {% endif %}
+    {% endif %}
+    """)
 
-    AXES_TEXT_ZOOM = """
-        axes_{axid}.select(".text{textid}")
-                       .attr("x", x_data_map{axid}({x}))
-                       .attr("y", y_data_map{axid}({y}))
-    """
+    ZOOM = jinja2.Template("""
+    {% if text %}
+     {% if zoomable %}
+        axes_{{ axid }}.select(".text{{ textid }}")
+                       .attr("x", x_data_map{{ axid }}({{ position[0] }}))
+                       .attr("y", y_data_map{{ axid }}({{ position[1] }}))
+     {% endif %}
+    {% endif %}
+    """)
 
     def __init__(self, parent, text):
         self._initialize(parent=parent, text=text)
@@ -666,29 +675,29 @@ class D3Text(D3Base):
     def zoomable(self):
         return self.text.get_transform().contains_branch(self.ax.transData)
 
-    def zoom(self):
+    def get_position(self):
         if self.zoomable():
-            x, y = self.text.get_position()
-            return self.AXES_TEXT_ZOOM.format(x=x, y=y, axid=self.axid,
-                                              textid=self.textid)
+            transform = self.text.get_transform() - self.ax.transData
         else:
-            return ''
+            transform = self.text.get_transform()
+
+        x, y = transform.transform(self.text.get_position())
+
+        # hack for y-label alignment
+        if self.text is self.ax.yaxis.label:
+            x += self.text.get_size()
+
+        return x, y
+
+    def zoom(self):
+        x, y = self.text.get_position()
+        return self.ZOOM.render(zoomable=self.zoomable(),
+                                position=self.get_position(),
+                                axid=self.axid,
+                                textid=self.textid,
+                                text=self.text.get_text())
 
     def html(self):
-        text_content = self.text.get_text()
-        x, y = self.text.get_position()
-
-        if not text_content:
-            return ''
-
-        if self.zoomable():
-            template = self.AXES_TEXT_TEMPLATE
-
-        else:
-            # convert (x, y) to figure coordinates
-            x, y = self.text.get_transform().transform((x, y))
-            template = self.FIG_TEXT_TEMPLATE
-
         color = color_to_hex(self.text.get_color())
         fontsize = self.text.get_size()
         rotation = -self.text.get_rotation()
@@ -698,17 +707,15 @@ class D3Text(D3Base):
                     'center': 'middle',
                     'right': 'end'}[self.text.get_horizontalalignment()]
 
-        # hack for y-label alignment
-        if self.text is self.ax.yaxis.label:
-            x += fontsize
-
-        return template.format(x=x, y=y, axid=self.axid,
-                               textid=self.textid,
-                               text=text_content,
-                               fontsize=fontsize,
-                               color=color,
-                               rotation=rotation,
-                               h_anchor=h_anchor)
+        return self.TEMPLATE.render(zoomable=self.zoomable(),
+                                    position=self.get_position(),
+                                    axid=self.axid,
+                                    textid=self.textid,
+                                    text=self.text.get_text(),
+                                    fontsize=fontsize,
+                                    color=color,
+                                    rotation=rotation,
+                                    h_anchor=h_anchor)
 
 
 class D3Patch(D3Base):
