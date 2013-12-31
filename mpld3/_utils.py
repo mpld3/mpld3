@@ -99,7 +99,7 @@ def path_data(path, transform=None):
         path = path.transformed(transform)
 
     return [(PATH_DICT[path_code], vertices.tolist())
-            for vertices, path_code in path.iter_segments()]
+            for vertices, path_code in path.iter_segments(simplify=False)]
 
 
 class Bunch(dict):
