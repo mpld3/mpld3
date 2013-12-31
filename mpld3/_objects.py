@@ -411,59 +411,55 @@ class D3Grid(D3Base):
     }}
     """
 
-    XGRID_TEMPLATE = """
+    TEMPLATE = jinja2.Template("""
+    {% if gridx %}
     // draw x grid lines: we use a second x-axis with long ticks
-    axes_{axid}.append("g")
-         .attr("class", "axes{axid} x grid")
-         .attr("transform", "translate(0," + (height_{axid}) + ")")
-         .call(create_xAxis_{axid}()
-                       .tickSize(-(height_{axid}), 0, 0)
+    axes_{{ axid }}.append("g")
+         .attr("class", "axes{{ axid }} x grid")
+         .attr("transform", "translate(0," + (height_{{ axid }}) + ")")
+         .call(create_xAxis_{{ axid }}()
+                       .tickSize(-(height_{{ axid }}), 0, 0)
                        .tickFormat(""));
-    """
+    {% endif %}
 
-    YGRID_TEMPLATE = """
+    {% if gridy %}
     // draw y grid lines: we use a second y-axis with long ticks
-    axes_{axid}.append("g")
-         .attr("class", "axes{axid} y grid")
-         .call(create_yAxis_{axid}()
-                       .tickSize(-(width_{axid}), 0, 0)
+    axes_{{ axid }}.append("g")
+         .attr("class", "axes{{ axid }} y grid")
+         .call(create_yAxis_{{ axid }}()
+                       .tickSize(-(width_{{ axid }}), 0, 0)
                        .tickFormat(""));
-    """
+    {% endif %}
+    """)
 
-    XZOOM = """
-        axes_{axid}.select(".x.grid")
-            .call(create_xAxis_{axid}()
-            .tickSize(-height_{axid}, 0, 0)
+    ZOOM = jinja2.Template("""
+    {% if gridx %}
+        axes_{{ axid }}.select(".x.grid")
+            .call(create_xAxis_{{ axid }}()
+            .tickSize(-height_{{ axid }}, 0, 0)
             .tickFormat(""));
-    """
+    {% endif %}
 
-    YZOOM = """
-        axes_{axid}.select(".y.grid")
-            .call(create_yAxis_{axid}()
-            .tickSize(-width_{axid}, 0, 0)
+    {% if gridy %}
+        axes_{{ axid }}.select(".y.grid")
+            .call(create_yAxis_{{ axid }}()
+            .tickSize(-width_{{ axid }}, 0, 0)
             .tickFormat(""));
-    """
+    {% endif %}
+    """)
 
     def __init__(self, parent):
         self._initialize(parent=parent)
 
     def zoom(self):
-        ret = ""
-        bbox = self.ax.get_position().bounds
-        if self.ax.xaxis._gridOnMajor:
-            ret += self.XZOOM.format(axid=self.axid, bbox=bbox)
-        if self.ax.yaxis._gridOnMajor:
-            ret += self.YZOOM.format(axid=self.axid, bbox=bbox)
-        return ret
+        return self.ZOOM.render(axid=self.axid,
+                                gridx=self.ax.xaxis._gridOnMajor,
+                                gridy=self.ax.yaxis._gridOnMajor)
 
     def html(self):
-        ret = ""
-        bbox = self.ax.get_position().bounds
-        if self.ax.xaxis._gridOnMajor:
-            ret += self.XGRID_TEMPLATE.format(axid=self.axid, bbox=bbox)
-        if self.ax.yaxis._gridOnMajor:
-            ret += self.YGRID_TEMPLATE.format(axid=self.axid, bbox=bbox)
-        return ret
+        return self.TEMPLATE.render(axid=self.axid,
+                                    gridx=self.ax.xaxis._gridOnMajor,
+                                    gridy=self.ax.yaxis._gridOnMajor)
 
     def style(self):
         gridlines = (self.ax.xaxis.get_gridlines() +
