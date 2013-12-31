@@ -634,27 +634,23 @@ class D3Text(D3Base):
     {% if text %}
      {% if zoomable %}
       axes_{{ axid }}.append("text")
-          .text("{{ text }}")
-          .attr("class", "text{{ textid }}")
           .attr("x", x_data_map{{ axid }}({{ position[0] }}))
           .attr("y", y_data_map{{ axid }}({{ position[1] }}))
-          .attr("font-size", "{{ fontsize }}px")
-          .attr("fill", "{{ color }}")
-          .attr("transform", "rotate({{ rotation }},{{ position[0] }},"
-                             + (figheight - {{ position[1] }}) + ")")
-          .attr("style", "text-anchor: {{ h_anchor }};")
+          .attr("transform", "rotate({{ rotation }}, "
+                             + x_data_map{{ axid }}({{ position[0] }}) + ","
+                             + y_data_map{{ axid }}({{ position[1] }}) + ")")
      {% else %}
       canvas.append("text")
-          .text("{{ text }}")
-          .attr("class", "text{{ textid }}")
           .attr("x", {{ position[0] }})
           .attr("y", figheight - {{ position[1] }})
+          .attr("transform", "rotate({{ rotation }}, " + {{ position[0] }}
+                             + "," + (figheight - {{ position[1] }}) + ")")
+     {% endif %}
+          .attr("class", "text{{ textid }}")
+          .text("{{ text }}")
           .attr("font-size", "{{ fontsize }}px")
           .attr("fill", "{{ color }}")
-          .attr("transform", "rotate({{ rotation }},{{ position[0] }},"
-                             + (figheight - {{ position[1] }}) + ")")
-          .attr("style", "text-anchor: {{ h_anchor }};")
-     {% endif %}
+          .attr("style", "text-anchor: {{ h_anchor }};");
     {% endif %}
     """)
 

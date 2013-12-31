@@ -17,11 +17,14 @@ def main():
                         ['left', 'center', 'right']):
         ax.text(x, y, align, ha=align, size=25)
 
-    # test colors
-    x = 0.7
-    for y, c in zip([0.3, 0.5, 0.7],
-                    ['red', 'blue', 'green']):
-        ax.text(x, y, c, size=18, color=c)
+    # test colors & rotations
+    x = 0.8
+    for y, c, r in zip([0.25, 0.5, 0.75],
+                       ['red', 'blue', 'green'],
+                       [-45, 0, 45]):
+        ax.text(x, y, "{0} rot={1}".format(c, r),
+                size=18, color=c, rotation=r, ha='center', va='center')
+
 
     ax.set_xlabel('x label')
     ax.set_ylabel('y label')
