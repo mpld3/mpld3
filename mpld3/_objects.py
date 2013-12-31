@@ -20,6 +20,9 @@ from ._utils import (color_to_hex, get_dasharray, get_d3_shape_for_marker,
 from ._js import CONSTRUCT_SVG_PATH
 
 
+D3_URL = "http://d3js.org/d3.v3.min.js"
+
+
 class D3Base(object):
     """Abstract Base Class for D3js objects"""
     __metaclass__ = abc.ABCMeta
@@ -117,9 +120,10 @@ class D3Figure(D3Base):
         self._figid = self.elid
         self.axes = [D3Axes(self, ax) for ax in fig.axes]
 
-    def html(self, d3_url="http://d3js.org/d3.v3.min.js",
-             with_d3_import=True, with_style=True,
+    def html(self, d3_url=None, with_d3_import=True, with_style=True,
              with_reset_button=False):
+        if d3_url is None:
+            d3_url = D3_URL
         return self.TEMPLATE.render(figid=self.figid,
                                     fig=self.fig,
                                     axes=self.axes,
