@@ -14,6 +14,9 @@ matplotlib's features.  It should be considered a proof-of-concept, for now.
 
 Installation
 ------------
+mpld3 requires [jinja2](http://jinja.pocoo.org/) and
+[matplotlib](http://matplotlib.org).
+
 To install the library system-wide
 
     [~]$ python setup.py install
@@ -52,31 +55,25 @@ supports the following:
 - lines and scatter plots created with ``plt.plot`` (not ``plt.scatter``, etc.)
 - grid lines and their properties
 - title and axis labels
+- patches (i.e. shapes like histograms, etc.)
+- polygons (filled plots, etc.)
+- some collections (scatter plots, etc.)
 
 ### TODO List
 
-There are a lot of things which could be implemented fairly easily, given
-enough time and energy:
+There are many features still missing, and they range from fairly
+straightforward to fairly difficult.
 
-- patches (i.e. shapes like histograms, etc.)
-- polygons (filled plots, etc.)
-- collections (scatter plots, etc.)
+- fine-grained text formatting (multi-lines, vertical alignment, etc.)
 - containers (errorbars, etc.)
-- correct text placement and alignment
-- log axes and date axes
-
-There are some things that will take a bit more thinking, and be difficult
-to do without rethinking some fundamental things
-
-- axes text (i.e. text which pans and zooms with the axis)
-- general text formatting
-
-And there are some things which I have no idea how to do well:
-
-- tying together pan/zoom on subplots
-- adding a box-zoom tool
+- general collections
+- axes aspect ratio
+- tick specification & formatting
 - twin axes (i.e. multiple scales on one plot) tied together
 - tick specification & formatting
+- adding a box-zoom tool
+- tying together pan/zoom on subplots
+- adding tooltips
 
-If you have the energy to address any of these, I'd love to accept pull
-requests!
+If any of these look like something you'd like to tackle, feel free to submit
+a pull request!

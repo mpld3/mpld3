@@ -6,6 +6,8 @@ import io
 import json
 from collections import defaultdict
 
+import jinja2
+
 import numpy as np
 
 from matplotlib.lines import Line2D
@@ -69,72 +71,65 @@ class D3Base(object):
 
 class D3Figure(D3Base):
     """Class for representing a matplotlib Figure in D3js"""
-    D3_WEB_LOC = "http://d3js.org/d3.v3.min.js"
 
-    D3_IMPORT = """
-    <script type="text/javascript" src="{d3_url}"></script>
-    """
+    FIGURE_TEMPLATE = jinja2.Template("""
+    {% if with_d3_import %}
+    <script type="text/javascript" src="{{ d3_url }}"></script>
+    {% endif %}
 
-    STYLE = """
+    {% if with_style %}
     <style>
-    {styles}
+      {% for ax in axes %}
+        {{ ax.style() }}
+      {% endfor %}
     </style>
-    """
+    {% endif %}
 
-    FIGURE_TEMPLATE = """
-    <div id='figure{figid}'>
-    <!-- Uncomment for a rudimentary reset button -->
-    <!-- <button id='reset{figid}'>Reset</button> -->
+    <div id='figure{{ figid }}'>
+    {% if with_reset_button %}
+      <button id='reset{{ figid }}'>Reset</button>
+    {% endif %}
     </div>
 
     <script type="text/javascript">
-    func{figid} = function(figure){{
+    func{{ figid }} = function(figure){
+        var figwidth = {{ fig.get_figwidth() }} * {{ fig.dpi }};
+        var figheight = {{ fig.get_figheight() }} * {{ fig.dpi }};
 
-    var figwidth = {figwidth} * {dpi};
-    var figheight = {figheight} * {dpi};
+        var canvas = figure.append('svg:svg')
+                       .attr('width', figwidth)
+                       .attr('height', figheight)
+                       .attr('class', 'canvas')
 
-    var canvas = figure.append('svg:svg')
-                   .attr('width', figwidth)
-                   .attr('height', figheight)
-                   .attr('class', 'canvas')
-
-    {axes}
-
-    }}
+        {% for ax in axes %}
+         {{ ax.html() }}
+        {% endfor %}
+    }
 
     // set a timeout of 0 to allow d3.js to load
-    setTimeout(function(){{ func{figid}(d3.select('#figure{figid}')) }}, 0)
+    setTimeout(function(){ func{{ figid }}(
+                                d3.select('#figure{{ figid }}')) }, 0)
     </script>
-    """
+    """)
 
     def __init__(self, fig):
         self._initialize(parent=None, _fig=fig, _ax=None)
         self._figid = self.elid
         self.axes = [D3Axes(self, ax) for ax in fig.axes]
 
-    def d3_import(self, d3_url=None):
-        if d3_url is None:
-            d3_url = self.D3_WEB_LOC
-        return self.D3_IMPORT.format(d3_url=d3_url)
-
     def style(self):
-        return self.STYLE.format(styles='\n'.join([ax.style()
-                                                   for ax in self.axes]))
+        return self.STYLE.render(styles=[ax.style() for ax in self.axes])
 
-    def html(self, d3_url=None, with_d3_import=True, with_style=True):
-        result = ""
-        if with_d3_import:
-            result += self.d3_import(d3_url)
-        if with_style:
-            result += self.style()
-
-        axes = '\n'.join(ax.html() for ax in self.axes)
-        fig = self.FIGURE_TEMPLATE.format(figid=self.figid,
-                                          figwidth=self.fig.get_figwidth(),
-                                          figheight=self.fig.get_figheight(),
-                                          dpi=self.fig.dpi,
-                                          axes=axes)
-        return result + fig
+    def html(self, d3_url="http://d3js.org/d3.v3.min.js",
+             with_d3_import=True, with_style=True,
+             with_reset_button=False):
+        return self.FIGURE_TEMPLATE.render(figid=self.figid,
+                                           fig=self.fig,
+                                           axes=self.axes,
+                                           with_d3_import=with_d3_import,
+                                           with_style=with_style,
+                                           with_reset_button=with_reset_button,
+                                           d3_url=d3_url)
 
 
 class D3Axes(D3Base):
