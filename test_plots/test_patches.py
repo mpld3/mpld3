@@ -1,6 +1,7 @@
 """Plot to test patches"""
 import matplotlib.pyplot as plt
 from matplotlib import patches
+from matplotlib.path import Path
 import numpy as np
 
 
@@ -9,6 +10,13 @@ def main():
     ax.grid(color='lightgray')
 
     rcolor = lambda: np.random.random(3)
+
+    # The points are scaled to be between 0 and 1 in both x and y
+    # Shift to be between 3.5 and 4.5 in x and .5 to 1.5 in y
+    points = np.loadtxt('test_plots/coords_test_patch.txt')
+    points += [3.5,.5]
+    codes = [Path.LINETO] * len(points)
+    codes[0] = Path.MOVETO
 
     p = [patches.Arrow(0.75, 0.75, 0.5, 0.5),
          patches.Circle((1, 2), 0.4),
@@ -20,6 +28,7 @@ def main():
          patches.Wedge((3, 1), 0.4, 0, 270),
          patches.Ellipse((3, 2), 0.6, 0.4),
          patches.Arc((3, 3), 0.5, 0.5, 270, 90),
+         patches.PathPatch(Path(points, codes))
     ]
 
     for patch in p:
