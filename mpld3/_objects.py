@@ -46,8 +46,8 @@ class D3Base(object):
             self.elid = self.generate_unique_id()
         else:
             self.num_children_by_id[self.parent.elid] += 1
-            self.elid = (self.parent.elid +
-                         str(self.num_children_by_id[self.parent.elid]))
+            self.elcount = self.num_children_by_id[self.parent.elid]
+            self.elid = self.parent.elid + str(self.elcount)
 
     def __getattr__(self, attr):
         if attr in ['fig', 'ax', 'figid', 'axid']:
