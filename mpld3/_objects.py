@@ -690,37 +690,39 @@ class D3Text(D3Base):
 
 class D3Patch(D3Base):
     """Class for representing matplotlib patches in D3js"""
-    STYLE = """
-    div#figure{figid}
-    path.patch{elid} {{
-        stroke: {linecolor};
-        stroke-width: {linewidth};
-        stroke-dasharray: {dasharray};
-        fill: {fillcolor};
-        stroke-opacity: {alpha};
-        fill-opacity: {alpha};
-    }}
-    """
+    STYLE = jinja2.Template("""
+    div#figure{{ figid }}
+    path.patch{{ elid }} {
+        stroke: {{ linecolor }};
+        stroke-width: {{ linewidth }};
+        stroke-dasharray: {{ dasharray }};
+        fill: {{ fillcolor }};
+        stroke-opacity: {{ alpha }};
+        fill-opacity: {{ alpha }};
+    }
+    """)
 
-    TEMPLATE = """
-    var data_{elid} = {data};
+    TEMPLATE = jinja2.Template("""
+    var data_{{ elid }} = {{ data }};
 
-    {construct_SVG_path}
+    {{ construct_SVG_path }}
 
-    axes_{axid}.append("svg:path")
-                   .attr("d", construct_SVG_path(data_{elid},
-                                                 x_data_map{axid},
-                                                 y_data_map{axid}))
+    axes_{{ axid }}.append("svg:path")
+                   .attr("d", construct_SVG_path(data_{{ elid }},
+                                                 x_data_map{{ axid }},
+                                                 y_data_map{{ axid }}))
                    .attr("vector-effect", "non-scaling-stroke")
-                   .attr('class', 'patch{elid}');
-    """
+                   .attr('class', 'patch{{ elid }}');
+    """)
 
-    ZOOM = """
-        axes_{axid}.select(".patch{elid}")
-              .attr("d", construct_SVG_path(data_{elid},
-                                            x_data_map{axid},
-                                            y_data_map{axid}))
-    """
+    ZOOM = jinja2.Template("""
+    {% if patch.zoomable() %}
+        axes_{{ axid }}.select(".patch{{ elid }}")
+              .attr("d", construct_SVG_path(data_{{ elid }},
+                                            x_data_map{{ axid }},
+                                            y_data_map{{ axid }}))
+    {% endif %}
+    """)
 
     def __init__(self, parent, patch):
         self._initialize(parent=parent, patch=patch)
@@ -730,11 +732,9 @@ class D3Patch(D3Base):
         return self.patch.get_transform().contains_branch(self.ax.transData)
 
     def zoom(self):
-        if self.zoomable():
-            return self.ZOOM.format(axid=self.axid,
-                                    elid=self.elid)
-        else:
-            return ""
+        return self.ZOOM.render(patch=self,
+                                axid=self.axid,
+                                elid=self.elid)
 
     def style(self):
         ec = self.patch.get_edgecolor()
@@ -750,7 +750,7 @@ class D3Patch(D3Base):
         lw = self.patch.get_linewidth()
         dasharray = get_dasharray(self.patch)
 
-        return self.STYLE.format(figid=self.figid,
+        return self.STYLE.render(figid=self.figid,
                                  elid=self.elid,
                                  linecolor=lc,
                                  linewidth=lw,
@@ -764,7 +764,7 @@ class D3Patch(D3Base):
         return path_data(self.patch.get_path(), transform)
 
     def html(self):
-        return self.TEMPLATE.format(axid=self.axid, elid=self.elid,
+        return self.TEMPLATE.render(axid=self.axid, elid=self.elid,
                                     construct_SVG_path=CONSTRUCT_SVG_PATH,
                                     data=json.dumps(self.data()))
 
@@ -960,136 +960,62 @@ class D3LineCollection(D3Collection):
         return data, defaults
 
 
-class D3PatchCollection(D3Base):
+class D3PatchCollection(D3Collection):
     """Class for representing matplotlib patch collections in D3js"""
-    STYLE = """
-    div#figure{figid}
-    path.coll{elid}.patch{i} {{
-        stroke: {linecolor};
-        stroke-width: {linewidth};
-        stroke-dasharray: {dasharray};
-        fill: {fillcolor};
-        stroke-opacity: {alpha};
-        fill-opacity: {alpha};
-    }}
-    """
-
-    TEMPLATE = """
-    var data_{pathid} = {data}
-
-    var patch_{pathid} = d3.svg.line()
-         .x(function(d) {{return x_data_map{axid}(d[0]);}})
-         .y(function(d) {{return y_data_map{axid}(d[1]);}})
-         .interpolate("{interpolate}");
-
-    axes_{axid}.append("svg:path")
-                   .attr("d", patch_{pathid}(data_{pathid}))
-                   .attr('class', 'coll{elid} patch{i}');
-    """
-
-    ZOOM = """
-        axes_{axid}.select(".coll{elid}.patch{i}")
-                       .attr("d", patch_{pathid}(data_{pathid}));
-    """
-
     # TODO: there are special D3 classes for many common patch types
     #       (i.e. circle, ellipse, rectangle, polygon, etc.)  We should
     #       use these where possible.  Also, it would be better to use the
     #       SVG path codes as in D3Patch(), above.
-
-    def __init__(self, parent, collection):
-        self._initialize(parent=parent, collection=collection)
-        self.n_paths = len(collection.get_paths())
-
-    def pathid(self, i):
-        return self.elid + str(i + 1)
-
-    def zoom(self):
-        return "".join([self.ZOOM.format(axid=self.axid,
-                                         i=i + 1,
-                                         pathid=self.pathid(i),
-                                         elid=self.elid)
-                        for i in range(self.n_paths)])
-
-    def style(self):
-        alpha = self.collection.get_alpha()
-        if alpha is None:
-            alpha = 1
-
-        ec = self.collection.get_edgecolor()
-        fc = self.collection.get_facecolor()
-        lc = self.collection.get_edgecolor()
-        lw = self.collection.get_linewidth()
-
-        styles = []
-        for i in range(self.n_paths):
-            dasharray = get_dasharray(self.collection, i)
-            styles.append(self.STYLE.format(figid=self.figid,
-                                            elid=self.elid,
-                                            i=i + 1,
-                                            linecolor=color_to_hex(lc[i]),
-                                            linewidth=lw[i],
-                                            fillcolor=color_to_hex(fc[i]),
-                                            dasharray=dasharray,
-                                            alpha=alpha))
-        return '\n'.join(styles)
-
-    def html(self):
-        results = []
-        for i, path in enumerate(self.collection.get_paths()):
-            data = path.vertices.tolist()
-            results.append(self.TEMPLATE.format(axid=self.axid,
-                                                elid=self.elid,
-                                                pathid=self.pathid(i),
-                                                i=i + 1,
-                                                data=json.dumps(data),
-                                                interpolate="linear"))
-        return '\n'.join(results)
+    pass
 
 
 class D3Image(D3Base):
     """Class for representing matplotlib images in D3js"""
-    IMAGE_TEMPLATE = """
-    axes_{axid}.append("svg:image")
-        .attr('class', 'image{imageid}')
-        .attr("x", x_{axid}({x}))
-        .attr("y", y_{axid}({y}))
-        .attr("width", x_{axid}({width}) - x_{axid}({x}))
-        .attr("height", y_{axid}({height}) - y_{axid}({y}))
-        .attr("xlink:href", "data:image/png;base64," + "{base64_data}")
-        .attr("preserveAspectRatio", "none");
-    """
 
-    IMAGE_ZOOM = """
-        axes_{axid}.select(".image{imageid}")
-                   .attr("x", x_{axid}({x}))
-                   .attr("y", y_{axid}({y}))
-                   .attr("width", x_{axid}({width}) - x_{axid}({x}))
-                   .attr("height", y_{axid}({height}) - y_{axid}({y}));
-    """
+    TEMPLATE = jinja2.Template("""
+    axes_{{ axid }}.append("svg:image")
+        .attr('class', 'image{{ elid }}')
+        .attr("x", x_{{ axid }}({{ x }}))
+        .attr("y", y_{{ axid }}({{ y }}))
+        .attr("width", x_{{ axid }}({{ width }}) - x_{{ axid }}({{ x }}))
+        .attr("height", y_{{ axid }}({{ height }}) - y_{{ axid }}({{ y }}))
+        .attr("xlink:href", "data:image/png;base64," + "{{ base64_data }}")
+        .attr("preserveAspectRatio", "none");
+    """)
+
+    ZOOM = jinja2.Template("""
+        axes_{{ axid }}.select(".image{{ elid }}")
+                   .attr("x", x_{{ axid }}({{ x }}))
+                   .attr("y", y_{{ axid }}({{ y }}))
+                   .attr("width", x_{{ axid }}({{ width }})
+                                  - x_{{ axid }}({{ x }}))
+                   .attr("height", y_{{ axid }}({{ height }})
+                                   - y_{{ axid }}({{ y }}));
+    """)
 
     def __init__(self, parent, ax, image, i=''):
         self._initialize(parent=parent, ax=ax, image=image)
-        self.imageid = "{0}{1}".format(self.axid, i)
 
     def zoom(self):
-        return self.IMAGE_ZOOM.format(imageid=self.imageid,
-                                      axid=self.axid,
-                                      x=self.x, y=self.y,
-                                      width=self.width, height=self.height)
+        data = self.image.get_array().data
+        height, width = data.shape
+        return self.ZOOM.render(elid=self.elid,
+                                axid=self.axid,
+                                x=0, y=0,
+                                width=width, height=height)
 
     def html(self):
-        self.x, self.y = 0, 0
         data = self.image.get_array().data
-        self.height, self.width = data.shape
+        height, width = data.shape
 
+        # encode image data in base-64
         binary_buffer = io.BytesIO()
         imsave(binary_buffer, data)
         binary_buffer.seek(0)
         base64_data = base64.b64encode(binary_buffer.read())
 
-        return self.IMAGE_TEMPLATE.format(axid=self.axid,
-                                          imageid=self.imageid,
-                                          base64_data=base64_data,
-                                          x=self.x, y=self.y,
-                                          width=self.width, height=self.height)
+        return self.TEMPLATE.render(axid=self.axid,
+                                    elid=self.elid,
+                                    base64_data=base64_data,
+                                    x=0, y=0,
+                                    width=width, height=height)
