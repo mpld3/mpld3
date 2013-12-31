@@ -72,7 +72,7 @@ class D3Base(object):
 class D3Figure(D3Base):
     """Class for representing a matplotlib Figure in D3js"""
 
-    FIGURE_TEMPLATE = jinja2.Template("""
+    TEMPLATE = jinja2.Template("""
     {% if with_d3_import %}
     <script type="text/javascript" src="{{ d3_url }}"></script>
     {% endif %}
@@ -117,222 +117,199 @@ class D3Figure(D3Base):
         self._figid = self.elid
         self.axes = [D3Axes(self, ax) for ax in fig.axes]
 
-    def style(self):
-        return self.STYLE.render(styles=[ax.style() for ax in self.axes])
-
     def html(self, d3_url="http://d3js.org/d3.v3.min.js",
              with_d3_import=True, with_style=True,
              with_reset_button=False):
-        return self.FIGURE_TEMPLATE.render(figid=self.figid,
-                                           fig=self.fig,
-                                           axes=self.axes,
-                                           with_d3_import=with_d3_import,
-                                           with_style=with_style,
-                                           with_reset_button=with_reset_button,
-                                           d3_url=d3_url)
+        return self.TEMPLATE.render(figid=self.figid,
+                                    fig=self.fig,
+                                    axes=self.axes,
+                                    d3_url=d3_url,
+                                    with_d3_import=with_d3_import,
+                                    with_style=with_style,
+                                    with_reset_button=with_reset_button)
 
 
 class D3Axes(D3Base):
     """Class for representing a matplotlib Axes in D3js"""
-    STYLE = """
-    div#figure{figid}
-    .axes{axid}.axis line, .axes{axid}.axis path {{
+
+    STYLE = jinja2.Template("""
+    div#figure{{ figid }}
+    .axes{{ axid }}.axis line, .axes{{ axid }}.axis path {
         shape-rendering: crispEdges;
         stroke: black;
         fill: none;
-    }}
+    }
 
-    div#figure{figid}
-    .axes{axid}.axis text {{
+    div#figure{{ figid }}
+    .axes{{ axid }}.axis text {
         font-family: sans-serif;
-        font-size: {fontsize}px;
+        font-size: {{ fontsize }}px;
         fill: black;
         stroke: none;
-    }}
+    }
 
-    div#figure{figid}
-    .bg{axid}{{
-        fill: {axesbg};
-    }}
-    """
+    div#figure{{ figid }}
+    .bg{{ axid }}{
+        fill: {{ axesbg }};
+    }
 
-    LINEAR_XAXIS_TEMPLATE = """
-    var xdomain{axid} = [{xlim[0]}, {xlim[1]}];
-    var x_{axid} = d3.scale.linear()
-                     .domain(xdomain{axid})
-                     .range([0, width_{axid}]);
-    var x_data_map{axid} = x_{axid};
-    """
+    {% for child in children %}
+      {{ child.style() }}
+    {% endfor %}
+    """)
 
-    LOG_XAXIS_TEMPLATE = """
-    var xdomain{axid} = [{xlim[0]}, {xlim[1]}];
-    var x_{axid} = d3.scale.log()
-                     .domain(xdomain{axid})
-                     .range([0, width_{axid}]);
-    var x_data_map{axid} = x_{axid};
-    """
-
-    DATE_XAXIS_TEMPLATE = """
-    var start_date_x{axid} = new Date({d0[0]}, {d0[1]}, {d0[2]}, {d0[3]},
-                                      {d0[4]}, {d0[5]}, {d0[6]});
-    var end_date_x{axid} = new Date({d1[0]}, {d1[1]}, {d1[2]}, {d1[3]},
-                                    {d1[4]}, {d1[5]}, {d1[6]});
-    var xdomain{axid} = [start_date_x{axid}, end_date_x{axid}];
-
-    var x_{axid} = d3.time.scale()
-                      .domain(xdomain{axid})
-                      .range([0, width_{axid}]);
-
-    var x_reverse_date_scale_{axid} = d3.time.scale()
-                                        .domain(xdomain{axid})
-                                        .range([{xlim[0]}, {xlim[1]}]);
-
-    var x_data_map{axid} = function (x)
-                {{ return x_{axid}(x_reverse_date_scale_{axid}.invert(x));}}
-    """
-
-    LINEAR_YAXIS_TEMPLATE = """
-    var ydomain{axid} = [{ylim[0]}, {ylim[1]}];
-    var y_{axid} = d3.scale.linear()
-                           .domain(ydomain{axid})
-                           .range([height_{axid}, 0]);
-    var y_data_map{axid} = y_{axid};
-    """
-
-    LOG_YAXIS_TEMPLATE = """
-    var ydomain{axid} = [{ylim[0]}, {ylim[1]}];
-    var y_{axid} = d3.scale.log()
-                           .domain(ydomain{axid})
-                           .range([height_{axid}, 0]);
-    var y_data_map{axid} = y_{axid};
-    """
-
-    DATE_YAXIS_TEMPLATE = """
-    var start_date_y{axid} = new Date({d0[0]}, {d0[1]}, {d0[2]}, {d0[3]},
-                                      {d0[4]}, {d0[5]}, {d0[6]});
-    var end_date_y{axid} = new Date({d1[0]}, {d1[1]}, {d1[2]}, {d1[3]},
-                                    {d1[4]}, {d1[5]}, {d1[6]});
-    var ydomain{axid} = [start_date_y{axid}, end_date_y{axid}];
-
-    var y_{axid} = d3.time.scale()
-                      .domain(ydomain{axid})
-                      .range([0, width_{axid}]);
-
-    var y_reverse_date_scale_{axid} = d3.time.scale()
-                                             .domain(ydomain{axid})
-                                             .range([{ylim[0]}, {ylim[1]}]);
-
-    var y_data_map{axid} = function (y)
-                {{ return y_{axid}(y_reverse_date_scale_{axid}.invert(y));}}
-    """
-
-    XAXIS_TEMPLATES = {'linear': LINEAR_XAXIS_TEMPLATE,
-                       'log': LOG_XAXIS_TEMPLATE,
-                       'date': DATE_XAXIS_TEMPLATE}
-
-    YAXIS_TEMPLATES = {'linear': LINEAR_YAXIS_TEMPLATE,
-                       'log': LOG_YAXIS_TEMPLATE,
-                       'date': DATE_YAXIS_TEMPLATE}
-
-    AXES_TEMPLATE = """
+    TEMPLATE = jinja2.Template("""
     // store the width and height of the axes
-    var width_{axid} = {bbox[2]} * figwidth;
-    var height_{axid} = {bbox[3]} * figheight
+    var width_{{ axid }} = {{ bbox[2] }} * figwidth;
+    var height_{{ axid }} = {{ bbox[3] }} * figheight;
 
-    {xaxis_code}
-    {yaxis_code}
+    {% if xscale == 'date' %}
+      var xdomain{{ axid }} = [new Date({{ xdaterange[0]|join(", ") }}),
+                               new Date({{ xdaterange[1]|join(", ") }})];
+    {% else %}
+      var xdomain{{ axid }} = [{{ xlim[0] }}, {{ xlim[1] }}];
+    {% endif %}
 
+    {% if yscale == 'date' %}
+      var ydomain{{ axid }} = [new Date({{ ydaterange[0]|join(", ") }}),
+                               new Date({{ ydaterange[1]|join(", ") }})];
+    {% else %}
+      var ydomain{{ axid }} = [{{ ylim[0] }}, {{ ylim[1] }}];
+    {% endif %}
+
+    {% if xscale == 'linear' %}
+      var x_{{ axid }} = d3.scale.linear();
+      var x_data_map{{ axid }} = x_{{ axid }};
+    {% elif xscale == 'log' %}
+      var x_{{ axid }} = d3.scale.log();
+      var x_data_map{{ axid }} = x_{{ axid }};
+    {% elif xscale == 'date' %}
+      var x_{{ axid }} = d3.time.scale();
+      var x_reverse_{{ axid }} = d3.time.scale()
+                                      .domain(xdomain{{ axid }})
+                                      .range([{{ xlim[0] }}, {{ xlim[1] }}]);
+      var x_data_map{{ axid }} = function(x)
+                  { return x_{{ axid }}(x_reverse_{{ axid }}.invert(x));}
+    {% endif %}
+
+    {% if yscale == 'linear' %}
+      var y_{{ axid }} = d3.scale.linear();
+      var y_data_map{{ axid }} = y_{{ axid }};
+    {% elif yscale == 'log' %}
+      var y_{{ axid }} = d3.scale.log();
+      var y_data_map{{ axid }} = y_{{ axid }};
+    {% elif yscale == 'date' %}
+      var y_{{ axid }} = d3.time.scale();
+      var y_reverse_{{ axid }} = d3.time.scale()
+                                      .domain(ydomain{{ axid }})
+                                      .range([{{ ylim[0] }}, {{ ylim[1] }}]);
+      var y_data_map{{ axid }} = function(y)
+                  { return y_{{ axid }}(y_reverse_{{ axid }}.invert(y));}
+    {% endif %}
+
+    // set axes limits and sizes
+    x_{{ axid }}.domain(xdomain{{ axid }})
+                .range([0, width_{{ axid }}]);
+    y_{{ axid }}.domain(ydomain{{ axid }})
+                .range([height_{{ axid }}, 0]);
 
     // zoom object for the axes
-    var zoom{axid} = d3.behavior.zoom()
-                    .x(x_{axid})
-                    .y(y_{axid})
-                    .on("zoom", zoomed{axid});
+    var zoom{{ axid }} = d3.behavior.zoom()
+                    .x(x_{{ axid }})
+                    .y(y_{{ axid }})
+                    .on("zoom", zoomed{{ axid }});
 
     // create the axes itself
-    var baseaxes_{axid} = canvas.append('g')
-            .attr('transform', 'translate(' + ({bbox[0]} * figwidth) + ',' +
-                              ((1 - {bbox[1]} - {bbox[3]}) * figheight) + ')')
-            .attr('width', width_{axid})
-            .attr('height', height_{axid})
+    var baseaxes_{{ axid }} = canvas.append('g')
+            .attr('transform', 'translate(' +
+                              ({{ bbox[0] }} * figwidth) + ',' +
+                              ((1 - {{ bbox[1] }} - {{ bbox[3] }}) * figheight)
+                              + ')')
+            .attr('width', width_{{ axid }})
+            .attr('height', height_{{ axid }})
             .attr('class', 'main')
-            .call(zoom{axid});
+            .call(zoom{{ axid }});
 
     // create the axes background
-    baseaxes_{axid}.append("svg:rect")
-                      .attr("width", width_{axid})
-                      .attr("height", height_{axid})
-                      .attr("class", "bg{axid}");
+    baseaxes_{{ axid }}.append("svg:rect")
+                      .attr("width", width_{{ axid }})
+                      .attr("height", height_{{ axid }})
+                      .attr("class", "bg{{ axid }}");
 
     // axis factory functions: used for grid lines & axes
-    var create_xAxis_{axid} = function(){{
+    var create_xAxis_{{ axid }} = function(){
        return d3.svg.axis()
-            .scale(x_{axid})
+            .scale(x_{{ axid }})
             .orient('bottom');
-    }}
+    }
 
-    var create_yAxis_{axid} = function(){{
+    var create_yAxis_{{ axid }} = function(){
        return d3.svg.axis()
-            .scale(y_{axid})
+            .scale(y_{{ axid }})
             .orient('left');
-    }}
+    }
 
     // draw the x axis
-    var xAxis_{axid} = create_xAxis_{axid}();
+    var xAxis_{{ axid }} = create_xAxis_{{ axid }}();
 
-    baseaxes_{axid}.append('g')
-            .attr('transform', 'translate(0,' + (height_{axid}) + ')')
-            .attr('class', 'axes{axid} x axis')
-            .call(xAxis_{axid});
+    baseaxes_{{ axid }}.append('g')
+            .attr('transform', 'translate(0,' + (height_{{ axid }}) + ')')
+            .attr('class', 'axes{{ axid }} x axis')
+            .call(xAxis_{{ axid }});
 
     // draw the y axis
-    var yAxis_{axid} = create_yAxis_{axid}();
+    var yAxis_{{ axid }} = create_yAxis_{{ axid }}();
 
-    baseaxes_{axid}.append('g')
-            .attr('transform', 'translate(0,0)')
-            .attr('class', 'axes{axid} y axis')
-            .call(yAxis_{axid});
+    baseaxes_{{ axid }}.append('g')
+            .attr('class', 'axes{{ axid }} y axis')
+            .call(yAxis_{{ axid }});
 
     // create the clip boundary
-    var clip_{axid} = baseaxes_{axid}.append("svg:clipPath")
-                             .attr("id", "clip{axid}")
+    var clip_{{ axid }} = baseaxes_{{ axid }}.append("svg:clipPath")
+                             .attr("id", "clip{{ axid }}")
                              .append("svg:rect")
                              .attr("x", 0)
                              .attr("y", 0)
-                             .attr("width", width_{axid})
-                             .attr("height", height_{axid});
+                             .attr("width", width_{{ axid }})
+                             .attr("height", height_{{ axid }});
 
     // axes_{axid} is the axes on which to draw plot components: they'll
     // be clipped when zooming or scrolling moves them out of the plot.
-    var axes_{axid} = baseaxes_{axid}.append('g')
-            .attr("clip-path", "url(#clip{axid})");
+    var axes_{{ axid }} = baseaxes_{{ axid }}.append('g')
+            .attr("clip-path", "url(#clip{{ axid }})");
 
-    {elements}
+    {% for child in children %}
+    {{ child.html() }}
+    {% endfor %}
 
-    function zoomed{axid}() {{
+    function zoomed{{ axid }}() {
         //console.log(d3.event);  // for some reason this is sometimes null
-        //console.log(zoom{axid}.translate());
-        //console.log(zoom{axid}.scale());
+        //console.log(zoom{{ axid }}.translate());
+        //console.log(zoom{{ axid }}.scale());
 
-        baseaxes_{axid}.select(".x.axis").call(xAxis_{axid});
-        baseaxes_{axid}.select(".y.axis").call(yAxis_{axid});
+        baseaxes_{{ axid }}.select(".x.axis").call(xAxis_{{ axid }});
+        baseaxes_{{ axid }}.select(".y.axis").call(yAxis_{{ axid }});
 
-        {element_zooms}
-    }}
+        {% for child in children %}
+          {{ child.zoom() }}
+        {% endfor %}
+    }
 
-    function reset{axid}() {{
-      d3.transition().duration(750).tween("zoom", function() {{
-        var ix = d3.interpolate(x_{axid}.domain(), xdomain{axid}),
-            iy = d3.interpolate(y_{axid}.domain(), ydomain{axid});
-        return function(t) {{
-          zoom{axid}.x(x_{axid}.domain(ix(t))).y(y_{axid}.domain(iy(t)));
-          zoomed{axid}();
-        }};
-      }});
-    }}
+    function reset{{ axid }}() {
+      d3.transition().duration(750).tween("zoom", function() {
+        var ix = d3.interpolate(x_{{ axid }}.domain(), xdomain{{ axid }}),
+            iy = d3.interpolate(y_{{ axid }}.domain(), ydomain{{ axid }});
+        return function(t) {
+          zoom{{ axid }}
+               .x(x_{{ axid }}.domain(ix(t)))
+               .y(y_{{ axid }}.domain(iy(t)));
+          zoomed{{ axid }}();
+        };
+      });
+    }
 
-    d3.select("#reset{figid}").on("click", reset{axid});
-    """
+    d3.select("#reset{{ figid }}").on("click", reset{{ axid }});
+    """)
 
     def __init__(self, parent, ax):
         self._initialize(parent=parent, _ax=ax)
@@ -375,56 +352,47 @@ class D3Axes(D3Base):
     def style(self):
         axesbg = color_to_hex(self.ax.patch.get_facecolor())
         ticks = self.ax.xaxis.get_ticklabels() + self.ax.yaxis.get_ticklabels()
+
         if len(ticks) == 0:
             fontsize_x = 11
         else:
             fontsize_x = ticks[0].properties()['size']
-        return '\n'.join([self.STYLE.format(axid=self.axid,
-                                            figid=self.figid,
-                                            axesbg=axesbg,
-                                            fontsize=fontsize_x)] +
-                         [c.style() for c in self.children])
 
-    def html(self):
-        elements = '\n'.join(c.html() for c in self.children)
-        zooms = '\n'.join(c.zoom() for c in self.children)
+        return self.STYLE.render(axid=self.axid,
+                                 figid=self.figid,
+                                 axesbg=axesbg,
+                                 fontsize=fontsize_x,
+                                 children=self.children)
 
-        codes = {}
-        axis = {'x': self.ax.xaxis,
-                'y': self.ax.yaxis}
-        templates = {'x': self.XAXIS_TEMPLATES,
-                     'y': self.YAXIS_TEMPLATES}
-
-        for xy in ['x', 'y']:
-            d0, d1 = None, None  # used only for date formatting
-
-            if isinstance(axis[xy].converter, mpl.dates.DateConverter):
-                date0, date1 = mpl.dates.num2date(self.ax.get_xlim())
-                d0 = [date0.year, date0.month - 1, date0.day, date0.hour,
-                      date0.minute, date0.second, date0.microsecond / 1e3]
-                d1 = [date1.year, date1.month - 1, date1.day, date1.hour,
-                      date1.minute, date1.second, date1.microsecond / 1e3]
-                template = templates[xy]['date']
-            elif axis[xy].get_scale() == 'log':
-                template = templates[xy]['log']
-            elif axis[xy].get_scale() == 'linear':
-                template = templates[xy]['linear']
+    def _get_axis_args(self):
+        args = {}
+        for axname in ['x', 'y']:
+            axis = getattr(self.ax, axname + 'axis')
+            if isinstance(axis.converter, mpl.dates.DateConverter):
+                dtup = lambda d: (d.year, d.month - 1, d.day, d.hour,
+                                  d.minute, d.second, d.microsecond / 1e3)
+                daterange = map(dtup, mpl.dates.num2date(self.ax.get_xlim()))
+                scale = 'date'
             else:
+                scale = axis.get_scale()
+                daterange = None
+
+            if scale not in ['date', 'linear', 'log']:
                 raise ValueError("Unknown axis scale: "
                                  "{0}".format(axis[xy].get_scale()))
 
-            codes[xy] = template.format(axid=self.axid,
-                                        xlim=self.ax.get_xlim(),
-                                        ylim=self.ax.get_ylim(),
-                                        d0=d0, d1=d1)
+            args[axname + 'daterange'] = daterange
+            args[axname + 'scale'] = scale
+        return args
 
-        return self.AXES_TEMPLATE.format(figid=self.figid,
-                                         axid=self.axid,
-                                         xaxis_code=codes['x'],
-                                         yaxis_code=codes['y'],
-                                         bbox=self.ax.get_position().bounds,
-                                         elements=elements,
-                                         element_zooms=zooms)
+    def html(self):
+        return self.TEMPLATE.render(figid=self.figid,
+                                    axid=self.axid,
+                                    bbox=self.ax.get_position().bounds,
+                                    children=self.children,
+                                    xlim=self.ax.get_xlim(),
+                                    ylim=self.ax.get_ylim(),
+                                    **self._get_axis_args())
 
 
 class D3Grid(D3Base):
