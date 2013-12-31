@@ -17,8 +17,14 @@ def fig_to_d3(fig, d3_url=None):
 
     Returns
     -------
-    fig_d3 : IPython.display.HTML object
-        the IPython HTML rich display of the figure.
+    fig_html : string
+        the HTML representation of the figure
+
+    See Also
+    --------
+    - show_d3 : show a figure in a new browser window, notebook not required.
+    - display_d3 : embed figure within the IPython notebook
+    - enable_notebook : automatically embed figures in the IPython notebook
     """
     return D3Figure(fig).html(d3_url)
 
@@ -41,6 +47,11 @@ def display_d3(fig=None, closefig=True, d3_url=None):
     -------
     fig_d3 : IPython.display.HTML object
         the IPython HTML rich display of the figure.
+
+    See Also
+    --------
+    - show_d3 : show a figure in a new browser window, notebook not required.
+    - enable_notebook : automatically embed figures in the IPython notebook
     """
     # import here, in case users don't have requirements installed
     from IPython.display import HTML
@@ -55,6 +66,8 @@ def display_d3(fig=None, closefig=True, d3_url=None):
 def show_d3(fig=None, d3_url=None, tmpfile='_tmp.html'):
     """Open figure in a web browser
 
+    Like plt.show(), this opens a figure visualization.
+
     Parameters
     ----------
     fig : matplotlib figure
@@ -62,6 +75,11 @@ def show_d3(fig=None, d3_url=None, tmpfile='_tmp.html'):
     d3_url : string (optional)
         The URL of the d3 library.  If not specified, a standard web path
         will be used.
+
+    See Also
+    --------
+    - display_d3 : embed figure within the IPython notebook
+    - enable_notebook : automatically embed figures in the IPython notebook
     """
     # import here, in case matplotlib.use(...) is called by user
     import matplotlib.pyplot as plt
@@ -87,6 +105,11 @@ def enable_notebook():
     or `%matplotlib inline`. This works by adding an HTML formatter
     for Figure objects; the existing SVG/PNG formatters will remain
     enabled.
+
+    See Also
+    --------
+    - disable_notebook : undo this operation
+    - display_d3 : display a single figure in the notebook
     """
     try:
         from IPython.core.getipython import get_ipython
@@ -99,7 +122,12 @@ def enable_notebook():
 
 
 def disable_notebook():
-    """Disable the automatic display of figures in the IPython Notebook."""
+    """Disable the automatic display of figures in the IPython Notebook.
+
+    See Also
+    --------
+    - enable_notebook : the operation this function undoes
+    """
     try:
         from IPython.core.getipython import get_ipython
         from matplotlib.figure import Figure
