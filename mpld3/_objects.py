@@ -13,6 +13,7 @@ import numpy as np
 from matplotlib.lines import Line2D
 from matplotlib.image import imsave
 from matplotlib.path import Path
+from matplotlib.text import Text
 import matplotlib as mpl
 
 from ._utils import (color_to_hex, get_dasharray, get_d3_shape_for_marker,
@@ -344,11 +345,16 @@ class D3Axes(D3Base):
                 warnings.warn("{0} not implemented.  "
                               "Elements will be ignored".format(collection))
 
+        for artist in ax.artists:
+            if isinstance(artist, Text):
+                self.children.append(D3Text(self, artist))
+            else:
+                warnings.warn("artist {0} not implemented. "
+                              "Elements will be ignored".format(artist))
+
         # Some warnings for pieces of matplotlib which are not yet implemented
-        for attr in ['artists', 'tables']:
-            if len(getattr(ax, attr)) > 0:
-                warnings.warn("{0} not implemented.  "
-                              "Elements will be ignored".format(attr))
+        if len(ax.tables) > 0:
+            warnings.warn("tables not implemented. Elements will be ignored")
 
         if ax.legend_ is not None:
             warnings.warn("legend is not implemented: it will be ignored")
@@ -634,6 +640,9 @@ class D3Text(D3Base):
         axes_{{ axid }}.select(".text{{ textid }}")
                        .attr("x", x_data_map{{ axid }}({{ position[0] }}))
                        .attr("y", y_data_map{{ axid }}({{ position[1] }}))
+                       .attr("transform", "rotate({{ rotation }}, "
+                             + x_data_map{{ axid }}({{ position[0] }}) + ","
+                             + y_data_map{{ axid }}({{ position[1] }}) + ")");
      {% endif %}
     {% endif %}
     """)
@@ -659,18 +668,21 @@ class D3Text(D3Base):
 
         return x, y
 
+    def get_rotation(self):
+        return -self.text.get_rotation()
+
     def zoom(self):
         x, y = self.text.get_position()
         return self.ZOOM.render(zoomable=self.zoomable(),
                                 position=self.get_position(),
                                 axid=self.axid,
                                 textid=self.textid,
-                                text=self.text.get_text())
+                                text=self.text.get_text(),
+                                rotation=self.get_rotation())
 
     def html(self):
         color = color_to_hex(self.text.get_color())
         fontsize = self.text.get_size()
-        rotation = -self.text.get_rotation()
 
         # TODO: fix vertical anchor point
         h_anchor = {'left': 'start',
@@ -684,7 +696,7 @@ class D3Text(D3Base):
                                     text=self.text.get_text(),
                                     fontsize=fontsize,
                                     color=color,
-                                    rotation=rotation,
+                                    rotation=self.get_rotation(),
                                     h_anchor=h_anchor)
 
 
