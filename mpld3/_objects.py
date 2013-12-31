@@ -962,51 +962,68 @@ class D3PatchCollection(D3Collection):
 
 class D3Image(D3Base):
     """Class for representing matplotlib images in D3js"""
+    # TODO: - Support interpolation keywords
+    #       - Can rendering be done in-browser?
+
+    STYLE = jinja2.Template("""
+    div#figure{{ figid }}
+    .image{{ elid }} {
+       opacity: {{ alpha }};
+    }
+    """)
 
     TEMPLATE = jinja2.Template("""
     axes_{{ axid }}.append("svg:image")
         .attr('class', 'image{{ elid }}')
-        .attr("x", x_{{ axid }}({{ x }}))
-        .attr("y", y_{{ axid }}({{ y }}))
-        .attr("width", x_{{ axid }}({{ width }}) - x_{{ axid }}({{ x }}))
-        .attr("height", y_{{ axid }}({{ height }}) - y_{{ axid }}({{ y }}))
+        .attr("x", x_{{ axid }}({{ extent[0] }}))
+        .attr("y", y_{{ axid }}({{ extent[3] }}))
+        .attr("width", x_{{ axid }}({{ extent[1] }})
+                       - x_{{ axid }}({{ extent[0] }}))
+        .attr("height", y_{{ axid }}({{ extent[2] }})
+                        - y_{{ axid }}({{ extent[3] }}))
         .attr("xlink:href", "data:image/png;base64," + "{{ base64_data }}")
         .attr("preserveAspectRatio", "none");
     """)
 
     ZOOM = jinja2.Template("""
         axes_{{ axid }}.select(".image{{ elid }}")
-                   .attr("x", x_{{ axid }}({{ x }}))
-                   .attr("y", y_{{ axid }}({{ y }}))
-                   .attr("width", x_{{ axid }}({{ width }})
-                                  - x_{{ axid }}({{ x }}))
-                   .attr("height", y_{{ axid }}({{ height }})
-                                   - y_{{ axid }}({{ y }}));
+                   .attr("x", x_{{ axid }}({{ extent[0] }}))
+                   .attr("y", y_{{ axid }}({{ extent[3] }}))
+                   .attr("width", x_{{ axid }}({{ extent[1] }})
+                                  - x_{{ axid }}({{ extent[0] }}))
+                   .attr("height", y_{{ axid }}({{ extent[2] }})
+                                   - y_{{ axid }}({{ extent[3] }}));
     """)
 
     def __init__(self, parent, ax, image, i=''):
         self._initialize(parent=parent, ax=ax, image=image)
+        if self.image.get_interpolation() != 'bilinear':
+            warnings.warn("Image interpolations not yet supported")
 
     def zoom(self):
-        data = self.image.get_array().data
-        height, width = data.shape
         return self.ZOOM.render(elid=self.elid,
                                 axid=self.axid,
-                                x=0, y=0,
-                                width=width, height=height)
+                                extent=self.image.get_extent())
+
+    def get_base64_data(self):
+        data = self.image.get_array().data
+        binary_buffer = io.BytesIO()
+        imsave(binary_buffer, data,
+               vmin=self.image.get_clim()[0],
+               vmax=self.image.get_clim()[1],
+               cmap=self.image.get_cmap(),
+               origin=self.image.origin,
+               format='png')
+        binary_buffer.seek(0)
+        return base64.b64encode(binary_buffer.read())
 
     def html(self):
-        data = self.image.get_array().data
-        height, width = data.shape
-
-        # encode image data in base-64
-        binary_buffer = io.BytesIO()
-        imsave(binary_buffer, data)
-        binary_buffer.seek(0)
-        base64_data = base64.b64encode(binary_buffer.read())
-
         return self.TEMPLATE.render(axid=self.axid,
                                     elid=self.elid,
-                                    base64_data=base64_data,
-                                    x=0, y=0,
-                                    width=width, height=height)
+                                    base64_data=self.get_base64_data(),
+                                    extent=self.image.get_extent())
+
+    def style(self):
+        return self.STYLE.render(elid=self.elid,
+                                 figid=self.figid,
+                                 alpha=self.image.get_alpha())
