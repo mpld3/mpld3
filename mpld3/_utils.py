@@ -84,7 +84,7 @@ def construct_svg_path(path, transform=None):
         transform = IdentityTransform()
 
     steps = []
-    for vert, code in path.iter_segments():
+    for vert, code in path.iter_segments(simplify=False):
         vert = transform.transform(vert.reshape(-1, 2)).ravel()
         step = PATH_DICT[code]
         if step != 'Z':
@@ -99,7 +99,7 @@ def path_data(path, transform=None):
         path = path.transformed(transform)
 
     return [(PATH_DICT[path_code], vertices.tolist())
-            for vertices, path_code in path.iter_segments()]
+            for vertices, path_code in path.iter_segments(simplify=False)]
 
 
 class Bunch(dict):
