@@ -601,36 +601,6 @@ class D3Line2D(D3Base):
                                     markershape=msh)
 
 
-class D3LineCollection(D3Base):
-    """Class to represent LineCollections in D3"""
-    def __init__(self, parent, collection):
-        self._initialize(parent=parent, collection=collection)
-        self.lines = []
-
-        collection.update_scalarmappable()
-        colors = collection.get_colors()
-        linewidths = collection.get_linewidths()
-        styles = collection.get_linestyles()
-        for i, path in enumerate(collection.get_paths()):
-            line_segment = Line2D(path.vertices[:, 0], path.vertices[:, 1],
-                                  linewidth=linewidths[i % len(linewidths)],
-                                  color=colors[i % len(colors)],
-                                  transform=collection.get_transform())
-            style = styles[i % len(styles)][1]
-            if style is not None:
-                line_segment.set_dashes(style)
-            self.lines.append(D3Line2D(parent, line_segment))
-
-    def zoom(self):
-        return "\n".join([line.zoom() for line in self.lines])
-
-    def style(self):
-        return "\n".join([line.style() for line in self.lines])
-
-    def html(self):
-        return "\n".join([line.html() for line in self.lines])
-
-
 class D3Text(D3Base):
     """Class for representing matplotlib text in D3js"""
 
@@ -981,7 +951,7 @@ class D3QuadMesh(D3Collection):
         D3Collection.__init__(self, *args, **kwargs)
 
 
-class _D3LineCollection(D3Collection):
+class D3LineCollection(D3Collection):
     def _update_data(self, data, defaults):
         # Hack to make length of paths match length of colors.
         # not sure why there is one more color than the number of paths.
