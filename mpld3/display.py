@@ -1,7 +1,5 @@
-import os
-import webbrowser
-
 from ._objects import D3Figure
+from ._server import serve_and_open
 
 
 def fig_to_d3(fig, d3_url=None):
@@ -63,38 +61,41 @@ def display_d3(fig=None, closefig=True, d3_url=None):
     return HTML(fig_to_d3(fig, d3_url))
 
 
-def show_d3(fig=None, d3_url=None, tmpfile='_tmp.html'):
+def show_d3(fig=None, d3_url=None, ip='127.0.0.1', port=8888, n_retries=50):
     """Open figure in a web browser
 
-    Like plt.show(), this opens a figure visualization.
+    Similar behavior to plt.show().  This opens the D3 visualization of the
+    specified figure in the web browser.  On most platforms, the browser
+    will open automatically.
 
     Parameters
     ----------
     fig : matplotlib figure
-        The figure to display
+        The figure to display.  If not specified, the current active figure
+        will be used.
     d3_url : string (optional)
         The URL of the d3 library.  If not specified, a standard web path
         will be used.
+    ip : string, default = '127.0.0.1'
+        the ip address used for the local server
+    port : int, default = 8888
+        the port number to use for the local server.  If already in use,
+        a nearby open port will be found (see n_retries)
+    n_retries : int, default = 50
+        the maximum number of ports to try when locating an empty port.
 
     See Also
     --------
     - display_d3 : embed figure within the IPython notebook
     - enable_notebook : automatically embed figures in the IPython notebook
     """
-    # import here, in case matplotlib.use(...) is called by user
-    import matplotlib.pyplot as plt
-
     if fig is None:
+        # import here, in case matplotlib.use(...) is called by user
+        import matplotlib.pyplot as plt
         fig = plt.gcf()
 
-    # TODO: use tempfile; launch simple server so file isn't removed
-    f = open(tmpfile, 'w')
-    f.write(D3Figure(fig).html(d3_url))
-
-    # TODO: webbrowser.open is unpredictable for local files
-
-    # Open local file (works on OSX; maybe not on others)
-    webbrowser.open_new('file://localhost' + os.path.abspath(tmpfile))
+    serve_and_open(D3Figure(fig).html(d3_url),
+                   ip=ip, port=port, n_retries=n_retries)
 
 
 def enable_notebook():
