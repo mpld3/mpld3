@@ -2,7 +2,7 @@ import os
 import urllib2
 import numpy as np
 import matplotlib.pyplot as plt
-from mpld3 import fig_to_d3
+from mpld3 import fig_to_d3, show_d3
 
 # Download d3 file locally
 d3_filename = 'd3.v3.min.js'
@@ -11,26 +11,63 @@ if not os.path.exists(d3_filename):
     with open(d3_filename, 'w') as f:
         f.write(page.read())
 
-# create a plot
-fig, ax = plt.subplots(subplot_kw={'axisbg':'#EEEEEE'}, facecolor='white')
-ax.plot(np.random.random(10),
-        np.random.random(10),
-        'ob', markeredgecolor='lightblue',
-        markersize=20, markeredgewidth=10, alpha=0.5)
-ax.plot(np.linspace(0.1, 0.9, 10),
-        np.random.random(10), '-c', lw=5, alpha=0.5)
-ax.set_xlabel('x label')
-ax.set_ylabel('y label')
-ax.set_title('title', fontsize=20)
+#----------------------------------------------------------------------
+# create the figure and axes
+fig, ax = plt.subplots(2, 2, figsize=(8, 8),
+                       subplot_kw={'axisbg':'#EEEEEE'})
 
-ax.text(0.2, 0.85, "left", fontsize=18, ha='left')
-ax.text(0.2, 0.75, "center", fontsize=18, ha='center')
-ax.text(0.2, 0.65, "right", fontsize=18, ha='right')
+for axi in ax.flat:
+    axi.grid(color='white', linestyle='solid')
 
-ax.grid(True, color='white', linestyle='solid')
+#----------------------------------------------------------------------
+# first plot: an image
+x = np.linspace(-2, 2, 20)
+y = x[:, None]
+X = np.zeros((20, 20, 4))
 
-filename = "example.html"
-print "Writing output to {0}".format(filename)
-open(filename, 'w').write(fig_to_d3(fig, d3_filename))
+X[:, :, 0] = np.exp(- (x - 1) ** 2 - (y) ** 2)
+X[:, :, 1] = np.exp(- (x + 0.71) ** 2 - (y - 0.71) ** 2)
+X[:, :, 2] = np.exp(- (x + 0.71) ** 2 - (y + 0.71) ** 2)
+X[:, :, 3] = np.exp(-0.25 * (x ** 2 + y ** 2))
 
-#plt.show()
+ax[0, 0].imshow(X)
+ax[0, 0].set_title('An Image')
+ax[0, 0].grid()
+
+#----------------------------------------------------------------------
+# second plot: scatter
+x = np.random.normal(size=100)
+y = np.random.normal(size=100)
+c = np.random.random(100)
+s = 100 + 500 * np.random.random(100)
+
+ax[0, 1].scatter(x, y, c=c, s=s, alpha=0.3)
+ax[0, 1].set_title('A Scatter Plot')
+
+#----------------------------------------------------------------------
+# third plot: some random lines
+x = np.linspace(0, 10, 100)
+y = np.sin(x)
+dy = 0.4
+
+ax[1, 0].plot(x, y, '--k', lw=2)
+
+for i in range(20):
+    y_plot = np.convolve(np.ones(5) / 5., np.random.normal(y, dy), mode='same')
+    ax[1, 0].plot(x, y_plot, '-b', lw=2, alpha=0.1)
+
+ax[1, 0].set_title('Transparent Lines')
+
+#----------------------------------------------------------------------
+# fourth plot: filled regions
+x = np.linspace(0, 4 * np.pi, 100)
+y1 = np.sin(x / 2)
+y2 = np.sin(x)
+
+ax[1, 1].fill_between(x, y1, y2, where=y1 > y2,
+                      color='blue', alpha=0.3)
+ax[1, 1].fill_between(x, y1, y2, where=y1 <= y2,
+                 color='red', alpha=0.3)
+ax[1, 1].set_title('fill_between()')
+
+show_d3()

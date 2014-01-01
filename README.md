@@ -31,12 +31,11 @@ Trying it out
 -------------
 The package is pure python, and very light-weight.  You can take a look at
 the notebooks in the examples directory, or run ``create_example.py``, which
-will create an output file ``example.html`` which can be viewed in your
-browser.
+will create a set of plots and launch a browser window showing interactive
+views of these plots.
 
-Alternatively, check out the
-[IPython notebook examples](http://nbviewer.ipython.org/github/jakevdp/mpld3/tree/master/examples/)
-available in the ``examples`` directory.
+For a more comprehensive set of examples, see the
+[IPython notebook examples](http://nbviewer.ipython.org/github/jakevdp/mpld3/tree/master/examples/) available in the ``examples`` directory.
 
 Test Plots
 ----------
