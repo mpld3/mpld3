@@ -325,10 +325,6 @@ class D3Axes(D3Base):
         self.children += [D3Image(self, ax, image) for image in ax.images]
         self.children += [D3Grid(self)]
         self.children += [D3Line2D(self, line) for line in ax.lines]
-        self.children += [D3Text(self, text) for text in ax.texts]
-        self.children += [D3Text(self, text) for text in [ax.xaxis.label,
-                                                          ax.yaxis.label,
-                                                          ax.title]]
         self.children += [D3Patch(self, patch)
                           for i, patch in enumerate(ax.patches)]
 
@@ -352,6 +348,11 @@ class D3Axes(D3Base):
                 warnings.warn("artist {0} not implemented. "
                               "Elements will be ignored".format(artist))
 
+        # Move text labels later so they show up on top
+        self.children += [D3Text(self, text) for text in ax.texts]
+        self.children += [D3Text(self, text) for text in [ax.xaxis.label,
+                                                          ax.yaxis.label,
+                                                          ax.title]]
         # Some warnings for pieces of matplotlib which are not yet implemented
         if len(ax.tables) > 0:
             warnings.warn("tables not implemented. Elements will be ignored")
