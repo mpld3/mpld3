@@ -242,9 +242,9 @@ class D3Axes(D3Base):
         # TODO: re-order children according to their zorder.
         self.children = [D3Axis(self, "bottom"), D3Axis(self, "left")]
 
-        if self.ax.xaxis._gridOnMajor:
+        if self.has_xgrid():
             self.children.append(D3Grid(self, 'x'))
-        if self.ax.yaxis._gridOnMajor:
+        if self.has_ygrid():
             self.children.append(D3Grid(self, 'y'))
 
         self.children += [D3Line2D(self, line) for line in ax.lines]
@@ -290,14 +290,22 @@ class D3Axes(D3Base):
                 else:
                     warnings.warn("Ignoring legend element: {0}".format(child))
 
+    def has_xgrid(self):
+        return bool(self.ax.xaxis._gridOnMajor
+                    and self.ax.xaxis.get_gridlines())
+
+    def has_ygrid(self):
+        return bool(self.ax.yaxis._gridOnMajor
+                    and self.ax.yaxis.get_gridlines())
+
     def _style_args(self):
         return dict(axesbg=color_to_hex(self.ax.patch.get_facecolor()),
                     children=self.children)
 
     def _html_args(self):
         args = dict(bbox=json.dumps(self.ax.get_position().bounds),
-                    xgrid=json.dumps(self.ax.xaxis._gridOnMajor),
-                    ygrid=json.dumps(self.ax.yaxis._gridOnMajor),
+                    xgrid=json.dumps(self.has_xgrid()),
+                    ygrid=json.dumps(self.has_ygrid()),
                     children=self.children)
 
         # get args for each axis
