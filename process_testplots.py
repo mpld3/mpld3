@@ -60,7 +60,7 @@ def combine_testplots(wildcard='test_plots/*.py',
         the URL of the d3 library to use.  If not specified, a standard web
         address will be used.
     """
-    if isinstance(wildcard, basestring):
+    if isinstance(wildcard, str):
         filenames = glob.glob(wildcard)
     else:
         filenames = sum([glob.glob(w) for w in wildcard], [])
@@ -75,7 +75,7 @@ def combine_testplots(wildcard='test_plots/*.py',
 
         f = __import__(modulename)
         if hasattr(f, 'main'):
-            print "running {0}".format(filename)
+            print("running {0}".format(filename))
             fig = f.main()
             fig_html.append(fig_to_d3(fig, d3_url))
 
@@ -84,7 +84,7 @@ def combine_testplots(wildcard='test_plots/*.py',
             fig_names.append("\n<div class='fig'><img src={0}>"
                              "</div>\n".format(fig_png))
 
-    print "writing results to {0}".format(outfile)
+    print("writing results to {0}".format(outfile))
     with open(outfile, 'w') as f:
         f.write(TEMPLATE.format(left_col="".join(fig_html),
                                 right_col="".join(fig_names)))

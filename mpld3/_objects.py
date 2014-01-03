@@ -772,7 +772,7 @@ class D3Image(D3Base):
                origin=self.image.origin,
                format='png')
         binary_buffer.seek(0)
-        return base64.b64encode(binary_buffer.read())
+        return base64.b64encode(binary_buffer.read()).decode('utf-8')
 
     def _html_args(self):
         return dict(imageid=self.imageid,
@@ -893,13 +893,13 @@ class D3Collection(D3Base):
 
         data = {'o': offsets,
                 'p': paths}
-        defaults = {}
+        defaults = {'o': [[0, 0]]}
 
         self.collection.update_scalarmappable()  # this updates colors
-        data['ec'] = map(color_to_hex, self.collection.get_edgecolors())
+        data['ec'] = list(map(color_to_hex, self.collection.get_edgecolors()))
         defaults['ec'] = 'none'
 
-        data['fc'] = map(color_to_hex, self.collection.get_facecolors())
+        data['fc'] = list(map(color_to_hex, self.collection.get_facecolors()))
         defaults['fc'] = 'none'
 
         data['alpha'] = self.collection.get_alpha()

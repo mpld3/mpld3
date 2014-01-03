@@ -2,15 +2,21 @@
 A Simple server used to show mpld3 images.
 """
 import threading
-import BaseHTTPServer
 import webbrowser
 import socket
 import itertools
 import random
 
+try:
+    # Python 2.x
+    import BaseHTTPServer as server
+except ImportError:
+    # Python 3.x
+    from http import server
+
 
 def generate_handler(html):
-    class MyHandler(BaseHTTPServer.BaseHTTPRequestHandler):
+    class MyHandler(server.BaseHTTPRequestHandler):
         def do_HEAD(self):
             self.send_response(200)
             self.send_header("Content-type", "text/html")
@@ -58,7 +64,7 @@ def serve_and_open(html, ip='127.0.0.1', port=8888, n_retries=50):
     """
     port = find_open_port(ip, port, n_retries)
     Handler = generate_handler(html)
-    server = BaseHTTPServer.HTTPServer((ip, port), Handler)
+    server = server.HTTPServer((ip, port), Handler)
 
     # Use a thread to open a web browser pointing to the server
     b = lambda: webbrowser.open('http://{0}:{1}'.format(ip, port))
