@@ -14,11 +14,12 @@ from matplotlib.lines import Line2D
 from matplotlib.image import imsave
 from matplotlib.path import Path
 from matplotlib.text import Text
+from matplotlib.patches import Patch
 import matplotlib as mpl
 
 from ._utils import (color_to_hex, get_dasharray, get_d3_shape_for_marker,
                      path_data, collection_data)
-from ._js import CONSTRUCT_SVG_PATH
+from . import _js as js
 
 
 D3_URL = "http://d3js.org/d3.v3.min.js"
@@ -66,9 +67,6 @@ class D3Base(object):
     def style(self):
         return ''
 
-    def zoom(self):
-        return ''
-
     def __str__(self):
         return self.html()
 
@@ -76,10 +74,16 @@ class D3Base(object):
 class D3Figure(D3Base):
     """Class for representing a matplotlib Figure in D3js"""
 
-    TEMPLATE = jinja2.Template("""
+    HTML = jinja2.Template("""
     {% if with_d3_import %}
     <script type="text/javascript" src="{{ d3_url }}"></script>
     {% endif %}
+
+    <script type="text/javascript">
+    {% for function in js_functions %}
+       {{ function }}
+    {% endfor %}
+    </script>
 
     {% if with_style %}
     <style>
@@ -91,28 +95,33 @@ class D3Figure(D3Base):
 
     <div id='figure{{ figid }}'>
     {% if with_reset_button %}
-      <button id='reset{{ figid }}'>Reset</button>
+      <button class='reset'>Reset</button>
     {% endif %}
     </div>
-
     <script type="text/javascript">
-    func{{ figid }} = function(figure){
-        var figwidth = {{ fig.get_figwidth() }} * {{ fig.dpi }};
-        var figheight = {{ fig.get_figheight() }} * {{ fig.dpi }};
+    var create_fig{{ figid }} = function(){
+      var figwidth = {{ fig.get_figwidth() }} * {{ fig.dpi }};
+      var figheight = {{ fig.get_figheight() }} * {{ fig.dpi }};
+      var fig = new Figure("div#figure{{ figid }}", figwidth, figheight);
 
-        var canvas = figure.append('svg:svg')
-                       .attr('width', figwidth)
-                       .attr('height', figheight)
-                       .attr('class', 'canvas')
-
-        {% for ax in axes %}
+      {% for ax in axes %}
          {{ ax.html() }}
-        {% endfor %}
+      {% endfor %}
+
+      fig.draw();
+
+      {% if with_reset_button %}
+        d3.select("#figure{{ figid }}")
+          .select("button.reset")
+          .on("click", fig.reset.bind(fig));
+      {% endif %}
+
+      return fig
     }
 
-    // set a timeout of 0 to allow d3.js to load
-    setTimeout(function(){ func{{ figid }}(
-                                d3.select('#figure{{ figid }}')) }, 0)
+    // var fig_{{ figid }} = create_fig{{ figid }}();
+    // set a timeout of 0: this makes things work in the IPython notebook
+    setTimeout(create_fig{{ figid }}, 0);
     </script>
     """)
 
@@ -125,13 +134,16 @@ class D3Figure(D3Base):
              with_reset_button=False):
         if d3_url is None:
             d3_url = D3_URL
-        return self.TEMPLATE.render(figid=self.figid,
-                                    fig=self.fig,
-                                    axes=self.axes,
-                                    d3_url=d3_url,
-                                    with_d3_import=with_d3_import,
-                                    with_style=with_style,
-                                    with_reset_button=with_reset_button)
+        return self.HTML.render(figid=self.figid,
+                                fig=self.fig,
+                                axes=self.axes,
+                                d3_url=d3_url,
+                                js_functions=[js.FIGURE_CLASS, js.AXES_CLASS,
+                                              js.AXIS_CLASS, js.GRID_CLASS,
+                                              js.CONSTRUCT_SVG_PATH],
+                                with_d3_import=with_d3_import,
+                                with_style=with_style,
+                                with_reset_button=with_reset_button)
 
 
 class D3Axes(D3Base):
@@ -139,22 +151,7 @@ class D3Axes(D3Base):
 
     STYLE = jinja2.Template("""
     div#figure{{ figid }}
-    .axes{{ axid }}.axis line, .axes{{ axid }}.axis path {
-        shape-rendering: crispEdges;
-        stroke: black;
-        fill: none;
-    }
-
-    div#figure{{ figid }}
-    .axes{{ axid }}.axis text {
-        font-family: sans-serif;
-        font-size: {{ fontsize }}px;
-        fill: black;
-        stroke: none;
-    }
-
-    div#figure{{ figid }}
-    .bg{{ axid }}{
+    .axesbg{
         fill: {{ axesbg }};
     }
 
@@ -163,170 +160,38 @@ class D3Axes(D3Base):
     {% endfor %}
     """)
 
-    TEMPLATE = jinja2.Template("""
-    // store the width and height of the axes
-    var width_{{ axid }} = {{ bbox[2] }} * figwidth;
-    var height_{{ axid }} = {{ bbox[3] }} * figheight;
-
-    {% if xscale == 'date' %}
-      var xdomain{{ axid }} = [new Date({{ xdaterange[0]|join(", ") }}),
-                               new Date({{ xdaterange[1]|join(", ") }})];
-    {% else %}
-      var xdomain{{ axid }} = [{{ xlim[0] }}, {{ xlim[1] }}];
-    {% endif %}
-
-    {% if yscale == 'date' %}
-      var ydomain{{ axid }} = [new Date({{ ydaterange[0]|join(", ") }}),
-                               new Date({{ ydaterange[1]|join(", ") }})];
-    {% else %}
-      var ydomain{{ axid }} = [{{ ylim[0] }}, {{ ylim[1] }}];
-    {% endif %}
-
-    {% if xscale == 'linear' %}
-      var x_{{ axid }} = d3.scale.linear();
-      var x_data_map{{ axid }} = x_{{ axid }};
-    {% elif xscale == 'log' %}
-      var x_{{ axid }} = d3.scale.log();
-      var x_data_map{{ axid }} = x_{{ axid }};
-    {% elif xscale == 'date' %}
-      var x_{{ axid }} = d3.time.scale();
-      var x_reverse_{{ axid }} = d3.time.scale()
-                                      .domain(xdomain{{ axid }})
-                                      .range([{{ xlim[0] }}, {{ xlim[1] }}]);
-      var x_data_map{{ axid }} = function(x)
-                  { return x_{{ axid }}(x_reverse_{{ axid }}.invert(x));}
-    {% endif %}
-
-    {% if yscale == 'linear' %}
-      var y_{{ axid }} = d3.scale.linear();
-      var y_data_map{{ axid }} = y_{{ axid }};
-    {% elif yscale == 'log' %}
-      var y_{{ axid }} = d3.scale.log();
-      var y_data_map{{ axid }} = y_{{ axid }};
-    {% elif yscale == 'date' %}
-      var y_{{ axid }} = d3.time.scale();
-      var y_reverse_{{ axid }} = d3.time.scale()
-                                      .domain(ydomain{{ axid }})
-                                      .range([{{ ylim[0] }}, {{ ylim[1] }}]);
-      var y_data_map{{ axid }} = function(y)
-                  { return y_{{ axid }}(y_reverse_{{ axid }}.invert(y));}
-    {% endif %}
-
-    // set axes limits and sizes
-    x_{{ axid }}.domain(xdomain{{ axid }})
-                .range([0, width_{{ axid }}]);
-    y_{{ axid }}.domain(ydomain{{ axid }})
-                .range([height_{{ axid }}, 0]);
-
-    // zoom object for the axes
-    var zoom{{ axid }} = d3.behavior.zoom()
-                    .x(x_{{ axid }})
-                    .y(y_{{ axid }})
-                    .on("zoom", zoomed{{ axid }});
-
-    // create the axes itself
-    var baseaxes_{{ axid }} = canvas.append('g')
-            .attr('transform', 'translate(' +
-                              ({{ bbox[0] }} * figwidth) + ',' +
-                              ((1 - {{ bbox[1] }} - {{ bbox[3] }}) * figheight)
-                              + ')')
-            .attr('width', width_{{ axid }})
-            .attr('height', height_{{ axid }})
-            .attr('class', 'main')
-            .call(zoom{{ axid }});
-
-    // create the axes background
-    baseaxes_{{ axid }}.append("svg:rect")
-                      .attr("width", width_{{ axid }})
-                      .attr("height", height_{{ axid }})
-                      .attr("class", "bg{{ axid }}");
-
-    // axis factory functions: used for grid lines & axes
-    var create_xAxis_{{ axid }} = function(){
-       return d3.svg.axis()
-            .scale(x_{{ axid }})
-            .orient('bottom');
-    }
-
-    var create_yAxis_{{ axid }} = function(){
-       return d3.svg.axis()
-            .scale(y_{{ axid }})
-            .orient('left');
-    }
-
-    // draw the x axis
-    var xAxis_{{ axid }} = create_xAxis_{{ axid }}();
-
-    baseaxes_{{ axid }}.append('g')
-            .attr('transform', 'translate(0,' + (height_{{ axid }}) + ')')
-            .attr('class', 'axes{{ axid }} x axis')
-            .call(xAxis_{{ axid }});
-
-    // draw the y axis
-    var yAxis_{{ axid }} = create_yAxis_{{ axid }}();
-
-    baseaxes_{{ axid }}.append('g')
-            .attr('class', 'axes{{ axid }} y axis')
-            .call(yAxis_{{ axid }});
-
-    // create the clip boundary
-    var clip_{{ axid }} = baseaxes_{{ axid }}.append("svg:clipPath")
-                             .attr("id", "clip{{ axid }}")
-                             .append("svg:rect")
-                             .attr("x", 0)
-                             .attr("y", 0)
-                             .attr("width", width_{{ axid }})
-                             .attr("height", height_{{ axid }});
-
-    // axes_{axid} is the axes on which to draw plot components: they'll
-    // be clipped when zooming or scrolling moves them out of the plot.
-    var axes_{{ axid }} = baseaxes_{{ axid }}.append('g')
-            .attr("clip-path", "url(#clip{{ axid }})");
+    HTML = jinja2.Template("""
+    var ax{{ axid }} = fig.add_axes({{ bbox }}, {{ xlim }}, {{ ylim }},
+                                    {{ xscale }}, {{ yscale }},
+                                    {{ xdomain }}, {{ ydomain }},
+                                    {{ xgrid }}, {{ ygrid }},
+                                    "axes{{ axid }}",
+                                    "clip{{ figid }}{{ axid }}");
 
     {% for child in children %}
-    {{ child.html() }}
+      {{ child.html() }}
     {% endfor %}
-
-    function zoomed{{ axid }}() {
-        //console.log(d3.event);  // for some reason this is sometimes null
-        //console.log(zoom{{ axid }}.translate());
-        //console.log(zoom{{ axid }}.scale());
-
-        baseaxes_{{ axid }}.select(".x.axis").call(xAxis_{{ axid }});
-        baseaxes_{{ axid }}.select(".y.axis").call(yAxis_{{ axid }});
-
-        {% for child in children %}
-          {{ child.zoom() }}
-        {% endfor %}
-    }
-
-    function reset{{ axid }}() {
-      d3.transition().duration(750).tween("zoom", function() {
-        var ix = d3.interpolate(x_{{ axid }}.domain(), xdomain{{ axid }}),
-            iy = d3.interpolate(y_{{ axid }}.domain(), ydomain{{ axid }});
-        return function(t) {
-          zoom{{ axid }}
-               .x(x_{{ axid }}.domain(ix(t)))
-               .y(y_{{ axid }}.domain(iy(t)));
-          zoomed{{ axid }}();
-        };
-      });
-    }
-
-    d3.select("#reset{{ figid }}").on("click", reset{{ axid }});
     """)
 
     def __init__(self, parent, ax):
         self._initialize(parent=parent, _ax=ax)
-        self._axid = self.elid
+        self._axid = self.elcount
 
-        self.children = []
+        # Note that the order of the children is the order of their stacking
+        # on the page: we append things we want on top (like text) last.
 
-        self.children += [D3Image(self, ax, image) for image in ax.images]
-        self.children += [D3Grid(self)]
+        # TODO: re-order children according to their zorder.
+        self.children = [D3Axis(self, "bottom"), D3Axis(self, "left")]
+
+        if self.ax.xaxis._gridOnMajor:
+            self.children.append(D3Grid(self, 'x'))
+        if self.ax.yaxis._gridOnMajor:
+            self.children.append(D3Grid(self, 'y'))
+
         self.children += [D3Line2D(self, line) for line in ax.lines]
         self.children += [D3Patch(self, patch)
                           for i, patch in enumerate(ax.patches)]
+        self.children += [D3Image(self, ax, image) for image in ax.images]
 
         for collection in ax.collections:
             if isinstance(collection, mpl.collections.PolyCollection):
@@ -348,66 +213,125 @@ class D3Axes(D3Base):
                 warnings.warn("artist {0} not implemented. "
                               "Elements will be ignored".format(artist))
 
-        # Move text labels later so they show up on top
         self.children += [D3Text(self, text) for text in ax.texts]
         self.children += [D3Text(self, text) for text in [ax.xaxis.label,
                                                           ax.yaxis.label,
                                                           ax.title]]
+
         # Some warnings for pieces of matplotlib which are not yet implemented
         if len(ax.tables) > 0:
             warnings.warn("tables not implemented. Elements will be ignored")
 
         if ax.legend_ is not None:
-            warnings.warn("legend is not implemented: it will be ignored")
+            for child in ax.legend_.get_children():
+                if isinstance(child, Text):
+                    self.children.append(D3Text(self, child))
+                elif isinstance(child, Patch):
+                    self.children.append(D3Patch(self, child))
+                else:
+                    warnings.warn("Ignoring legend element: {0}".format(child))
 
     def style(self):
         axesbg = color_to_hex(self.ax.patch.get_facecolor())
-        ticks = self.ax.xaxis.get_ticklabels() + self.ax.yaxis.get_ticklabels()
-
-        if len(ticks) == 0:
-            fontsize_x = 11
-        else:
-            fontsize_x = ticks[0].properties()['size']
 
         return self.STYLE.render(axid=self.axid,
                                  figid=self.figid,
                                  axesbg=axesbg,
-                                 fontsize=fontsize_x,
                                  children=self.children)
 
     def _get_axis_args(self):
         args = {}
         for axname in ['x', 'y']:
             axis = getattr(self.ax, axname + 'axis')
+            domain = getattr(self.ax, 'get_{0}lim'.format(axname))()
+            lim = json.dumps(domain)
             if isinstance(axis.converter, mpl.dates.DateConverter):
-                dtup = lambda d: (d.year, d.month - 1, d.day, d.hour,
-                                  d.minute, d.second, d.microsecond / 1e3)
-                daterange = map(dtup, mpl.dates.num2date(self.ax.get_xlim()))
                 scale = 'date'
+                domain = ["new Date{0}".format((d.year, d.month - 1, d.day,
+                                                d.hour, d.minute, d.second,
+                                                d.microsecond * 1E-3))
+                          for d in mpl.dates.num2date(domain)]
+                domain = "[{0}]".format(",".join(domain))
             else:
                 scale = axis.get_scale()
-                daterange = None
+                domain = json.dumps(domain)
 
             if scale not in ['date', 'linear', 'log']:
                 raise ValueError("Unknown axis scale: "
                                  "{0}".format(axis[xy].get_scale()))
 
-            args[axname + 'daterange'] = daterange
-            args[axname + 'scale'] = scale
+            args[axname + 'scale'] = json.dumps(scale)
+            args[axname + 'lim'] = lim
+            args[axname + 'domain'] = domain
         return args
 
     def html(self):
-        return self.TEMPLATE.render(figid=self.figid,
-                                    axid=self.axid,
-                                    bbox=self.ax.get_position().bounds,
-                                    children=self.children,
-                                    xlim=self.ax.get_xlim(),
-                                    ylim=self.ax.get_ylim(),
-                                    **self._get_axis_args())
+        return self.HTML.render(figid=self.figid,
+                                axid=self.axid,
+                                bbox=json.dumps(self.ax.get_position().bounds),
+                                xgrid=json.dumps(self.ax.xaxis._gridOnMajor),
+                                ygrid=json.dumps(self.ax.yaxis._gridOnMajor),
+                                children=self.children,
+                                **self._get_axis_args())
+
+
+class D3Axis(D3Base):
+    """Class for representing x/y-axis in D3js"""
+
+    HTML = jinja2.Template("""
+    // Add an Axis element
+    ax{{ axid }}.add_element(new Axis(ax{{ axid }}, {{ position }}));
+    """)
+
+    STYLE = jinja2.Template("""
+    div#figure{{ figid }}
+    .axis line, .axis path {
+        shape-rendering: crispEdges;
+        stroke: black;
+        fill: none;
+    }
+
+    div#figure{{ figid }}
+    .axis text {
+        font-family: sans-serif;
+        font-size: {{ fontsize }}px;
+        fill: black;
+        stroke: none;
+    }
+    """)
+
+    def __init__(self, parent, position):
+        if position not in ["top", "bottom", "left", "right"]:
+            raise ValueError("Unrecognized position: {0}".format(position))
+        self._initialize(parent=parent, position=position)
+
+    def html(self):
+        return self.HTML.render(axid=self.axid,
+                                position=json.dumps(self.position))
+
+    def style(self):
+        if self.position in ["top", "bottom"]:
+            ticks = self.ax.xaxis.get_ticklabels()
+        else:
+            ticks = self.ax.yaxis.get_ticklabels()
+
+        if len(ticks) == 0:
+            fontsize = 11
+        else:
+            fontsize = ticks[0].properties()['size']
+
+        return self.STYLE.render(figid=self.figid,
+                                 fontsize=fontsize)
 
 
 class D3Grid(D3Base):
-    """Class for representing a matplotlib Axes grid in D3js"""
+    """Class for representing axes grids in D3js"""
+
+    HTML = jinja2.Template("""
+    // Add a Grid element
+    ax{{ axid }}.add_element(new Grid(ax{{ axid }}, {{ grid_type }}));
+    """)
+
     STYLE = jinja2.Template("""
     div#figure{{ figid }}
     .grid .tick {
@@ -422,229 +346,80 @@ class D3Grid(D3Base):
     }
     """)
 
-    TEMPLATE = jinja2.Template("""
-    {% if gridx %}
-    // draw x grid lines: we use a second x-axis with long ticks
-    axes_{{ axid }}.append("g")
-         .attr("class", "axes{{ axid }} x grid")
-         .attr("transform", "translate(0," + (height_{{ axid }}) + ")")
-         .call(create_xAxis_{{ axid }}()
-                       .tickSize(-(height_{{ axid }}), 0, 0)
-                       .tickFormat(""));
-    {% endif %}
-
-    {% if gridy %}
-    // draw y grid lines: we use a second y-axis with long ticks
-    axes_{{ axid }}.append("g")
-         .attr("class", "axes{{ axid }} y grid")
-         .call(create_yAxis_{{ axid }}()
-                       .tickSize(-(width_{{ axid }}), 0, 0)
-                       .tickFormat(""));
-    {% endif %}
-    """)
-
-    ZOOM = jinja2.Template("""
-    {% if gridx %}
-        axes_{{ axid }}.select(".x.grid")
-            .call(create_xAxis_{{ axid }}()
-            .tickSize(-height_{{ axid }}, 0, 0)
-            .tickFormat(""));
-    {% endif %}
-
-    {% if gridy %}
-        axes_{{ axid }}.select(".y.grid")
-            .call(create_yAxis_{{ axid }}()
-            .tickSize(-width_{{ axid }}, 0, 0)
-            .tickFormat(""));
-    {% endif %}
-    """)
-
-    def __init__(self, parent):
-        self._initialize(parent=parent)
-
-    def zoom(self):
-        return self.ZOOM.render(axid=self.axid,
-                                gridx=self.ax.xaxis._gridOnMajor,
-                                gridy=self.ax.yaxis._gridOnMajor)
+    def __init__(self, parent, grid_type):
+        if grid_type not in ["x", "y"]:
+            raise ValueError("Invalid grid type: '{0}'.  "
+                             "Expected 'x' or 'y'".format(grid_type))
+        self._initialize(parent=parent, grid_type=grid_type)
 
     def html(self):
-        return self.TEMPLATE.render(axid=self.axid,
-                                    gridx=self.ax.xaxis._gridOnMajor,
-                                    gridy=self.ax.yaxis._gridOnMajor)
+        return self.HTML.render(axid=self.axid,
+                                grid_type=json.dumps(self.grid_type))
 
     def style(self):
-        gridlines = (self.ax.xaxis.get_gridlines() +
-                     self.ax.yaxis.get_gridlines())
+        gridlines = getattr(self.ax, self.grid_type + 'axis').get_gridlines()
         color = color_to_hex(gridlines[0].get_color())
         alpha = gridlines[0].get_alpha()
         dasharray = get_dasharray(gridlines[0])
-        return self.STYLE.render(color=color,
-                                 alpha=alpha,
-                                 figid=self.figid,
-                                 dasharray=dasharray)
-
-
-class D3Line2D(D3Base):
-    """Class for representing a 2D matplotlib line in D3js"""
-
-    STYLE = jinja2.Template("""
-    div#figure{{ figid }}
-    path.line{{ lineid }} {
-        stroke: {{ linecolor }};
-        stroke-width: {{ linewidth }};
-        stroke-dasharray: {{ dasharray }};
-        fill: none;
-        stroke-opacity: {{ alpha }};
-    }
-
-    div#figure{{ figid }}
-    path.points{{ lineid }} {
-        stroke-width: {{ markeredgewidth }};
-        stroke: {{ markeredgecolor }};
-        fill: {{ markercolor }};
-        fill-opacity: {{ alpha }};
-        stroke-opacity: {{ alpha }};
-    }
-    """)
-
-    ZOOM = jinja2.Template("""
-    {% if line.zoomable() %}
-      {% if line.has_line() %}
-        axes_{{ axid }}.select(".line{{ lineid }}")
-                       .attr("d", line_{{ lineid }}(data_{{ lineid }}));
-      {% endif %}
-      {% if line.has_points() %}
-        axes_{{ axid }}.selectAll(".points{{ lineid }}")
-              .attr("transform", function(d)
-                { return "translate(" + x_data_map{{ axid }}(d[0]) + "," +
-                                        y_data_map{{ axid }}(d[1]) + ")"; });
-      {% endif %}
-    {% endif %}
-    """)
-
-    TEMPLATE = jinja2.Template("""
-    var data_{{ lineid }} = {{ data }};
-
-    {% if line.zoomable() %}
-      {% if line.has_line() %}
-        var line_{{ lineid }} = d3.svg.line()
-             .x(function(d) {return x_data_map{{ axid }}(d[0]);})
-             .y(function(d) {return y_data_map{{ axid }}(d[1]);})
-             .interpolate("linear")
-             .defined(function (d) {return !isNaN(d[0]) && !isNaN(d[1]); });
-
-        axes_{{ axid }}.append("svg:path")
-                       .attr("d", line_{{ lineid }}(data_{{ lineid }}))
-                       .attr('class', 'line{{ lineid }}');
-      {% endif %}
-      {% if line.has_points() %}
-        var g_{{ lineid }} = axes_{{ axid }}.append("svg:g");
-
-        g_{{ lineid }}.selectAll("scatter-dots-{{ lineid }}")
-              .data(data_{{ lineid }}.filter(
-                          function(d) {return !isNaN(d[0]) && !isNaN(d[1]); }))
-              .enter().append("svg:path")
-                  .attr('class', 'points{{ lineid }}')
-                  .attr("d", d3.svg.symbol()
-                                .type("{{ markershape }}")
-                                .size({{ markersize }}))
-                  .attr("transform", function(d)
-                      { return "translate(" + x_data_map{{ axid }}(d[0]) +
-                         "," + y_data_map{{ axid }}(d[1]) + ")"; });
-      {% endif %}
-    {% endif %}
-    """)
-
-    def __init__(self, parent, line):
-        self._initialize(parent=parent, line=line)
-        self.lineid = self.elid
-
-    def zoomable(self):
-        return self.line.get_transform().contains_branch(self.ax.transData)
-
-    def has_line(self):
-        return self.line.get_linestyle() not in ['', ' ', 'None', 'none', None]
-
-    def has_points(self):
-        return self.line.get_marker() not in ['', ' ', 'None', 'none', None]
-
-    def zoom(self):
-        return self.ZOOM.render(line=self,
-                                lineid=self.lineid,
-                                axid=self.axid)
-
-    def style(self):
-        alpha = self.line.get_alpha()
-        if alpha is None:
-            alpha = 1
-        lc = color_to_hex(self.line.get_color())
-        lw = self.line.get_linewidth()
-        mc = color_to_hex(self.line.get_markerfacecolor())
-        mec = color_to_hex(self.line.get_markeredgecolor())
-        mew = self.line.get_markeredgewidth()
-        dasharray = get_dasharray(self.line)
-
         return self.STYLE.render(figid=self.figid,
-                                 lineid=self.lineid,
-                                 linecolor=lc,
-                                 linewidth=lw,
-                                 markeredgewidth=mew,
-                                 markeredgecolor=mec,
-                                 markercolor=mc,
+                                 color=color,
                                  dasharray=dasharray,
                                  alpha=alpha)
-
-    def html(self):
-        transform = self.line.get_transform() - self.ax.transData
-        data = transform.transform(self.line.get_xydata()).tolist()
-        msh = get_d3_shape_for_marker(self.line.get_marker())
-        ms = self.line.get_markersize() ** 2
-
-        return self.TEMPLATE.render(line=self,
-                                    lineid=self.lineid,
-                                    axid=self.axid,
-                                    data=json.dumps(data),
-                                    markersize=ms,
-                                    markershape=msh)
 
 
 class D3Text(D3Base):
     """Class for representing matplotlib text in D3js"""
 
-    TEMPLATE = jinja2.Template("""
-    {% if text %}
-     {% if zoomable %}
-      axes_{{ axid }}.append("text")
-          .attr("x", x_data_map{{ axid }}({{ position[0] }}))
-          .attr("y", y_data_map{{ axid }}({{ position[1] }}))
-          .attr("transform", "rotate({{ rotation }}, "
-                             + x_data_map{{ axid }}({{ position[0] }}) + ","
-                             + y_data_map{{ axid }}({{ position[1] }}) + ")")
-     {% else %}
-      canvas.append("text")
-          .attr("x", {{ position[0] }})
-          .attr("y", figheight - {{ position[1] }})
-          .attr("transform", "rotate({{ rotation }}, " + {{ position[0] }}
-                             + "," + (figheight - {{ position[1] }}) + ")")
-     {% endif %}
-          .attr("class", "text{{ textid }}")
-          .text("{{ text }}")
-          .attr("font-size", "{{ fontsize }}px")
-          .attr("fill", "{{ color }}")
-          .attr("style", "text-anchor: {{ h_anchor }};");
-    {% endif %}
+    STYLE = jinja2.Template("""
+    div#figure{{ figid }}
+    text.text{{ textid }} {
+       font-size : {{ fontsize }}px;
+       fill : {{ color }};
+       opacity : {{ alpha }};
+    }
     """)
 
-    ZOOM = jinja2.Template("""
+    HTML = jinja2.Template("""
     {% if text %}
+    // Add a text element
+    ax{{ axid }}.add_element(new function(){
+     this.position = {{ position }};
+     this.rotation = {{ rotation }};
+     this.ax = ax{{ axid }};
+     this.text = {{ text }};
+
+     this.draw = function(){
+       {% if zoomable %}
+       this.obj = this.ax.axes.append("text")
+                         .attr("x", this.ax.x(this.position[0]))
+                         .attr("y", this.ax.y(this.position[1]))
+                         .attr("transform", "rotate(" + this.rotation + ","
+                                          + this.ax.x(this.position[0]) + ","
+                                          + this.ax.y(this.position[1]) + ")")
+       {% else %}
+       this.obj = this.ax.fig.canvas.append("text")
+                      .attr("x", this.position[0])
+                      .attr("y", this.ax.fig.height - this.position[1])
+                      .attr("transform", "rotate(" + this.rotation + ","
+                                      + this.position[0] + ","
+                                      + (figheight - this.position[1]) + ")")
+       {% endif %}
+                      .attr("class", "text")
+                      .text(this.text)
+                      .attr("class", "text{{ textid }}")
+                      .attr("style", "text-anchor: {{ h_anchor }};");
+     }
+
+     this.zoomed = function(){
      {% if zoomable %}
-        axes_{{ axid }}.select(".text{{ textid }}")
-                       .attr("x", x_data_map{{ axid }}({{ position[0] }}))
-                       .attr("y", y_data_map{{ axid }}({{ position[1] }}))
-                       .attr("transform", "rotate({{ rotation }}, "
-                             + x_data_map{{ axid }}({{ position[0] }}) + ","
-                             + y_data_map{{ axid }}({{ position[1] }}) + ")");
+     this.obj.attr("x", this.ax.x(this.position[0]))
+             .attr("y", this.ax.y(this.position[1]))
+             .attr("transform", "rotate(" + this.rotation + ","
+                             + this.ax.x(this.position[0]) + ","
+                             + this.ax.y(this.position[1]) + ")")
      {% endif %}
+     }
+    });
     {% endif %}
     """)
 
@@ -672,40 +447,166 @@ class D3Text(D3Base):
     def get_rotation(self):
         return -self.text.get_rotation()
 
-    def zoom(self):
-        x, y = self.text.get_position()
-        return self.ZOOM.render(zoomable=self.zoomable(),
-                                position=self.get_position(),
-                                axid=self.axid,
-                                textid=self.textid,
-                                text=self.text.get_text(),
-                                rotation=self.get_rotation())
-
-    def html(self):
+    def style(self):
+        alpha = self.text.get_alpha()
+        if alpha is None:
+            alpha = 1
         color = color_to_hex(self.text.get_color())
         fontsize = self.text.get_size()
 
+        return self.STYLE.render(figid=self.figid,
+                                 axid=self.axid,
+                                 textid=self.textid,
+                                 color=color,
+                                 fontsize=fontsize,
+                                 alpha=alpha)
+
+    def html(self):
         # TODO: fix vertical anchor point
         h_anchor = {'left': 'start',
                     'center': 'middle',
                     'right': 'end'}[self.text.get_horizontalalignment()]
 
-        return self.TEMPLATE.render(zoomable=self.zoomable(),
-                                    position=self.get_position(),
-                                    axid=self.axid,
-                                    textid=self.textid,
-                                    text=self.text.get_text(),
-                                    fontsize=fontsize,
-                                    color=color,
-                                    rotation=self.get_rotation(),
-                                    h_anchor=h_anchor)
+        return self.HTML.render(zoomable=self.zoomable(),
+                                position=json.dumps(self.get_position()),
+                                axid=self.axid,
+                                textid=self.textid,
+                                text=json.dumps(self.text.get_text()),
+                                rotation=json.dumps(self.get_rotation()),
+                                h_anchor=h_anchor)
+
+
+class D3Line2D(D3Base):
+    """Class for representing a 2D matplotlib line in D3js"""
+
+    STYLE = jinja2.Template("""
+    div#figure{{ figid }}
+    .axes{{ axid }}
+    path.line{{ lineid }} {
+        stroke: {{ linecolor }};
+        stroke-width: {{ linewidth }};
+        stroke-dasharray: {{ dasharray }};
+        fill: none;
+        stroke-opacity: {{ alpha }};
+    }
+
+    div#figure{{ figid }}
+    .axes{{ axid }}
+    path.points{{ lineid }} {
+        stroke-width: {{ markeredgewidth }};
+        stroke: {{ markeredgecolor }};
+        fill: {{ markercolor }};
+        fill-opacity: {{ alpha }};
+        stroke-opacity: {{ alpha }};
+    }
+    """)
+
+    HTML = jinja2.Template("""
+    // Add a Line2D element
+    ax{{ axid }}.add_element(new function(){
+     this.data = {{ data }};
+     this.ax = ax{{ axid }};
+
+     this.translate = function(d)
+       { return "translate(" + this.ax.x(d[0]) + ","
+                             + this.ax.y(d[1]) + ")"; };
+
+     this.draw = function(){
+     {% if line.zoomable() %}
+       {% if line.has_line() %}
+         this.line = d3.svg.line()
+              .x(function(d) {return this.ax.x(d[0]);})
+              .y(function(d) {return this.ax.y(d[1]);})
+              .interpolate("linear")
+              .defined(function (d) {return !isNaN(d[0]) && !isNaN(d[1]); });
+
+         this.lineobj = this.ax.axes.append("svg:path")
+                             .attr("d", this.line(this.data))
+                             .attr('class', 'line{{ lineid }}');
+       {% endif %}
+       {% if line.has_points() %}
+         this.pointsobj = this.ax.axes.append("svg:g")
+             .selectAll("scatter-dots-{{ lineid }}")
+               .data(this.data.filter(
+                           function(d){return !isNaN(d[0]) && !isNaN(d[1]); }))
+               .enter().append("svg:path")
+                   .attr('class', 'points{{ lineid }}')
+                   .attr("d", d3.svg.symbol()
+                                 .type("{{ markershape }}")
+                                 .size({{ markersize }}))
+                   .attr("transform", this.translate.bind(this));
+       {% endif %}
+     {% endif %}
+     };
+
+     this.zoomed = function(){
+        {% if line.zoomable() %}
+          {% if line.has_line() %}
+            this.lineobj.attr("d", this.line(this.data));
+          {% endif %}
+          {% if line.has_points() %}
+            this.pointsobj.attr("transform", this.translate.bind(this));
+          {% endif %}
+        {% endif %}
+     }
+    });
+    """)
+
+    def __init__(self, parent, line):
+        self._initialize(parent=parent, line=line)
+        self.lineid = self.elcount
+
+    def zoomable(self):
+        return self.line.get_transform().contains_branch(self.ax.transData)
+
+    def has_line(self):
+        return self.line.get_linestyle() not in ['', ' ', 'None', 'none', None]
+
+    def has_points(self):
+        return self.line.get_marker() not in ['', ' ', 'None', 'none', None]
+
+    def style(self):
+        alpha = self.line.get_alpha()
+        if alpha is None:
+            alpha = 1
+        lc = color_to_hex(self.line.get_color())
+        lw = self.line.get_linewidth()
+        mc = color_to_hex(self.line.get_markerfacecolor())
+        mec = color_to_hex(self.line.get_markeredgecolor())
+        mew = self.line.get_markeredgewidth()
+        dasharray = get_dasharray(self.line)
+
+        return self.STYLE.render(figid=self.figid,
+                                 axid=self.axid,
+                                 lineid=self.lineid,
+                                 linecolor=lc,
+                                 linewidth=lw,
+                                 markeredgewidth=mew,
+                                 markeredgecolor=mec,
+                                 markercolor=mc,
+                                 dasharray=dasharray,
+                                 alpha=alpha)
+
+    def html(self):
+        transform = self.line.get_transform() - self.ax.transData
+        data = transform.transform(self.line.get_xydata()).tolist()
+        msh = get_d3_shape_for_marker(self.line.get_marker())
+        ms = self.line.get_markersize() ** 2
+
+        return self.HTML.render(line=self,
+                                lineid=self.lineid,
+                                axid=self.axid,
+                                data=json.dumps(data),
+                                markersize=ms,
+                                markershape=msh)
 
 
 class D3Patch(D3Base):
     """Class for representing matplotlib patches in D3js"""
     STYLE = jinja2.Template("""
     div#figure{{ figid }}
-    path.patch{{ elid }} {
+    .axes{{ axid }}
+    path.patch{{ patchid }} {
         stroke: {{ linecolor }};
         stroke-width: {{ linewidth }};
         stroke-dasharray: {{ dasharray }};
@@ -715,26 +616,29 @@ class D3Patch(D3Base):
     }
     """)
 
-    TEMPLATE = jinja2.Template("""
-    var data_{{ elid }} = {{ data }};
+    HTML = jinja2.Template("""
+    // Add a Patch element
+    ax{{ axid }}.add_element(new function(){
+      this.data = {{ data }};
+      this.ax = ax{{ axid }};
 
-    {{ construct_SVG_path }}
+      this.draw = function(){
+        this.patch = this.ax.axes.append("svg:path")
+                       .attr("d", construct_SVG_path(this.data,
+                                                     this.ax.x,
+                                                     this.ax.y))
+                       .attr("vector-effect", "non-scaling-stroke")
+                       .attr('class', 'patch{{ patchid }}');
+      };
 
-    axes_{{ axid }}.append("svg:path")
-                   .attr("d", construct_SVG_path(data_{{ elid }},
-                                                 x_data_map{{ axid }},
-                                                 y_data_map{{ axid }}))
-                   .attr("vector-effect", "non-scaling-stroke")
-                   .attr('class', 'patch{{ elid }}');
-    """)
-
-    ZOOM = jinja2.Template("""
-    {% if patch.zoomable() %}
-        axes_{{ axid }}.select(".patch{{ elid }}")
-              .attr("d", construct_SVG_path(data_{{ elid }},
-                                            x_data_map{{ axid }},
-                                            y_data_map{{ axid }}))
-    {% endif %}
+      this.zoomed = function(){
+        {% if patch.zoomable() %}
+          this.patch.attr("d", construct_SVG_path(this.data,
+                                                  this.ax.x,
+                                                  this.ax.y));
+        {% endif %}
+      };
+    });
     """)
 
     def __init__(self, parent, patch):
@@ -743,11 +647,6 @@ class D3Patch(D3Base):
 
     def zoomable(self):
         return self.patch.get_transform().contains_branch(self.ax.transData)
-
-    def zoom(self):
-        return self.ZOOM.render(patch=self,
-                                axid=self.axid,
-                                elid=self.elid)
 
     def style(self):
         ec = self.patch.get_edgecolor()
@@ -764,7 +663,8 @@ class D3Patch(D3Base):
         dasharray = get_dasharray(self.patch)
 
         return self.STYLE.render(figid=self.figid,
-                                 elid=self.elid,
+                                 axid=self.axid,
+                                 patchid=self.patchid,
                                  linecolor=lc,
                                  linewidth=lw,
                                  fillcolor=fc,
@@ -777,9 +677,79 @@ class D3Patch(D3Base):
         return path_data(self.patch.get_path(), transform)
 
     def html(self):
-        return self.TEMPLATE.render(axid=self.axid, elid=self.elid,
-                                    construct_SVG_path=CONSTRUCT_SVG_PATH,
-                                    data=json.dumps(self.data()))
+        return self.HTML.render(patch=self,
+                                axid=self.axid, patchid=self.patchid,
+                                data=json.dumps(self.data()))
+
+
+class D3Image(D3Base):
+    """Class for representing matplotlib images in D3js"""
+    # TODO: - Support interpolation keywords
+    #       - Can rendering be done in-browser?
+
+    STYLE = jinja2.Template("""
+    div#figure{{ figid }}
+    .axes{{ axid }}
+    image.image{{ imageid }} {
+       opacity: {{ alpha }};
+    }
+    """)
+
+    HTML = jinja2.Template("""
+    // Add an Image element
+    ax{{ axid }}.add_element(new function(){
+      this.ax = ax{{ axid }};
+      this.data = "data:image/png;base64," + "{{ base64_data }}";
+      this.extent = {{ extent }};
+      this.class = "image{{ imageid }}";
+
+      this.draw = function(){
+        this.image = this.ax.axes.append("svg:image")
+            .attr('class', this.class)
+            .attr("xlink:href", this.data)
+            .attr("preserveAspectRatio", "none");
+        this.zoomed();  // set the initial image location
+      };
+
+      this.zoomed = function(){
+        this.image.attr("x", this.ax.x(this.extent[0]))
+                  .attr("y", this.ax.y(this.extent[3]))
+                  .attr("width", this.ax.x(this.extent[1])
+                                  - this.ax.x(this.extent[0]))
+                  .attr("height", this.ax.y(this.extent[2])
+                                  - this.ax.y(this.extent[3]));
+      };
+    });
+    """)
+
+    def __init__(self, parent, ax, image, i=''):
+        self._initialize(parent=parent, ax=ax, image=image)
+        self.imageid = self.elid
+        if self.image.get_interpolation() != 'bilinear':
+            warnings.warn("Image interpolations not yet supported")
+
+    def get_base64_data(self):
+        data = self.image.get_array().data
+        binary_buffer = io.BytesIO()
+        imsave(binary_buffer, data,
+               vmin=self.image.get_clim()[0],
+               vmax=self.image.get_clim()[1],
+               cmap=self.image.get_cmap(),
+               origin=self.image.origin,
+               format='png')
+        binary_buffer.seek(0)
+        return base64.b64encode(binary_buffer.read())
+
+    def html(self):
+        return self.HTML.render(axid=self.axid,
+                                imageid=self.imageid,
+                                base64_data=self.get_base64_data(),
+                                extent=json.dumps(self.image.get_extent()))
+
+    def style(self):
+        return self.STYLE.render(imageid=self.imageid,
+                                 figid=self.figid,
+                                 alpha=self.image.get_alpha())
 
 
 class D3Collection(D3Base):
@@ -789,73 +759,73 @@ class D3Collection(D3Base):
     #       this can be done more efficiently.  Also, defaults should be
     #       done at the template level rather than the javascript level.
 
-    TEMPLATE = jinja2.Template("""
-    var data_{{ elid }} = {{ data }};
+    HTML = jinja2.Template("""
+    // Add a Collection
+    ax{{ axid }}.add_element(new function(){
+      this.ax = ax{{ axid }};
+      this.data = {{ data }};
 
-    {{ construct_SVG_path }}
-
-    var offset_func_{{ elid }} = function(d){
+      this.offset_func = function(d){
          var offset = d.o ? d.o : {{ defaults.o }};
-         return "translate(" +
-              {% if obj.offset_zoomable() %}
-                    x_data_map{{ axid }}(offset[0]) + "," +
-                    y_data_map{{ axid }}(offset[1])
-              {% else %}
-                    offset
-              {% endif %}
-                    + ")";
-    }
+         {% if obj.offset_zoomable() %}
+           offset = [this.ax.x(offset[0]), this.ax.y(offset[1])];
+         {% endif %}
+         return "translate(" + offset  + ")";
+      };
 
-    var path_func_{{ elid }} = function(d){
+      this.path_func = function(d){
          var path = d.p ? d.p : {{ defaults.p }};
          var size = d.s ? d.s : {{ defaults.s }};
-         return construct_SVG_path(path,
-                {% if obj.path_zoomable() %}
-                         function(x){return x_data_map{{ axid }}(size * x);},
-                         function(y){return y_data_map{{ axid }}(size * y);});
+         {% if obj.path_zoomable() %}
+           var xscale = function(x){return this.ax.x(size * x);}.bind(this);
+           var yscale = function(y){return this.ax.y(size * y);}.bind(this);
+         {% else %}
+           var xscale = function(x){return size * x;};
+           var yscale = function(y){return size * y;};
+         {% endif %}
+         return construct_SVG_path(path, xscale, yscale);
+      };
 
-                {% else %}
-                         function(x){return size * x;},
-                         function(y){return size * y;});
-                {% endif %}
-    }
+      this.style_func = function(d){
+         var edgecolor = d.ec ? d.ec : {{ defaults.ec }};
+         var facecolor = d.fc ? d.fc : {{ defaults.fc }};
+         var linewidth = d.lw ? d.lw : {{ defaults.lw }};
+         var dasharray = d.ls ? d.ls : {{ defaults.ls }};
+         return "stroke: " + edgecolor + "; " +
+                "stroke-width: " + linewidth + "; " +
+                "stroke-dasharray: " + dasharray + "; " +
+                "fill: " + facecolor + "; " +
+                "stroke-opacity: {{ defaults.alpha }}; " +
+                "fill-opacity: {{ defaults.alpha }}";
+      };
 
-    var style_func_{{ elid }} = function(d){
-       var edgecolor = d.ec ? d.ec : {{ defaults.ec }};
-       var facecolor = d.fc ? d.fc : {{ defaults.fc }};
-       var linewidth = d.lw ? d.lw : {{ defaults.lw }};
-       var dasharray = d.ls ? d.ls : {{ defaults.ls }};
-       return "stroke: " + edgecolor + "; " +
-              "stroke-width: " + linewidth + "; " +
-              "stroke-dasharray: " + dasharray + "; " +
-              "fill: " + facecolor + "; " +
-              "stroke-opacity: {{ defaults.alpha }}; " +
-              "fill-opacity: {{ defaults.alpha }}";
-    }
+      this.draw = function(){
+        this.g = this.ax.axes.append("svg:g");
 
-    var g_{{ elid }} = axes_{{ axid }}.append("svg:g");
-
-    g_{{ elid }}.selectAll("paths-{{ elid }}")
-          .data(data_{{ elid }})
+        this.g.selectAll("paths-{{ collid }}")
+          .data(this.data)
           .enter().append("svg:path")
-              .attr('class', 'paths{{ elid }}')
-              .attr("d", path_func_{{ elid }})
-              .attr("style", style_func_{{ elid }})
-              .attr("transform", offset_func_{{ elid }});
-    """)
+              .attr('class', 'paths{{ collid }}')
+              .attr("d", this.path_func.bind(this))
+              .attr("style", this.style_func.bind(this))
+              .attr("transform", this.offset_func.bind(this));
+      };
 
-    ZOOM = jinja2.Template("""
-        axes_{{ axid }}.selectAll(".paths{{ elid }}")
+      this.zoomed = function(){
+        this.g.selectAll(".paths{{ collid }}")
                  {% if obj.path_zoomable() %}
-                   .attr("d", path_func_{{ elid }})
+                   .attr("d", this.path_func.bind(this))
                  {% endif %}
                  {% if obj.offset_zoomable() %}
-                   .attr("transform", offset_func_{{ elid }})
+                   .attr("transform", this.offset_func.bind(this))
                  {% endif %};
+      };
+    });
     """)
 
     def __init__(self, parent, collection):
         self._initialize(parent, collection=collection)
+        self.collid = self.elid
 
     def _update_data(self, data, defaults):
         return data, defaults
@@ -926,17 +896,11 @@ class D3Collection(D3Base):
 
         data, defaults = self.get_data_defaults()
 
-        return self.TEMPLATE.render(obj=self,
-                                    elid=self.elid, axid=self.axid,
-                                    construct_SVG_path=CONSTRUCT_SVG_PATH,
-                                    data=json.dumps(data),
-                                    defaults=defaults)
-
-    def zoom(self):
-        return self.ZOOM.render(obj=self, elid=self.elid, axid=self.axid)
-
-    def style(self):
-        return ""
+        return self.HTML.render(obj=self,
+                                axid=self.axid,
+                                collid=self.collid,
+                                data=json.dumps(data),
+                                defaults=defaults)
 
 
 class D3PathCollection(D3Collection):
@@ -971,72 +935,3 @@ class D3PatchCollection(D3Collection):
     #       use these where possible.  Also, it would be better to use the
     #       SVG path codes as in D3Patch(), above.
     pass
-
-
-class D3Image(D3Base):
-    """Class for representing matplotlib images in D3js"""
-    # TODO: - Support interpolation keywords
-    #       - Can rendering be done in-browser?
-
-    STYLE = jinja2.Template("""
-    div#figure{{ figid }}
-    .image{{ elid }} {
-       opacity: {{ alpha }};
-    }
-    """)
-
-    TEMPLATE = jinja2.Template("""
-    axes_{{ axid }}.append("svg:image")
-        .attr('class', 'image{{ elid }}')
-        .attr("x", x_{{ axid }}({{ extent[0] }}))
-        .attr("y", y_{{ axid }}({{ extent[3] }}))
-        .attr("width", x_{{ axid }}({{ extent[1] }})
-                       - x_{{ axid }}({{ extent[0] }}))
-        .attr("height", y_{{ axid }}({{ extent[2] }})
-                        - y_{{ axid }}({{ extent[3] }}))
-        .attr("xlink:href", "data:image/png;base64," + "{{ base64_data }}")
-        .attr("preserveAspectRatio", "none");
-    """)
-
-    ZOOM = jinja2.Template("""
-        axes_{{ axid }}.select(".image{{ elid }}")
-                   .attr("x", x_{{ axid }}({{ extent[0] }}))
-                   .attr("y", y_{{ axid }}({{ extent[3] }}))
-                   .attr("width", x_{{ axid }}({{ extent[1] }})
-                                  - x_{{ axid }}({{ extent[0] }}))
-                   .attr("height", y_{{ axid }}({{ extent[2] }})
-                                   - y_{{ axid }}({{ extent[3] }}));
-    """)
-
-    def __init__(self, parent, ax, image, i=''):
-        self._initialize(parent=parent, ax=ax, image=image)
-        if self.image.get_interpolation() != 'bilinear':
-            warnings.warn("Image interpolations not yet supported")
-
-    def zoom(self):
-        return self.ZOOM.render(elid=self.elid,
-                                axid=self.axid,
-                                extent=self.image.get_extent())
-
-    def get_base64_data(self):
-        data = self.image.get_array().data
-        binary_buffer = io.BytesIO()
-        imsave(binary_buffer, data,
-               vmin=self.image.get_clim()[0],
-               vmax=self.image.get_clim()[1],
-               cmap=self.image.get_cmap(),
-               origin=self.image.origin,
-               format='png')
-        binary_buffer.seek(0)
-        return base64.b64encode(binary_buffer.read())
-
-    def html(self):
-        return self.TEMPLATE.render(axid=self.axid,
-                                    elid=self.elid,
-                                    base64_data=self.get_base64_data(),
-                                    extent=self.image.get_extent())
-
-    def style(self):
-        return self.STYLE.render(elid=self.elid,
-                                 figid=self.figid,
-                                 alpha=self.image.get_alpha())
