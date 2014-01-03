@@ -33,6 +33,9 @@ class D3Base(object):
     # this assists in generating unique ids for all HTML elements
     num_children_by_id = defaultdict(int)
 
+    HTML = jinja2.Template("")
+    STYLE = jinja2.Template("")
+
     @staticmethod
     def generate_unique_id():
         return str(uuid.uuid4()).replace('-', '')
@@ -60,12 +63,29 @@ class D3Base(object):
         else:
             raise AttributeError("no attribute {0}".format(attr))
 
-    @abc.abstractmethod
+    def _base_args(self):
+        return {'figid': self.figid,
+                'axid': self.axid,
+                'elid': self.elid,
+                'fig': self.fig,
+                'ax': self.ax,
+                'obj': self}
+
+    def _html_args(self):
+        return {}
+
+    def _style_args(self):
+        return {}
+
     def html(self):
-        raise NotImplementedError()
+        argdict = self._base_args()
+        argdict.update(self._html_args())
+        return self.HTML.render(**argdict)
 
     def style(self):
-        return ''
+        argdict = self._base_args()
+        argdict.update(self._style_args())
+        return self.STYLE.render(**argdict)
 
     def __str__(self):
         return self.html()
@@ -231,16 +251,17 @@ class D3Axes(D3Base):
                 else:
                     warnings.warn("Ignoring legend element: {0}".format(child))
 
-    def style(self):
-        axesbg = color_to_hex(self.ax.patch.get_facecolor())
+    def _style_args(self):
+        return dict(axesbg=color_to_hex(self.ax.patch.get_facecolor()),
+                    children=self.children)
 
-        return self.STYLE.render(axid=self.axid,
-                                 figid=self.figid,
-                                 axesbg=axesbg,
-                                 children=self.children)
+    def _html_args(self):
+        args = dict(bbox=json.dumps(self.ax.get_position().bounds),
+                    xgrid=json.dumps(self.ax.xaxis._gridOnMajor),
+                    ygrid=json.dumps(self.ax.yaxis._gridOnMajor),
+                    children=self.children)
 
-    def _get_axis_args(self):
-        args = {}
+        # get args for each axis
         for axname in ['x', 'y']:
             axis = getattr(self.ax, axname + 'axis')
             domain = getattr(self.ax, 'get_{0}lim'.format(axname))()
@@ -263,16 +284,8 @@ class D3Axes(D3Base):
             args[axname + 'scale'] = json.dumps(scale)
             args[axname + 'lim'] = lim
             args[axname + 'domain'] = domain
-        return args
 
-    def html(self):
-        return self.HTML.render(figid=self.figid,
-                                axid=self.axid,
-                                bbox=json.dumps(self.ax.get_position().bounds),
-                                xgrid=json.dumps(self.ax.xaxis._gridOnMajor),
-                                ygrid=json.dumps(self.ax.yaxis._gridOnMajor),
-                                children=self.children,
-                                **self._get_axis_args())
+        return args
 
 
 class D3Axis(D3Base):
@@ -305,11 +318,10 @@ class D3Axis(D3Base):
             raise ValueError("Unrecognized position: {0}".format(position))
         self._initialize(parent=parent, position=position)
 
-    def html(self):
-        return self.HTML.render(axid=self.axid,
-                                position=json.dumps(self.position))
+    def _html_args(self):
+        return {'position': json.dumps(self.position)}
 
-    def style(self):
+    def _style_args(self):
         if self.position in ["top", "bottom"]:
             ticks = self.ax.xaxis.get_ticklabels()
         else:
@@ -320,8 +332,7 @@ class D3Axis(D3Base):
         else:
             fontsize = ticks[0].properties()['size']
 
-        return self.STYLE.render(figid=self.figid,
-                                 fontsize=fontsize)
+        return {'fontsize': fontsize}
 
 
 class D3Grid(D3Base):
@@ -352,19 +363,17 @@ class D3Grid(D3Base):
                              "Expected 'x' or 'y'".format(grid_type))
         self._initialize(parent=parent, grid_type=grid_type)
 
-    def html(self):
-        return self.HTML.render(axid=self.axid,
-                                grid_type=json.dumps(self.grid_type))
+    def _html_args(self):
+        return {'grid_type': json.dumps(self.grid_type)}
 
-    def style(self):
+    def _style_args(self):
         gridlines = getattr(self.ax, self.grid_type + 'axis').get_gridlines()
         color = color_to_hex(gridlines[0].get_color())
         alpha = gridlines[0].get_alpha()
         dasharray = get_dasharray(gridlines[0])
-        return self.STYLE.render(figid=self.figid,
-                                 color=color,
-                                 dasharray=dasharray,
-                                 alpha=alpha)
+        return dict(color=color,
+                    dasharray=dasharray,
+                    alpha=alpha)
 
 
 class D3Text(D3Base):
@@ -372,7 +381,7 @@ class D3Text(D3Base):
 
     STYLE = jinja2.Template("""
     div#figure{{ figid }}
-    text.text{{ textid }} {
+    text.text{{ elid }} {
        font-size : {{ fontsize }}px;
        fill : {{ color }};
        opacity : {{ alpha }};
@@ -406,7 +415,7 @@ class D3Text(D3Base):
        {% endif %}
                       .attr("class", "text")
                       .text(this.text)
-                      .attr("class", "text{{ textid }}")
+                      .attr("class", "text{{ elid }}")
                       .attr("style", "text-anchor: {{ h_anchor }};");
      }
 
@@ -425,7 +434,6 @@ class D3Text(D3Base):
 
     def __init__(self, parent, text):
         self._initialize(parent=parent, text=text)
-        self.textid = self.elid
 
     def zoomable(self):
         return self.text.get_transform().contains_branch(self.ax.transData)
@@ -447,33 +455,29 @@ class D3Text(D3Base):
     def get_rotation(self):
         return -self.text.get_rotation()
 
-    def style(self):
+    def _style_args(self):
         alpha = self.text.get_alpha()
         if alpha is None:
             alpha = 1
         color = color_to_hex(self.text.get_color())
         fontsize = self.text.get_size()
 
-        return self.STYLE.render(figid=self.figid,
-                                 axid=self.axid,
-                                 textid=self.textid,
-                                 color=color,
-                                 fontsize=fontsize,
-                                 alpha=alpha)
+        return dict(color=color,
+                    fontsize=fontsize,
+                    alpha=alpha)
 
-    def html(self):
+    def _html_args(self):
         # TODO: fix vertical anchor point
-        h_anchor = {'left': 'start',
-                    'center': 'middle',
-                    'right': 'end'}[self.text.get_horizontalalignment()]
+        ha_dict = {'left': 'start',
+                   'center': 'middle',
+                   'right': 'end'}
+        h_anchor = ha_dict[self.text.get_horizontalalignment()]
 
-        return self.HTML.render(zoomable=self.zoomable(),
-                                position=json.dumps(self.get_position()),
-                                axid=self.axid,
-                                textid=self.textid,
-                                text=json.dumps(self.text.get_text()),
-                                rotation=json.dumps(self.get_rotation()),
-                                h_anchor=h_anchor)
+        return dict(zoomable=self.zoomable(),
+                    position=json.dumps(self.get_position()),
+                    text=json.dumps(self.text.get_text()),
+                    rotation=json.dumps(self.get_rotation()),
+                    h_anchor=h_anchor)
 
 
 class D3Line2D(D3Base):
@@ -512,8 +516,8 @@ class D3Line2D(D3Base):
                              + this.ax.y(d[1]) + ")"; };
 
      this.draw = function(){
-     {% if line.zoomable() %}
-       {% if line.has_line() %}
+     {% if obj.zoomable() %}
+       {% if obj.has_line() %}
          this.line = d3.svg.line()
               .x(function(d) {return this.ax.x(d[0]);})
               .y(function(d) {return this.ax.y(d[1]);})
@@ -524,7 +528,7 @@ class D3Line2D(D3Base):
                              .attr("d", this.line(this.data))
                              .attr('class', 'line{{ lineid }}');
        {% endif %}
-       {% if line.has_points() %}
+       {% if obj.has_points() %}
          this.pointsobj = this.ax.axes.append("svg:g")
              .selectAll("scatter-dots-{{ lineid }}")
                .data(this.data.filter(
@@ -540,11 +544,11 @@ class D3Line2D(D3Base):
      };
 
      this.zoomed = function(){
-        {% if line.zoomable() %}
-          {% if line.has_line() %}
+        {% if obj.zoomable() %}
+          {% if obj.has_line() %}
             this.lineobj.attr("d", this.line(this.data));
           {% endif %}
-          {% if line.has_points() %}
+          {% if obj.has_points() %}
             this.pointsobj.attr("transform", this.translate.bind(this));
           {% endif %}
         {% endif %}
@@ -565,7 +569,7 @@ class D3Line2D(D3Base):
     def has_points(self):
         return self.line.get_marker() not in ['', ' ', 'None', 'none', None]
 
-    def style(self):
+    def _style_args(self):
         alpha = self.line.get_alpha()
         if alpha is None:
             alpha = 1
@@ -576,29 +580,25 @@ class D3Line2D(D3Base):
         mew = self.line.get_markeredgewidth()
         dasharray = get_dasharray(self.line)
 
-        return self.STYLE.render(figid=self.figid,
-                                 axid=self.axid,
-                                 lineid=self.lineid,
-                                 linecolor=lc,
-                                 linewidth=lw,
-                                 markeredgewidth=mew,
-                                 markeredgecolor=mec,
-                                 markercolor=mc,
-                                 dasharray=dasharray,
-                                 alpha=alpha)
+        return dict(lineid=self.lineid,
+                    linecolor=lc,
+                    linewidth=lw,
+                    markeredgewidth=mew,
+                    markeredgecolor=mec,
+                    markercolor=mc,
+                    dasharray=dasharray,
+                    alpha=alpha)
 
-    def html(self):
+    def _html_args(self):
         transform = self.line.get_transform() - self.ax.transData
         data = transform.transform(self.line.get_xydata()).tolist()
         msh = get_d3_shape_for_marker(self.line.get_marker())
         ms = self.line.get_markersize() ** 2
 
-        return self.HTML.render(line=self,
-                                lineid=self.lineid,
-                                axid=self.axid,
-                                data=json.dumps(data),
-                                markersize=ms,
-                                markershape=msh)
+        return dict(lineid=self.lineid,
+                    data=json.dumps(data),
+                    markersize=ms,
+                    markershape=msh)
 
 
 class D3Patch(D3Base):
@@ -632,7 +632,7 @@ class D3Patch(D3Base):
       };
 
       this.zoomed = function(){
-        {% if patch.zoomable() %}
+        {% if obj.zoomable() %}
           this.patch.attr("d", construct_SVG_path(this.data,
                                                   this.ax.x,
                                                   this.ax.y));
@@ -648,7 +648,7 @@ class D3Patch(D3Base):
     def zoomable(self):
         return self.patch.get_transform().contains_branch(self.ax.transData)
 
-    def style(self):
+    def _style_args(self):
         ec = self.patch.get_edgecolor()
         if self.patch.get_fill():
             fc = color_to_hex(self.patch.get_facecolor())
@@ -662,24 +662,19 @@ class D3Patch(D3Base):
         lw = self.patch.get_linewidth()
         dasharray = get_dasharray(self.patch)
 
-        return self.STYLE.render(figid=self.figid,
-                                 axid=self.axid,
-                                 patchid=self.patchid,
-                                 linecolor=lc,
-                                 linewidth=lw,
-                                 fillcolor=fc,
-                                 dasharray=dasharray,
-                                 alpha=alpha)
+        return dict(patchid=self.patchid,
+                    linecolor=lc,
+                    linewidth=lw,
+                    fillcolor=fc,
+                    dasharray=dasharray,
+                    alpha=alpha)
 
-    def data(self):
+    def _html_args(self):
         # transform path to data coordinates
         transform = self.patch.get_transform() - self.ax.transData
-        return path_data(self.patch.get_path(), transform)
-
-    def html(self):
-        return self.HTML.render(patch=self,
-                                axid=self.axid, patchid=self.patchid,
-                                data=json.dumps(self.data()))
+        data = path_data(self.patch.get_path(), transform)
+        return dict(patchid=self.patchid,
+                    data=json.dumps(data))
 
 
 class D3Image(D3Base):
@@ -740,16 +735,14 @@ class D3Image(D3Base):
         binary_buffer.seek(0)
         return base64.b64encode(binary_buffer.read())
 
-    def html(self):
-        return self.HTML.render(axid=self.axid,
-                                imageid=self.imageid,
-                                base64_data=self.get_base64_data(),
-                                extent=json.dumps(self.image.get_extent()))
+    def _html_args(self):
+        return dict(imageid=self.imageid,
+                    base64_data=self.get_base64_data(),
+                    extent=json.dumps(self.image.get_extent()))
 
-    def style(self):
-        return self.STYLE.render(imageid=self.imageid,
-                                 figid=self.figid,
-                                 alpha=self.image.get_alpha())
+    def _style_args(self):
+        return dict(imageid=self.imageid,
+                    alpha=self.image.get_alpha())
 
 
 class D3Collection(D3Base):
@@ -889,18 +882,16 @@ class D3Collection(D3Base):
 
         return data, defaults
 
-    def html(self):
+    def _html_args(self):
         if self.collection.get_transforms() != []:
             warnings.warn("Collection: multiple transforms not implemented. "
                           "They will be ignored.")
 
         data, defaults = self.get_data_defaults()
 
-        return self.HTML.render(obj=self,
-                                axid=self.axid,
-                                collid=self.collid,
-                                data=json.dumps(data),
-                                defaults=defaults)
+        return dict(collid=self.collid,
+                    data=json.dumps(data),
+                    defaults=defaults)
 
 
 class D3PathCollection(D3Collection):
@@ -932,6 +923,5 @@ class D3PatchCollection(D3Collection):
     """Class for representing matplotlib patch collections in D3js"""
     # TODO: there are special D3 classes for many common patch types
     #       (i.e. circle, ellipse, rectangle, polygon, etc.)  We should
-    #       use these where possible.  Also, it would be better to use the
-    #       SVG path codes as in D3Patch(), above.
+    #       use these where possible.
     pass
