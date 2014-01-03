@@ -34,18 +34,6 @@ FIGURE_CLASS = """
       this.axes = [];
     }
 
-    Figure.prototype.add_axes = function(bbox, xlim, ylim,
-                                         xscale, yscale,
-                                         xdomain, ydomain,
-                                         xgrid, ygrid,
-                                         axclass, clipid){
-      var ax = new Axes(this, bbox, xlim, ylim, xscale, yscale,
-                        xdomain, ydomain,
-                        xgrid, ygrid, axclass, clipid);
-      this.axes.push(ax);
-      return ax;
-    };
-
     Figure.prototype.draw = function(){
       this.canvas = this.root.append('svg:svg')
                                  .attr('class', 'figure')
@@ -66,7 +54,9 @@ FIGURE_CLASS = """
         for (var i=0; i<this.axes.length; i++){
           this.axes[i].xdom(this.axes[i].xdom.domain(this.axes[i].ix(t)));
           this.axes[i].ydom(this.axes[i].ydom.domain(this.axes[i].iy(t)));
-          this.axes[i].zoomed();
+
+          // don't propagate: this will be done as part of the loop.
+          this.axes[i].zoomed(false);
         }
       }.bind(this)
 
@@ -87,6 +77,9 @@ AXES_CLASS = """
                   xdomain, ydomain,
                   xgridOn, ygridOn,
                   axclass, clipid){
+      this.axnum = fig.axes.length;
+      fig.axes.push(this);
+
       this.fig = fig;
       this.bbox = bbox;
       this.xlim = xlim;
@@ -100,6 +93,8 @@ AXES_CLASS = """
       this.axclass = (typeof axclass !== 'undefined') ? axclass : "axes";
       this.clipid = (typeof clipid != 'undefined') ? clipid : "clip";
 
+      this.sharex = [];
+      this.sharey = [];
       this.elements = [];
 
       this.position = [this.bbox[0] * this.fig.width,
@@ -193,12 +188,31 @@ AXES_CLASS = """
       }
     };
 
-    Axes.prototype.zoomed = function(){
+    Axes.prototype.zoomed = function(propagate){
+      // propagate is a boolean specifying whether to propagate movements
+      // to shared axes, specified by sharex and sharey.  Default is true.
+      propagate = (typeof propagate == 'undefined') ? true : propagate;
+
       //console.log(this.zoom.translate());
       //console.log(this.zoom.scale());
+      //console.log(this.zoom.x().domain());
+      //console.log(this.zoom.y().domain());
 
       for(var i=0; i<this.elements.length; i++){
         this.elements[i].zoomed();
+      }
+
+      if(propagate){
+        // update shared x axes
+        for(var i=0; i<this.sharex.length; i++){
+          this.sharex[i].zoom.x().domain(this.zoom.x().domain());
+          this.sharex[i].zoomed(false);
+        }
+        // update shared y axes
+        for(var i=0; i<this.sharey.length; i++){
+          this.sharey[i].zoom.y().domain(this.zoom.y().domain());
+          this.sharey[i].zoomed(false);
+        }
       }
     };
 

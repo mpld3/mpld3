@@ -54,6 +54,11 @@ class D3Base(object):
             self.elcount = self.num_children_by_id[self.parent.elid]
             self.elid = self.parent.elid + str(self.elcount)
 
+    @property
+    def axvar(self):
+        """The JS variable used to store the axes object"""
+        return "ax{0}".format(self.axid)
+
     def __getattr__(self, attr):
         if attr in ['fig', 'ax', 'figid', 'axid']:
             if hasattr(self, '_' + attr):
@@ -66,6 +71,7 @@ class D3Base(object):
     def _base_args(self):
         return {'figid': self.figid,
                 'axid': self.axid,
+                'axvar': self.axvar,
                 'elid': self.elid,
                 'fig': self.fig,
                 'ax': self.ax,
@@ -99,11 +105,13 @@ class D3Figure(D3Base):
     <script type="text/javascript" src="{{ d3_url }}"></script>
     {% endif %}
 
-    <script type="text/javascript">
-    {% for function in js_functions %}
-       {{ function }}
-    {% endfor %}
-    </script>
+    {% if with_js_boilerplate %}
+      <script type="text/javascript">
+      {% for function in js_functions %}
+         {{ function }}
+      {% endfor %}
+      </script>
+    {% endif %}
 
     {% if with_style %}
     <style>
@@ -122,10 +130,20 @@ class D3Figure(D3Base):
     var create_fig{{ figid }} = function(){
       var figwidth = {{ fig.get_figwidth() }} * {{ fig.dpi }};
       var figheight = {{ fig.get_figheight() }} * {{ fig.dpi }};
-      var fig = new Figure("div#figure{{ figid }}", figwidth, figheight);
+      var fig = new Figure("div#figure{{ figid }}",
+                                    figwidth, figheight);
 
       {% for ax in axes %}
          {{ ax.html() }}
+      {% endfor %}
+
+      {% for ax in axes %}
+       {% if ax.sharex %}
+        {{ ax.axvar }}.sharex = [{{ ax.sharex|join(', ') }}];
+       {% endif %}
+       {% if ax.sharey %}
+        {{ ax.axvar }}.sharey = [{{ ax.sharey|join(' ,') }}];
+       {% endif %}
       {% endfor %}
 
       fig.draw();
@@ -150,8 +168,26 @@ class D3Figure(D3Base):
         self._figid = self.elid
         self.axes = [D3Axes(self, ax) for ax in fig.axes]
 
-    def html(self, d3_url=None, with_d3_import=True, with_style=True,
+        self.sharex = []
+        self.sharey = []
+
+        # figure out shared axes groups
+        for i, ax in enumerate(self.axes):
+            #TODO: what about shared axes between figures?
+            xsib = ax.ax.get_shared_x_axes().get_siblings(ax.ax)
+            ysib = ax.ax.get_shared_y_axes().get_siblings(ax.ax)
+
+            ax.sharex = [axi.axvar for axi in self.axes
+                         if axi is not ax and axi.ax in xsib]
+            ax.sharey = [axi.axvar for axi in self.axes
+                         if axi is not ax and axi.ax in ysib]
+
+    def html(self, d3_url=None,
+             with_d3_import=True,
+             with_js_boilerplate=True,
+             with_style=True,
              with_reset_button=False):
+        """Output HTML representing the figure."""
         if d3_url is None:
             d3_url = D3_URL
         return self.HTML.render(figid=self.figid,
@@ -162,6 +198,7 @@ class D3Figure(D3Base):
                                               js.AXIS_CLASS, js.GRID_CLASS,
                                               js.CONSTRUCT_SVG_PATH],
                                 with_d3_import=with_d3_import,
+                                with_js_boilerplate=with_js_boilerplate,
                                 with_style=with_style,
                                 with_reset_button=with_reset_button)
 
@@ -181,12 +218,12 @@ class D3Axes(D3Base):
     """)
 
     HTML = jinja2.Template("""
-    var ax{{ axid }} = fig.add_axes({{ bbox }}, {{ xlim }}, {{ ylim }},
-                                    {{ xscale }}, {{ yscale }},
-                                    {{ xdomain }}, {{ ydomain }},
-                                    {{ xgrid }}, {{ ygrid }},
-                                    "axes{{ axid }}",
-                                    "clip{{ figid }}{{ axid }}");
+    var {{ axvar }} = new Axes(fig, {{ bbox }}, {{ xlim }}, {{ ylim }},
+                               {{ xscale }}, {{ yscale }},
+                               {{ xdomain }}, {{ ydomain }},
+                               {{ xgrid }}, {{ ygrid }},
+                               "axes{{ axid }}",
+                               "clip{{ figid }}{{ axid }}");
 
     {% for child in children %}
       {{ child.html() }}
@@ -196,6 +233,8 @@ class D3Axes(D3Base):
     def __init__(self, parent, ax):
         self._initialize(parent=parent, _ax=ax)
         self._axid = self.elcount
+        self.sharedx = []
+        self.sharedy = []
 
         # Note that the order of the children is the order of their stacking
         # on the page: we append things we want on top (like text) last.
@@ -293,7 +332,7 @@ class D3Axis(D3Base):
 
     HTML = jinja2.Template("""
     // Add an Axis element
-    ax{{ axid }}.add_element(new Axis(ax{{ axid }}, {{ position }}));
+    {{ axvar }}.add_element(new Axis({{ axvar }}, {{ position }}));
     """)
 
     STYLE = jinja2.Template("""
@@ -340,7 +379,7 @@ class D3Grid(D3Base):
 
     HTML = jinja2.Template("""
     // Add a Grid element
-    ax{{ axid }}.add_element(new Grid(ax{{ axid }}, {{ grid_type }}));
+    {{ axvar }}.add_element(new Grid({{ axvar }}, {{ grid_type }}));
     """)
 
     STYLE = jinja2.Template("""
@@ -391,10 +430,10 @@ class D3Text(D3Base):
     HTML = jinja2.Template("""
     {% if text %}
     // Add a text element
-    ax{{ axid }}.add_element(new function(){
+    {{ axvar }}.add_element(new function(){
      this.position = {{ position }};
      this.rotation = {{ rotation }};
-     this.ax = ax{{ axid }};
+     this.ax = {{ axvar }};
      this.text = {{ text }};
 
      this.draw = function(){
@@ -507,9 +546,9 @@ class D3Line2D(D3Base):
 
     HTML = jinja2.Template("""
     // Add a Line2D element
-    ax{{ axid }}.add_element(new function(){
+    {{ axvar }}.add_element(new function(){
      this.data = {{ data }};
-     this.ax = ax{{ axid }};
+     this.ax = {{ axvar }};
 
      this.translate = function(d)
        { return "translate(" + this.ax.x(d[0]) + ","
@@ -618,9 +657,9 @@ class D3Patch(D3Base):
 
     HTML = jinja2.Template("""
     // Add a Patch element
-    ax{{ axid }}.add_element(new function(){
+    {{ axvar }}.add_element(new function(){
       this.data = {{ data }};
-      this.ax = ax{{ axid }};
+      this.ax = {{ axvar }};
 
       this.draw = function(){
         this.patch = this.ax.axes.append("svg:path")
@@ -692,8 +731,8 @@ class D3Image(D3Base):
 
     HTML = jinja2.Template("""
     // Add an Image element
-    ax{{ axid }}.add_element(new function(){
-      this.ax = ax{{ axid }};
+    {{ axvar }}.add_element(new function(){
+      this.ax = {{ axvar }};
       this.data = "data:image/png;base64," + "{{ base64_data }}";
       this.extent = {{ extent }};
       this.class = "image{{ imageid }}";
@@ -754,8 +793,8 @@ class D3Collection(D3Base):
 
     HTML = jinja2.Template("""
     // Add a Collection
-    ax{{ axid }}.add_element(new function(){
-      this.ax = ax{{ axid }};
+    {{ axvar }}.add_element(new function(){
+      this.ax = {{ axvar }};
       this.data = {{ data }};
 
       this.offset_func = function(d){
