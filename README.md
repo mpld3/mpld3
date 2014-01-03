@@ -65,13 +65,10 @@ straightforward to fairly difficult.
 
 - fine-grained text formatting (multi-lines, vertical alignment, etc.)
 - containers (errorbars, etc.)
-- general collections
 - axes aspect ratio
 - tick specification & formatting
 - twin axes (i.e. multiple scales on one plot) tied together
-- tick specification & formatting
 - adding a box-zoom tool
-- tying together pan/zoom on subplots
 - adding tooltips
 
 If any of these look like something you'd like to tackle, feel free to submit

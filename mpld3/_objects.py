@@ -726,8 +726,7 @@ class D3Patch(D3Base):
 
 class D3Image(D3Base):
     """Class for representing matplotlib images in D3js"""
-    # TODO: - Support interpolation keywords
-    #       - Can rendering be done in-browser?
+    # TODO: - Can rendering be done in-browser?
 
     STYLE = jinja2.Template("""
     div#figure{{ figid }}
@@ -767,18 +766,10 @@ class D3Image(D3Base):
     def __init__(self, parent, ax, image, i=''):
         self._initialize(parent=parent, ax=ax, image=image)
         self.imageid = self.elid
-        if self.image.get_interpolation() != 'bilinear':
-            warnings.warn("Image interpolations not yet supported")
 
     def get_base64_data(self):
-        data = self.image.get_array().data
         binary_buffer = io.BytesIO()
-        imsave(binary_buffer, data,
-               vmin=self.image.get_clim()[0],
-               vmax=self.image.get_clim()[1],
-               cmap=self.image.get_cmap(),
-               origin=self.image.origin,
-               format='png')
+        self.image.write_png(binary_buffer)
         binary_buffer.seek(0)
         return base64.b64encode(binary_buffer.read()).decode('utf-8')
 
