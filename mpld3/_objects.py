@@ -242,6 +242,8 @@ class D3Axes(D3Base):
         # TODO: re-order children according to their zorder.
         self.children = [D3Axis(self, "bottom"), D3Axis(self, "left")]
 
+        self.children += [D3Image(self, ax, image) for image in ax.images]
+
         if self.has_xgrid():
             self.children.append(D3Grid(self, 'x'))
         if self.has_ygrid():
@@ -250,7 +252,6 @@ class D3Axes(D3Base):
         self.children += [D3Line2D(self, line) for line in ax.lines]
         self.children += [D3Patch(self, patch)
                           for i, patch in enumerate(ax.patches)]
-        self.children += [D3Image(self, ax, image) for image in ax.images]
 
         for collection in ax.collections:
             if isinstance(collection, mpl.collections.PolyCollection):
