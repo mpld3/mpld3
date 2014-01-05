@@ -274,9 +274,12 @@ AXES_CLASS = """
 
 
 AXIS_CLASS = """
-    function Axis(axes, position){
+    function Axis(axes, position, nticks, tickvalues, tickformat){
       this.axes = axes;
       this.position = position;
+      this.nticks = nticks;
+      this.tickvalues = tickvalues;
+      this.tickformat = tickformat;
       if (position == "bottom"){
         this.transform = "translate(0," + this.axes.height + ")";
         this.scale = this.axes.xdom;
@@ -297,7 +300,12 @@ AXIS_CLASS = """
     }
 
     Axis.prototype.draw = function(){
-      this.axis = d3.svg.axis().scale(this.scale).orient(this.position);
+      this.axis = d3.svg.axis()
+                          .scale(this.scale)
+                          .orient(this.position)
+                          .ticks(this.nticks)
+                          .tickValues(this.tickvalues)
+                          .tickFormat(this.tickformat);
       this.elem = this.axes.baseaxes.append('g')
                         .attr("transform", this.transform)
                         .attr("class", this.class)

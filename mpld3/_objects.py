@@ -15,6 +15,7 @@ from matplotlib.image import imsave
 from matplotlib.path import Path
 from matplotlib.text import Text
 from matplotlib.patches import Patch
+from matplotlib import ticker
 import matplotlib as mpl
 
 from ._utils import (color_to_hex, get_dasharray, get_d3_shape_for_marker,
@@ -381,7 +382,9 @@ class D3Axis(D3Base):
 
     HTML = jinja2.Template("""
     // Add an Axis element
-    {{ axvar }}.add_element(new Axis({{ axvar }}, {{ position }}));
+    {{ axvar }}.add_element(new Axis({{ axvar }}, {{ position }},
+                                     {{ nticks }}, {{ tickvalues }},
+                                     {{ tickformat }}));
     """)
 
     STYLE = jinja2.Template("""
@@ -405,15 +408,45 @@ class D3Axis(D3Base):
         if position not in ["top", "bottom", "left", "right"]:
             raise ValueError("Unrecognized position: {0}".format(position))
         self._initialize(parent=parent, position=position)
+        if self.position in ["top", "bottom"]:
+            self.axis = self.ax.xaxis
+            self.lim = self.ax.get_xlim()
+        else:
+            self.axis = self.ax.yaxis
+            self.lim = self.ax.get_ylim()
+
+    def get_nticks(self):
+        # TODO: handle locations more specifically.  The current solution is
+        #       sufficient for NullLocator, MaxNLocator, and FixedLocator,
+        #       but not as well for AutoLocator, MultipleLocator, and others.
+        locator = self.axis.get_major_locator()
+        return len(locator())
+
+    def get_tickvalues(self):
+        locator = self.axis.get_major_locator()
+        if isinstance(locator, ticker.FixedLocator):
+            # override nticks
+            return json.dumps(list(locator()))
+        else:
+            # null indicates that nticks should be used.
+            return json.dumps(None)
+
+    def get_tickformat(self):
+        # TODO: handle formats other than Null
+        formatter = self.axis.get_major_formatter()
+        if isinstance(formatter, ticker.NullFormatter):
+            return json.dumps("")
+        else:
+            return json.dumps(None)
 
     def _html_args(self):
-        return {'position': json.dumps(self.position)}
+        return {'position': json.dumps(self.position),
+                'nticks': self.get_nticks(),
+                'tickvalues': self.get_tickvalues(),
+                'tickformat': self.get_tickformat()}
 
     def _style_args(self):
-        if self.position in ["top", "bottom"]:
-            ticks = self.ax.xaxis.get_ticklabels()
-        else:
-            ticks = self.ax.yaxis.get_ticklabels()
+        ticks = self.axis.get_ticklabels()
 
         if len(ticks) == 0:
             fontsize = 11

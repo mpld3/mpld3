@@ -21,6 +21,9 @@ def main():
 
     ax.set_title("Line Collections", size=18)
 
+    ax.xaxis.set_major_formatter(plt.NullFormatter())
+    ax.yaxis.set_major_formatter(plt.NullFormatter())
+
     return fig
 
 if __name__ == '__main__':
