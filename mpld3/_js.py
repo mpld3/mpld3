@@ -343,3 +343,7 @@ GRID_CLASS = """
       this.elem.call(this.grid);
     };
 """
+
+ALL_FUNCTIONS = [FIGURE_CLASS, AXES_CLASS,
+                 AXIS_CLASS, GRID_CLASS,
+                 CONSTRUCT_SVG_PATH]

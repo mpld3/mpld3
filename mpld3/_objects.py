@@ -101,26 +101,35 @@ class D3Figure(D3Base):
     """Class for representing a matplotlib Figure in D3js"""
 
     HTML = jinja2.Template("""
-    {% if with_d3_import %}
+    {% if standalone %}<!DOCTYPE html>
+    <html>
+    <head>
+      {% if title %}
+        <title>{{ title }}</title>
+      {% endif %}
+    {% endif %}
+    {% if with_js_includes %}
     <script type="text/javascript" src="{{ d3_url }}"></script>
-    {% endif %}
-
-    {% if with_js_boilerplate %}
-      <script type="text/javascript">
+    <script type="text/javascript">
       {% for function in js_functions %}
-         {{ function }}
+        {{ function }}
       {% endfor %}
-      </script>
+    </script>
+    {% if extra_js %}{{ extra_js }}{% endif %}
     {% endif %}
-
     {% if with_style %}
     <style>
       {% for ax in axes %}
         {{ ax.style() }}
       {% endfor %}
     </style>
+    {% if extra_style %}{{ extra_style }}{% endif %}
     {% endif %}
-
+    {% if standalone %}
+    </head>
+    <body>
+    {% endif %}
+    {% if with_body %}
     <div id='figure{{ figid }}'>
     {% if with_reset_button %}
       <button class='reset'>Reset</button>
@@ -161,6 +170,12 @@ class D3Figure(D3Base):
     // set a timeout of 0: this makes things work in the IPython notebook
     setTimeout(create_fig{{ figid }}, 0);
     </script>
+    {% if extra_body %}{{ extra_body }}{% endif %}
+    {% endif %}
+    {% if standalone %}
+    </body>
+    </html>
+    {% endif %}
     """)
 
     def __init__(self, fig):
@@ -182,25 +197,50 @@ class D3Figure(D3Base):
             ax.sharey = [axi.axvar for axi in self.axes
                          if axi is not ax and axi.ax in ysib]
 
-    def html(self, d3_url=None,
-             with_d3_import=True,
-             with_js_boilerplate=True,
-             with_style=True,
-             with_reset_button=False):
+    def style(self, **kwargs):
+        """Return the style tags for the figure."""
+        return self._render(with_body=False,
+                            with_js_includes=False,
+                            **kwargs)
+
+    def js_includes(self, **kwargs):
+        """Return the javascript includes for the figure."""
+        return self._render(with_body=False,
+                            with_style=False,
+                            **kwargs)
+
+    def body(self, **kwargs):
+        """Return the body content for the figure."""
+        return self._render(with_js_includes=False,
+                            with_style=False,
+                            **kwargs)
+
+    def html(self, d3_url=None, **kwargs):
         """Output HTML representing the figure."""
+        return self._render(d3_url, **kwargs)
+
+    def _render(self, d3_url=None,
+                standalone=False, title=None,
+                with_js_includes=True, extra_js=None,
+                with_style=True, extra_style=None,
+                with_body=True, extra_body=None,
+                with_reset_button=False):
+        """Render the figure (or parts of the figure) as d3."""
         if d3_url is None:
             d3_url = D3_URL
         return self.HTML.render(figid=self.figid,
                                 fig=self.fig,
                                 axes=self.axes,
                                 d3_url=d3_url,
-                                js_functions=[js.FIGURE_CLASS, js.AXES_CLASS,
-                                              js.AXIS_CLASS, js.GRID_CLASS,
-                                              js.CONSTRUCT_SVG_PATH],
-                                with_d3_import=with_d3_import,
-                                with_js_boilerplate=with_js_boilerplate,
+                                js_functions=js.ALL_FUNCTIONS,
+                                with_js_includes=with_js_includes,
+                                extra_js=extra_js,
                                 with_style=with_style,
-                                with_reset_button=with_reset_button)
+                                extra_style=extra_style,
+                                with_body=with_body,
+                                extra_body=extra_body,
+                                with_reset_button=with_reset_button,
+                                title=title)
 
 
 class D3Axes(D3Base):

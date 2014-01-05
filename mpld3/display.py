@@ -2,7 +2,7 @@ from ._objects import D3Figure
 from ._server import serve_and_open
 
 
-def fig_to_d3(fig, d3_url=None):
+def fig_to_d3(fig, d3_url=None, **kwargs):
     """Output d3 representation of the figure
 
     Parameters
@@ -12,6 +12,8 @@ def fig_to_d3(fig, d3_url=None):
     d3_url : string (optional)
         The URL of the d3 library.  If not specified, a standard web path
         will be used.
+    **kwargs :
+        Additional keyword arguments passed to D3Figure.html
 
     Returns
     -------
@@ -24,7 +26,7 @@ def fig_to_d3(fig, d3_url=None):
     - display_d3 : embed figure within the IPython notebook
     - enable_notebook : automatically embed figures in the IPython notebook
     """
-    return D3Figure(fig).html(d3_url)
+    return D3Figure(fig).html(d3_url=d3_url, **kwargs)
 
 
 def display_d3(fig=None, closefig=True, d3_url=None):
@@ -58,7 +60,7 @@ def display_d3(fig=None, closefig=True, d3_url=None):
         fig = plt.gcf()
     if closefig:
         plt.close(fig)
-    return HTML(fig_to_d3(fig, d3_url))
+    return HTML(fig_to_d3(fig, d3_url=d3_url))
 
 
 def show_d3(fig=None, d3_url=None, ip='127.0.0.1', port=8888, n_retries=50):
@@ -94,7 +96,7 @@ def show_d3(fig=None, d3_url=None, ip='127.0.0.1', port=8888, n_retries=50):
         import matplotlib.pyplot as plt
         fig = plt.gcf()
 
-    serve_and_open(D3Figure(fig).html(d3_url),
+    serve_and_open(D3Figure(fig).html(d3_url=d3_url),
                    ip=ip, port=port, n_retries=n_retries)
 
 
