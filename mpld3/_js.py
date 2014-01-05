@@ -165,8 +165,11 @@ AXES_CLASS = """
                                                  + this.position[1] + ')')
                              .attr('width', this.width)
                              .attr('height', this.height)
-                             .attr('class', "baseaxes")
-                             .call(this.zoom);
+                             .attr('class', "baseaxes");
+
+      if(this.zoomable){
+        this.baseaxes.call(this.zoom);
+      }
 
       this.axesbg = this.baseaxes.append("svg:rect")
                              .attr("width", this.width)
@@ -191,31 +194,29 @@ AXES_CLASS = """
     };
 
     Axes.prototype.zoomed = function(propagate){
-      if(this.zoomable){
-        // propagate is a boolean specifying whether to propagate movements
-        // to shared axes, specified by sharex and sharey.  Default is true.
-        propagate = (typeof propagate == 'undefined') ? true : propagate;
+      // propagate is a boolean specifying whether to propagate movements
+      // to shared axes, specified by sharex and sharey.  Default is true.
+      propagate = (typeof propagate == 'undefined') ? true : propagate;
 
-        //console.log(this.zoom.translate());
-        //console.log(this.zoom.scale());
-        //console.log(this.zoom.x().domain());
-        //console.log(this.zoom.y().domain());
+      //console.log(this.zoom.translate());
+      //console.log(this.zoom.scale());
+      //console.log(this.zoom.x().domain());
+      //console.log(this.zoom.y().domain());
 
-        for(var i=0; i<this.elements.length; i++){
-          this.elements[i].zoomed();
+      for(var i=0; i<this.elements.length; i++){
+        this.elements[i].zoomed();
+      }
+
+      if(propagate){
+        // update shared x axes
+        for(var i=0; i<this.sharex.length; i++){
+          this.sharex[i].zoom.x().domain(this.zoom.x().domain());
+          this.sharex[i].zoomed(false);
         }
-
-        if(propagate){
-          // update shared x axes
-          for(var i=0; i<this.sharex.length; i++){
-            this.sharex[i].zoom.x().domain(this.zoom.x().domain());
-            this.sharex[i].zoomed(false);
-          }
-          // update shared y axes
-          for(var i=0; i<this.sharey.length; i++){
-            this.sharey[i].zoom.y().domain(this.zoom.y().domain());
-            this.sharey[i].zoomed(false);
-          }
+        // update shared y axes
+        for(var i=0; i<this.sharey.length; i++){
+          this.sharey[i].zoom.y().domain(this.zoom.y().domain());
+          this.sharey[i].zoomed(false);
         }
       }
     };
