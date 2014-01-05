@@ -4,6 +4,7 @@ import warnings
 import base64
 import io
 import json
+from textwrap import dedent
 from collections import defaultdict
 
 import jinja2
@@ -88,12 +89,12 @@ class D3Base(object):
     def html(self):
         argdict = self._base_args()
         argdict.update(self._html_args())
-        return self.HTML.render(**argdict)
+        return dedent(self.HTML.render(**argdict))
 
     def style(self):
         argdict = self._base_args()
         argdict.update(self._style_args())
-        return self.STYLE.render(**argdict)
+        return dedent(self.STYLE.render(**argdict))
 
     def __str__(self):
         return self.html()
@@ -230,19 +231,19 @@ class D3Figure(D3Base):
         """Render the figure (or parts of the figure) as d3."""
         if d3_url is None:
             d3_url = D3_URL
-        return self.HTML.render(figid=self.figid,
-                                fig=self.fig,
-                                axes=self.axes,
-                                d3_url=d3_url,
-                                js_functions=js.ALL_FUNCTIONS,
-                                with_js_includes=with_js_includes,
-                                extra_js=extra_js,
-                                with_style=with_style,
-                                extra_style=extra_style,
-                                with_body=with_body,
-                                extra_body=extra_body,
-                                with_reset_button=with_reset_button,
-                                title=title)
+        return dedent(self.HTML.render(figid=self.figid,
+                                       fig=self.fig,
+                                       axes=self.axes,
+                                       d3_url=d3_url,
+                                       js_functions=js.ALL_FUNCTIONS,
+                                       with_js_includes=with_js_includes,
+                                       extra_js=extra_js,
+                                       with_style=with_style,
+                                       extra_style=extra_style,
+                                       with_body=with_body,
+                                       extra_body=extra_body,
+                                       with_reset_button=with_reset_button,
+                                       title=title))
 
 
 class D3Axes(D3Base):
