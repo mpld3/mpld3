@@ -76,7 +76,8 @@ AXES_CLASS = """
                   xscale, yscale,
                   xdomain, ydomain,
                   xgridOn, ygridOn,
-                  axclass, clipid){
+                  axclass, clipid,
+                  zoomable){
       this.axnum = fig.axes.length;
       fig.axes.push(this);
 
@@ -92,6 +93,7 @@ AXES_CLASS = """
       this.ygridOn = ygridOn;
       this.axclass = (typeof axclass !== 'undefined') ? axclass : "axes";
       this.clipid = (typeof clipid != 'undefined') ? clipid : "clip";
+      this.zoomable = zoomable;
 
       this.sharex = [];
       this.sharey = [];
@@ -189,29 +191,31 @@ AXES_CLASS = """
     };
 
     Axes.prototype.zoomed = function(propagate){
-      // propagate is a boolean specifying whether to propagate movements
-      // to shared axes, specified by sharex and sharey.  Default is true.
-      propagate = (typeof propagate == 'undefined') ? true : propagate;
+      if(this.zoomable){
+        // propagate is a boolean specifying whether to propagate movements
+        // to shared axes, specified by sharex and sharey.  Default is true.
+        propagate = (typeof propagate == 'undefined') ? true : propagate;
 
-      //console.log(this.zoom.translate());
-      //console.log(this.zoom.scale());
-      //console.log(this.zoom.x().domain());
-      //console.log(this.zoom.y().domain());
+        //console.log(this.zoom.translate());
+        //console.log(this.zoom.scale());
+        //console.log(this.zoom.x().domain());
+        //console.log(this.zoom.y().domain());
 
-      for(var i=0; i<this.elements.length; i++){
-        this.elements[i].zoomed();
-      }
-
-      if(propagate){
-        // update shared x axes
-        for(var i=0; i<this.sharex.length; i++){
-          this.sharex[i].zoom.x().domain(this.zoom.x().domain());
-          this.sharex[i].zoomed(false);
+        for(var i=0; i<this.elements.length; i++){
+          this.elements[i].zoomed();
         }
-        // update shared y axes
-        for(var i=0; i<this.sharey.length; i++){
-          this.sharey[i].zoom.y().domain(this.zoom.y().domain());
-          this.sharey[i].zoomed(false);
+
+        if(propagate){
+          // update shared x axes
+          for(var i=0; i<this.sharex.length; i++){
+            this.sharex[i].zoom.x().domain(this.zoom.x().domain());
+            this.sharex[i].zoomed(false);
+          }
+          // update shared y axes
+          for(var i=0; i<this.sharey.length; i++){
+            this.sharey[i].zoom.y().domain(this.zoom.y().domain());
+            this.sharey[i].zoomed(false);
+          }
         }
       }
     };

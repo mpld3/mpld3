@@ -265,7 +265,7 @@ class D3Axes(D3Base):
                                {{ xdomain }}, {{ ydomain }},
                                {{ xgrid }}, {{ ygrid }},
                                "axes{{ axid }}",
-                               "clip{{ figid }}{{ axid }}");
+                               "clip{{ figid }}{{ axid }}", {{ zoomable }});
 
     {% for child in children %}
       {{ child.html() }}
@@ -346,11 +346,15 @@ class D3Axes(D3Base):
         return dict(axesbg=color_to_hex(self.ax.patch.get_facecolor()),
                     children=self.children)
 
+    def zoomable(self):
+        return bool(self.ax.get_navigate())
+
     def _html_args(self):
         args = dict(bbox=json.dumps(self.ax.get_position().bounds),
                     xgrid=json.dumps(self.has_xgrid()),
                     ygrid=json.dumps(self.has_ygrid()),
-                    children=self.children)
+                    children=self.children,
+                    zoomable=json.dumps(self.zoomable()))
 
         # get args for each axis
         for axname in ['x', 'y']:
