@@ -10,6 +10,7 @@ import jinja2
 
 import numpy as np
 
+import matplotlib.axis
 from matplotlib.lines import Line2D
 from matplotlib.image import imsave
 from matplotlib.path import Path
@@ -281,7 +282,8 @@ class D3Axes(D3Base):
         # on the page: we append things we want on top (like text) last.
 
         # TODO: re-order children according to their zorder.
-        self.children = [D3Axis(self, "bottom"), D3Axis(self, "left")]
+        self.children = [D3Axis(self, self.ax.xaxis),
+                         D3Axis(self, self.ax.yaxis)]
 
         self.children += [D3Image(self, ax, image) for image in ax.images]
 
@@ -404,16 +406,30 @@ class D3Axis(D3Base):
     }
     """)
 
-    def __init__(self, parent, position):
-        if position not in ["top", "bottom", "left", "right"]:
-            raise ValueError("Unrecognized position: {0}".format(position))
-        self._initialize(parent=parent, position=position)
-        if self.position in ["top", "bottom"]:
-            self.axis = self.ax.xaxis
+    def __init__(self, parent, axis):
+        self._initialize(parent=parent, axis=axis)
+        self.position = self.axis.get_ticks_position()
+
+        # TODO: allow labels/ticks to be drawn on both sides
+        # TODO: make sure grid lines line-up with ticks
+        label1On = self.axis._major_tick_kw.get('label1On', True)
+
+        if isinstance(self.axis, matplotlib.axis.XAxis):
+            if label1On:
+                self.position = "bottom"
+            else:
+                self.position = "top"
             self.lim = self.ax.get_xlim()
-        else:
-            self.axis = self.ax.yaxis
+            self.labels = self.ax.get_xticklabels()
+        elif isinstance(self.axis, matplotlib.axis.YAxis):
+            if label1On:
+                self.position = "left"
+            else:
+                self.position = "right"
             self.lim = self.ax.get_ylim()
+            self.labels = self.ax.get_yticklabels()
+        else:
+            raise ValueError("{0} should be an Axis instance".format(axis))
 
     def get_nticks(self):
         # TODO: handle locations more specifically.  The current solution is
@@ -435,6 +451,8 @@ class D3Axis(D3Base):
         # TODO: handle formats other than Null
         formatter = self.axis.get_major_formatter()
         if isinstance(formatter, ticker.NullFormatter):
+            return json.dumps("")
+        elif not any(label.get_visible() for label in self.labels):
             return json.dumps("")
         else:
             return json.dumps(None)
