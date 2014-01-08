@@ -15,10 +15,12 @@ def main():
     X[:, :, 3] = np.exp(-0.25 * (x ** 2 + y ** 2))
 
     im = ax.imshow(X, extent=(10, 20, 10, 20),
-                   origin='lower')
+                   origin='lower', zorder=1)
     fig.colorbar(im, ax=ax)
 
     ax.set_title('An Image', size=20)
+    ax.text(15,16,"overlaid text")
+    ax.text(15,15,"covered text",zorder=0)
 
     return fig
 
