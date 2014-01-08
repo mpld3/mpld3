@@ -48,12 +48,6 @@ class D3Base(object):
         self.parent = parent
         for key, val in kwds.items():
             setattr(self, key, val)
-            
-            # check for zorder
-            try:
-                self.zorder=val.zorder
-            except:
-                pass
 
         # create a unique element id
         if parent is None:
@@ -286,7 +280,7 @@ class D3Axes(D3Base):
     """)
 
     def __init__(self, parent, ax):
-        self._initialize(parent=parent, _ax=ax)
+        self._initialize(parent=parent, _ax=ax, zorder=ax.zorder)
         self._axid = self.elcount
         self.sharedx = []
         self.sharedy = []
@@ -428,7 +422,7 @@ class D3Axis(D3Base):
     """)
 
     def __init__(self, parent, axis):
-        self._initialize(parent=parent, axis=axis)
+        self._initialize(parent=parent, axis=axis, zorder=axis.zorder)
         self.position = self.axis.get_ticks_position()
 
         # TODO: allow labels/ticks to be drawn on both sides
@@ -599,7 +593,7 @@ class D3Text(D3Base):
     """)
 
     def __init__(self, parent, text):
-        self._initialize(parent=parent, text=text)
+        self._initialize(parent=parent, text=text, zorder=text.zorder)
 
     def zoomable(self):
         return self.text.get_transform().contains_branch(self.ax.transData)
@@ -723,7 +717,7 @@ class D3Line2D(D3Base):
     """)
 
     def __init__(self, parent, line):
-        self._initialize(parent=parent, line=line)
+        self._initialize(parent=parent, line=line, zorder=line.zorder)
         self.lineid = self.elcount
 
     def zoomable(self):
@@ -808,7 +802,7 @@ class D3Patch(D3Base):
     """)
 
     def __init__(self, parent, patch):
-        self._initialize(parent=parent, patch=patch)
+        self._initialize(parent=parent, patch=patch, zorder=patch.zorder)
         self.patchid = self.elid
 
     def zoomable(self):
@@ -883,7 +877,8 @@ class D3Image(D3Base):
     """)
 
     def __init__(self, parent, ax, image, i=''):
-        self._initialize(parent=parent, ax=ax, image=image)
+        self._initialize(parent=parent, ax=ax, image=image, 
+                zorder=image.zorder)
         self.imageid = self.elid
 
     def get_base64_data(self):
@@ -974,7 +969,8 @@ class D3Collection(D3Base):
     """)
 
     def __init__(self, parent, collection):
-        self._initialize(parent, collection=collection)
+        self._initialize(parent, collection=collection, 
+                zorder=collection.zorder)
         self.collid = self.elid
 
     def _update_data(self, data, defaults):
