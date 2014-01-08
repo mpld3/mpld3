@@ -546,16 +546,20 @@ class D3Text(D3Base):
        this.obj = this.ax.axes.append("text")
                          .attr("x", this.ax.x(this.position[0]))
                          .attr("y", this.ax.y(this.position[1]))
+                         {% if rotation %}
                          .attr("transform", "rotate(" + this.rotation + ","
                                           + this.ax.x(this.position[0]) + ","
                                           + this.ax.y(this.position[1]) + ")")
+                         {% endif %}
        {% else %}
        this.obj = this.ax.fig.canvas.append("text")
                       .attr("x", this.position[0])
                       .attr("y", this.ax.fig.height - this.position[1])
+                      {% if rotation %}
                       .attr("transform", "rotate(" + this.rotation + ","
                                       + this.position[0] + ","
                                       + (figheight - this.position[1]) + ")")
+                      {% endif %}
        {% endif %}
                       .attr("class", "text")
                       .text(this.text)
@@ -567,9 +571,11 @@ class D3Text(D3Base):
      {% if zoomable %}
      this.obj.attr("x", this.ax.x(this.position[0]))
              .attr("y", this.ax.y(this.position[1]))
+             {% if rotation %}
              .attr("transform", "rotate(" + this.rotation + ","
                              + this.ax.x(this.position[0]) + ","
                              + this.ax.y(this.position[1]) + ")")
+             {% endif %}
      {% endif %}
      }
     });
