@@ -48,6 +48,12 @@ class D3Base(object):
         self.parent = parent
         for key, val in kwds.items():
             setattr(self, key, val)
+            
+            # check for zorder
+            try:
+                self.zorder=val.zorder
+            except:
+                pass
 
         # create a unique element id
         if parent is None:
@@ -95,6 +101,12 @@ class D3Base(object):
         argdict = self._base_args()
         argdict.update(self._style_args())
         return dedent(self.STYLE.render(**argdict))
+
+    def get_zorder(self):
+        try:
+            return self.zorder
+        except:
+            return 0
 
     def __str__(self):
         return self.html()
@@ -282,16 +294,17 @@ class D3Axes(D3Base):
         # Note that the order of the children is the order of their stacking
         # on the page: we append things we want on top (like text) last.
 
-        # TODO: re-order children according to their zorder.
         self.children = [D3Axis(self, self.ax.xaxis),
                          D3Axis(self, self.ax.yaxis)]
 
         self.children += [D3Image(self, ax, image) for image in ax.images]
 
         if self.has_xgrid():
-            self.children.append(D3Grid(self, 'x'))
+            self.children.append(D3Grid(self, 'x', 
+                zorder=self.ax.xaxis.zorder))
         if self.has_ygrid():
-            self.children.append(D3Grid(self, 'y'))
+            self.children.append(D3Grid(self, 'y', 
+                zorder=self.ax.yaxis.zorder))
 
         self.children += [D3Line2D(self, line) for line in ax.lines]
         self.children += [D3Patch(self, patch)
@@ -334,6 +347,9 @@ class D3Axes(D3Base):
                     self.children.append(D3Patch(self, child))
                 else:
                     warnings.warn("Ignoring legend element: {0}".format(child))
+
+        # re-order children according to their zorder.
+        self.children.sort(key=lambda child: child.get_zorder())
 
     def has_xgrid(self):
         return bool(self.ax.xaxis._gridOnMajor
@@ -501,11 +517,11 @@ class D3Grid(D3Base):
     }
     """)
 
-    def __init__(self, parent, grid_type):
+    def __init__(self, parent, grid_type, zorder=0):
         if grid_type not in ["x", "y"]:
             raise ValueError("Invalid grid type: '{0}'.  "
                              "Expected 'x' or 'y'".format(grid_type))
-        self._initialize(parent=parent, grid_type=grid_type)
+        self._initialize(parent=parent, grid_type=grid_type, zorder=zorder)
 
     def _html_args(self):
         return {'grid_type': json.dumps(self.grid_type)}
