@@ -19,6 +19,8 @@ def main():
     fig.colorbar(im, ax=ax)
 
     ax.set_title('An Image', size=20)
+    ax.set_xlim(8, 22)
+    ax.set_ylim(8, 22)
 
     return fig
 

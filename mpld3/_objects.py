@@ -872,7 +872,16 @@ class D3Image(D3Base):
 
     def get_base64_data(self):
         binary_buffer = io.BytesIO()
+
+        # image is saved in axes coordinates: we need to temporarily
+        # set the correct limits to get the correct image, then undo it.
+        xlim = self.ax.get_xlim()
+        ylim = self.ax.get_ylim()
+        self.ax.set_xlim(self.image.get_extent()[:2])
+        self.ax.set_ylim(self.image.get_extent()[2:])
         self.image.write_png(binary_buffer)
+        self.ax.set_xlim(xlim)
+        self.ax.set_ylim(ylim)
         binary_buffer.seek(0)
         return base64.b64encode(binary_buffer.read()).decode('utf-8')
 
