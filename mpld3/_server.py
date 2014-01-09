@@ -64,7 +64,7 @@ def serve_and_open(html, ip='127.0.0.1', port=8888, n_retries=50):
     """
     port = find_open_port(ip, port, n_retries)
     Handler = generate_handler(html)
-    server = server.HTTPServer((ip, port), Handler)
+    srvr = server.HTTPServer((ip, port), Handler)
 
     # Use a thread to open a web browser pointing to the server
     b = lambda: webbrowser.open('http://{0}:{1}'.format(ip, port))
@@ -73,8 +73,8 @@ def serve_and_open(html, ip='127.0.0.1', port=8888, n_retries=50):
     # Start the server
     print("Serving to http://{0}:{1}/    [Ctrl-C to exit]".format(ip, port))
     try:
-        server.serve_forever()
+        srvr.serve_forever()
     except (KeyboardInterrupt, SystemExit):
         print("\nstopping Server...")
 
-    server.server_close()
+    srvr.server_close()
