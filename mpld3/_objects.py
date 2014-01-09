@@ -25,7 +25,7 @@ from ._utils import (color_to_hex, get_dasharray, get_d3_shape_for_marker,
 from . import _js as js
 
 
-D3_URL = "http://d3js.org/d3.v3.min.js"
+D3_URL = "//cdnjs.cloudflare.com/ajax/libs/d3/3.3.11/d3.min.js"
 
 
 class D3Base(object):
