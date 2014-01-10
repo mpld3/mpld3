@@ -50,13 +50,21 @@ class D3Base(object):
         for key, val in kwds.items():
             setattr(self, key, val)
 
-        # create a unique element id
+        # create various identifiers for the object
         if parent is None:
-            self.elid = self.generate_unique_id()
+            self.elcount = 1
         else:
             self.num_children_by_id[self.parent.elid] += 1
             self.elcount = self.num_children_by_id[self.parent.elid]
-            self.elid = self.parent.elid + str(self.elcount)
+
+        self.elname = self.__class__.__name__.lower()
+        if self.elname.startswith('d3'):
+            self.elname = self.elname[2:]
+
+        self.var = self.elname + str(self.elcount)
+        self.cssclass = self.elname + str(self.elcount)
+        self.elid = self.generate_unique_id()
+        self.cssid = self.elname + self.elid
 
     @property
     def zorder(self):
@@ -71,7 +79,7 @@ class D3Base(object):
         return "ax{0}".format(self.axid)
 
     def __getattr__(self, attr):
-        if attr in ['fig', 'ax', 'figid', 'axid']:
+        if attr in ['fig', 'ax', 'figid', 'axid', 'figcssid']:
             if hasattr(self, '_' + attr):
                 return getattr(self, '_' + attr)
             elif self.parent is not None and self.parent is not self:
@@ -81,9 +89,13 @@ class D3Base(object):
 
     def _base_args(self):
         return {'figid': self.figid,
+                'figcssid': self.figcssid,
                 'axid': self.axid,
                 'axvar': self.axvar,
                 'elid': self.elid,
+                'cssid': self.cssid,
+                'cssclass': self.cssclass,
+                'var': self.var,
                 'fig': self.fig,
                 'ax': self.ax,
                 'obj': self}
@@ -192,8 +204,11 @@ class D3Figure(D3Base):
     """)
 
     def __init__(self, fig):
-        self._initialize(parent=None, obj=fig, _fig=fig, _ax=None)
+        self._initialize(parent=None, obj=fig)
         self._figid = self.elid
+        self._figcssid = "figure" + self._figid
+        self._fig = fig
+        self._ax = None
         self.axes = [D3Axes(self, ax) for ax in fig.axes]
 
         self.sharex = []
@@ -702,7 +717,7 @@ class D3Line2D(D3Base):
 
     HTML = jinja2.Template("""
     // Add a Line2D element
-    {{ axvar }}.add_element(new function(){
+    var line{{ elid }} = new function(){
      this.data = {{ data }};
      this.ax = {{ axvar }};
 
@@ -748,7 +763,9 @@ class D3Line2D(D3Base):
           {% endif %}
         {% endif %}
      }
-    });
+    };
+
+    {{ axvar }}.add_element(line{{ elid }});
     """)
 
     def __init__(self, parent, line):
@@ -813,7 +830,7 @@ class D3Patch(D3Base):
 
     HTML = jinja2.Template("""
     // Add a Patch element
-    {{ axvar }}.add_element(new function(){
+    var patch{{ elid }} = new function(){
       this.data = {{ data }};
       this.ax = {{ axvar }};
 
@@ -833,7 +850,9 @@ class D3Patch(D3Base):
                                                   this.ax.y));
         {% endif %}
       };
-    });
+    };
+
+    {{ axvar }}.add_element(patch{{ elid }});
     """)
 
     def __init__(self, parent, patch):
@@ -886,7 +905,7 @@ class D3Image(D3Base):
 
     HTML = jinja2.Template("""
     // Add an Image element
-    {{ axvar }}.add_element(new function(){
+    var image{{ elid }} = new function(){
       this.ax = {{ axvar }};
       this.data = "data:image/png;base64," + "{{ base64_data }}";
       this.extent = {{ extent }};
@@ -908,7 +927,8 @@ class D3Image(D3Base):
                   .attr("height", this.ax.y(this.extent[2])
                                   - this.ax.y(this.extent[3]));
       };
-    });
+    };
+    {{ axvar }}.add_element(image{{ elid }});
     """)
 
     def __init__(self, parent, image):
@@ -949,7 +969,7 @@ class D3Collection(D3Base):
 
     HTML = jinja2.Template("""
     // Add a Collection
-    {{ axvar }}.add_element(new function(){
+    var coll{{ elid }} = new function(){
       this.ax = {{ axvar }};
       this.data = {{ data }};
 
@@ -1008,7 +1028,8 @@ class D3Collection(D3Base):
                    .attr("transform", this.offset_func.bind(this))
                  {% endif %};
       };
-    });
+    };
+    {{ axvar }}.add_element(coll{{ elid }});
     """)
 
     def __init__(self, parent, collection):
