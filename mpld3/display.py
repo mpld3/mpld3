@@ -100,7 +100,7 @@ def show_d3(fig=None, d3_url=None, ip='127.0.0.1', port=8888, n_retries=50):
                    ip=ip, port=port, n_retries=n_retries)
 
 
-def enable_notebook():
+def enable_notebook(d3_url=None):
     """Enable the automatic display of figures in the IPython Notebook.
 
     This function should be used with the inline Matplotlib backend
@@ -108,6 +108,11 @@ def enable_notebook():
     or `%matplotlib inline`. This works by adding an HTML formatter
     for Figure objects; the existing SVG/PNG formatters will remain
     enabled.
+
+    Parameters
+    ----------
+    d3_url : string (optional)
+        if specified, then find the d3 library at the provided URL
 
     See Also
     --------
@@ -121,7 +126,7 @@ def enable_notebook():
         raise ImportError('This feature requires IPython and Matplotlib')
     ip = get_ipython()
     formatter = ip.display_formatter.formatters['text/html']
-    formatter.for_type(Figure, lambda fig: fig_to_d3(fig))
+    formatter.for_type(Figure, lambda fig: fig_to_d3(fig, d3_url))
 
 
 def disable_notebook():
