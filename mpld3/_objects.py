@@ -1013,7 +1013,7 @@ class D3Collection(D3Base):
 
     def __init__(self, parent, collection):
         self._initialize(parent, obj=collection, collection=collection)
-        self.collid = self.elid
+        self.collid = self.elcount
 
     def _update_data(self, data, defaults):
         return data, defaults
