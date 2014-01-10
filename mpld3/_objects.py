@@ -59,6 +59,13 @@ class D3Base(object):
             self.elid = self.parent.elid + str(self.elcount)
 
     @property
+    def zorder(self):
+        if hasattr(self.obj, 'zorder'):
+            return self.obj.zorder
+        else:
+            return 0
+
+    @property
     def axvar(self):
         """The JS variable used to store the axes object"""
         return "ax{0}".format(self.axid)
@@ -316,9 +323,9 @@ class D3Axes(D3Base):
         self._add_children(*[D3Image(self, image) for image in ax.images])
 
         if self.has_xgrid():
-            self._add_children(D3Grid(self, 'x'))
+            self._add_children(D3Grid(self, ax.xaxis))
         if self.has_ygrid():
-            self._add_children(D3Grid(self, 'y'))
+            self._add_children(D3Grid(self, ax.yaxis))
 
         self._add_children(*[D3Line2D(self, line) for line in ax.lines])
         self._add_children(*[D3Patch(self, patch)
@@ -361,6 +368,9 @@ class D3Axes(D3Base):
                     self._add_children(D3Patch(self, child))
                 else:
                     warnings.warn("Ignoring legend element: {0}".format(child))
+
+        # re-order children according to their zorder.
+        self.children.sort(key=lambda child: child.zorder)
 
     def _add_children(self, *children):
         for child in children:
@@ -533,11 +543,14 @@ class D3Grid(D3Base):
     }
     """)
 
-    def __init__(self, parent, grid_type):
-        if grid_type not in ["x", "y"]:
-            raise ValueError("Invalid grid type: '{0}'.  "
-                             "Expected 'x' or 'y'".format(grid_type))
-        self._initialize(parent=parent, obj=None, grid_type=grid_type)
+    def __init__(self, parent, axis):
+        if isinstance(axis, matplotlib.axis.XAxis):
+            grid_type = "x"
+        elif isinstance(axis, matplotlib.axis.YAxis):
+            grid_type = "y"
+        else:
+            raise ValueError("grid argument must be an x or y axis")
+        self._initialize(parent=parent, obj=axis, grid_type=grid_type)
 
     def _html_args(self):
         return {'grid_type': json.dumps(self.grid_type)}
