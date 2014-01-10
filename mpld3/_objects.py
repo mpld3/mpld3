@@ -43,9 +43,10 @@ class D3Base(object):
     def generate_unique_id():
         return str(uuid.uuid4()).replace('-', '')
 
-    def _initialize(self, parent=None, **kwds):
+    def _initialize(self, parent=None, obj=None, **kwds):
         # set attributes
         self.parent = parent
+        self.obj = obj
         for key, val in kwds.items():
             setattr(self, key, val)
 
@@ -113,20 +114,20 @@ class D3Figure(D3Base):
     {% endif %}
     {% if with_js_includes %}
     <script type="text/javascript" src="{{ d3_url }}"></script>
+    {% if extra_js %}{{ extra_js }}{% endif %}
     <script type="text/javascript">
       {% for function in js_functions %}
         {{ function }}
       {% endfor %}
     </script>
-    {% if extra_js %}{{ extra_js }}{% endif %}
     {% endif %}
     {% if with_style %}
     <style>
       {% for ax in axes %}
         {{ ax.style() }}
       {% endfor %}
-    </style>
     {% if extra_style %}{{ extra_style }}{% endif %}
+    </style>
     {% endif %}
     {% if standalone %}
     </head>
@@ -166,6 +167,8 @@ class D3Figure(D3Base):
           .on("click", fig.reset.bind(fig));
       {% endif %}
 
+      {% if extra_fig_js %}{{ extra_fig_js }}{% endif %}
+
       return fig
     }
 
@@ -182,7 +185,7 @@ class D3Figure(D3Base):
     """)
 
     def __init__(self, fig):
-        self._initialize(parent=None, _fig=fig, _ax=None)
+        self._initialize(parent=None, obj=fig, _fig=fig, _ax=None)
         self._figid = self.elid
         self.axes = [D3Axes(self, ax) for ax in fig.axes]
 
@@ -227,8 +230,29 @@ class D3Figure(D3Base):
                 with_js_includes=True, extra_js=None,
                 with_style=True, extra_style=None,
                 with_body=True, extra_body=None,
+                extra_fig_js=None,
                 with_reset_button=False):
         """Render the figure (or parts of the figure) as d3."""
+        if hasattr(self.fig, 'plugins'):
+            if not extra_js:
+                extra_js = ''
+
+            if not extra_style:
+                extra_style = ''
+
+            if not extra_body:
+                extra_body = ''
+
+            if not extra_fig_js:
+                extra_fig_js = ''
+
+            for plugin in self.fig.plugins:
+                plugin.set_figure(self)
+                extra_js += plugin.js()
+                extra_style += plugin.style()
+                extra_body += plugin.html()
+                extra_fig_js += plugin.fig_js()
+
         if d3_url is None:
             d3_url = D3_URL
         return dedent(self.HTML.render(figid=self.figid,
@@ -238,6 +262,7 @@ class D3Figure(D3Base):
                                        js_functions=js.ALL_FUNCTIONS,
                                        with_js_includes=with_js_includes,
                                        extra_js=extra_js,
+                                       extra_fig_js=extra_fig_js,
                                        with_style=with_style,
                                        extra_style=extra_style,
                                        with_body=with_body,
@@ -274,53 +299,55 @@ class D3Axes(D3Base):
     """)
 
     def __init__(self, parent, ax):
-        self._initialize(parent=parent, _ax=ax)
+        self._initialize(parent=parent, obj=ax, _ax=ax)
         self._axid = self.elcount
         self.sharedx = []
         self.sharedy = []
+        self.children = []
+        self.objmap = {}
 
         # Note that the order of the children is the order of their stacking
         # on the page: we append things we want on top (like text) last.
 
         # TODO: re-order children according to their zorder.
-        self.children = [D3Axis(self, self.ax.xaxis),
-                         D3Axis(self, self.ax.yaxis)]
+        self._add_children(D3Axis(self, self.ax.xaxis),
+                           D3Axis(self, self.ax.yaxis))
 
-        self.children += [D3Image(self, ax, image) for image in ax.images]
+        self._add_children(*[D3Image(self, image) for image in ax.images])
 
         if self.has_xgrid():
-            self.children.append(D3Grid(self, 'x'))
+            self._add_children(D3Grid(self, 'x'))
         if self.has_ygrid():
-            self.children.append(D3Grid(self, 'y'))
+            self._add_children(D3Grid(self, 'y'))
 
-        self.children += [D3Line2D(self, line) for line in ax.lines]
-        self.children += [D3Patch(self, patch)
-                          for i, patch in enumerate(ax.patches)]
+        self._add_children(*[D3Line2D(self, line) for line in ax.lines])
+        self._add_children(*[D3Patch(self, patch)
+                             for i, patch in enumerate(ax.patches)])
 
         for collection in ax.collections:
             if isinstance(collection, mpl.collections.PolyCollection):
-                self.children.append(D3PatchCollection(self, collection))
+                self._add_children(D3PatchCollection(self, collection))
             elif isinstance(collection, mpl.collections.LineCollection):
-                self.children.append(D3LineCollection(self, collection))
+                self._add_children(D3LineCollection(self, collection))
             elif isinstance(collection, mpl.collections.QuadMesh):
-                self.children.append(D3QuadMesh(self, collection))
+                self._add_children(D3QuadMesh(self, collection))
             elif isinstance(collection, mpl.collections.PathCollection):
-                self.children.append(D3PathCollection(self, collection))
+                self._add_children(D3PathCollection(self, collection))
             else:
                 warnings.warn("{0} not implemented.  "
                               "Elements will be ignored".format(collection))
 
         for artist in ax.artists:
             if isinstance(artist, Text):
-                self.children.append(D3Text(self, artist))
+                self._add_children(D3Text(self, artist))
             else:
                 warnings.warn("artist {0} not implemented. "
                               "Elements will be ignored".format(artist))
 
-        self.children += [D3Text(self, text) for text in ax.texts]
-        self.children += [D3Text(self, text) for text in [ax.xaxis.label,
-                                                          ax.yaxis.label,
-                                                          ax.title]]
+        self._add_children(*[D3Text(self, text) for text in ax.texts])
+        self._add_children(*[D3Text(self, text) for text in [ax.xaxis.label,
+                                                             ax.yaxis.label,
+                                                             ax.title]])
 
         # Some warnings for pieces of matplotlib which are not yet implemented
         if len(ax.tables) > 0:
@@ -329,11 +356,16 @@ class D3Axes(D3Base):
         if ax.legend_ is not None:
             for child in ax.legend_.get_children():
                 if isinstance(child, Text):
-                    self.children.append(D3Text(self, child))
+                    self._add_children(D3Text(self, child))
                 elif isinstance(child, Patch):
-                    self.children.append(D3Patch(self, child))
+                    self._add_children(D3Patch(self, child))
                 else:
                     warnings.warn("Ignoring legend element: {0}".format(child))
+
+    def _add_children(self, *children):
+        for child in children:
+            self.children.append(child)
+            self.objmap[child.obj] = child
 
     def has_xgrid(self):
         return bool(self.ax.xaxis._gridOnMajor
@@ -412,7 +444,7 @@ class D3Axis(D3Base):
     """)
 
     def __init__(self, parent, axis):
-        self._initialize(parent=parent, axis=axis)
+        self._initialize(parent=parent, obj=axis, axis=axis)
         self.position = self.axis.get_ticks_position()
 
         # TODO: allow labels/ticks to be drawn on both sides
@@ -505,7 +537,7 @@ class D3Grid(D3Base):
         if grid_type not in ["x", "y"]:
             raise ValueError("Invalid grid type: '{0}'.  "
                              "Expected 'x' or 'y'".format(grid_type))
-        self._initialize(parent=parent, grid_type=grid_type)
+        self._initialize(parent=parent, obj=None, grid_type=grid_type)
 
     def _html_args(self):
         return {'grid_type': json.dumps(self.grid_type)}
@@ -583,7 +615,7 @@ class D3Text(D3Base):
     """)
 
     def __init__(self, parent, text):
-        self._initialize(parent=parent, text=text)
+        self._initialize(parent=parent, obj=text, text=text)
 
     def zoomable(self):
         return self.text.get_transform().contains_branch(self.ax.transData)
@@ -707,7 +739,7 @@ class D3Line2D(D3Base):
     """)
 
     def __init__(self, parent, line):
-        self._initialize(parent=parent, line=line)
+        self._initialize(parent=parent, obj=line, line=line)
         self.lineid = self.elcount
 
     def zoomable(self):
@@ -792,7 +824,7 @@ class D3Patch(D3Base):
     """)
 
     def __init__(self, parent, patch):
-        self._initialize(parent=parent, patch=patch)
+        self._initialize(parent=parent, obj=patch, patch=patch)
         self.patchid = self.elid
 
     def zoomable(self):
@@ -866,8 +898,8 @@ class D3Image(D3Base):
     });
     """)
 
-    def __init__(self, parent, ax, image, i=''):
-        self._initialize(parent=parent, ax=ax, image=image)
+    def __init__(self, parent, image):
+        self._initialize(parent=parent, obj=image, image=image)
         self.imageid = self.elid
 
     def get_base64_data(self):
@@ -967,7 +999,7 @@ class D3Collection(D3Base):
     """)
 
     def __init__(self, parent, collection):
-        self._initialize(parent, collection=collection)
+        self._initialize(parent, obj=collection, collection=collection)
         self.collid = self.elid
 
     def _update_data(self, data, defaults):
