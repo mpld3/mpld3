@@ -75,7 +75,7 @@ class PointLabelTooltip(PluginBase):
     >>> from mpld3 import fig_to_d3
     >>> fig, ax = plt.subplots()
     >>> points = ax.plot(range(10), 'o')
-    >>> fig.plugins = [PointLabelTooltip(points)]
+    >>> fig.plugins = [PointLabelTooltip(points[0])]
     >>> fig_to_d3(fig)
     """
 
