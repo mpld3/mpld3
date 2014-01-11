@@ -15,15 +15,15 @@ def main():
     X[:, :, 3] = np.exp(-0.25 * (x ** 2 + y ** 2))
 
     im = ax.imshow(X, extent=(10, 20, 10, 20),
-                   origin='lower', zorder=1)
+                   origin='lower', zorder=1, interpolation='nearest')
     fig.colorbar(im, ax=ax)
 
     ax.text(16, 16, "overlaid text")
     ax.text(16, 15, "covered text", zorder=0)
 
     ax.set_title('An Image', size=20)
-    ax.set_xlim(8, 22)
-    ax.set_ylim(8, 22)
+    ax.set_xlim(9, 21)
+    ax.set_ylim(9, 21)
 
     return fig
 
