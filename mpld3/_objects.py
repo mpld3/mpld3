@@ -255,6 +255,10 @@ class D3Figure(D3Base):
                 extra_fig_js=None,
                 with_reset_button=False):
         """Render the figure (or parts of the figure) as d3."""
+        # here we call savefig so that draw() commands will happen
+        self.fig.savefig(io.BytesIO(), format='png')
+
+        # now write the html
         if hasattr(self.fig, 'plugins'):
             if not extra_js:
                 extra_js = ''
@@ -375,17 +379,27 @@ class D3Axes(D3Base):
         if len(ax.tables) > 0:
             warnings.warn("tables not implemented. Elements will be ignored")
 
-        if ax.legend_ is not None:
-            for child in ax.legend_.get_children():
-                if isinstance(child, Text):
-                    self._add_children(D3Text(self, child))
-                elif isinstance(child, Patch):
-                    self._add_children(D3Patch(self, child))
-                else:
-                    warnings.warn("Ignoring legend element: {0}".format(child))
-
         # re-order children according to their zorder.
         self.children.sort(key=lambda child: child.zorder)
+
+        # draw legend on top
+        if ax.legend_ is not None:
+            for child in ax.legend_.get_children()[:-1]:
+                if isinstance(child, Patch):
+                    self._add_children(D3Patch(self, child))
+
+            for child in ax.legend_.get_children():
+                if isinstance(child, Text):
+                    # legend usually contains text with 'None': why?
+                    if (child is not ax.legend_.get_children()[-1]
+                        and child.get_text() != 'None'):
+                        self._add_children(D3Text(self, child))
+                elif isinstance(child, Patch):
+                    pass
+                elif isinstance(child, Line2D):
+                    self._add_children(D3Line2D(self, child))
+                else:
+                    warnings.warn("Ignoring legend element: {0}".format(child))
 
     def _add_children(self, *children):
         for child in children:
@@ -593,7 +607,7 @@ class D3Text(D3Base):
     """)
 
     HTML = jinja2.Template("""
-    {% if text %}
+    {% if text != '""' %}
     // Add a text element
     {{ axvar }}.add_element(new function(){
      this.position = {{ position }};
@@ -726,7 +740,6 @@ class D3Line2D(D3Base):
                              + this.ax.y(d[1]) + ")"; };
 
      this.draw = function(){
-     {% if obj.zoomable() %}
        {% if obj.has_line() %}
          this.line = d3.svg.line()
               .x(function(d) {return this.ax.x(d[0]);})
@@ -750,7 +763,6 @@ class D3Line2D(D3Base):
                                  .size({{ markersize }}))
                    .attr("transform", this.translate.bind(this));
        {% endif %}
-     {% endif %}
      };
 
      this.zoomed = function(){
