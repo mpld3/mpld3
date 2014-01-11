@@ -1,7 +1,7 @@
 """Plot to test line styles"""
 import matplotlib.pyplot as plt
 import numpy as np
-from mpld3 import plugins
+from mpld3 import plugins, fig_to_d3
 
 def main():
     fig, ax = plt.subplots(subplot_kw=dict(axisbg='#EEEEEE'))
@@ -23,5 +23,6 @@ def main():
     return fig
 
 if __name__ == '__main__':
-    main()
-    plt.show()
+    fig = main()
+    fig_to_d3(fig)
+
