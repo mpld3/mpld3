@@ -133,6 +133,9 @@ class D3Figure(D3Base):
     {% endif %}
     {% if with_js_includes %}
     <script type="text/javascript" src="{{ d3_url }}"></script>
+    {% if not standalone %}
+    d3=this.d3
+    {% endif %}
     {% if extra_js %}{{ extra_js }}{% endif %}
     <script type="text/javascript">
       {% for function in js_functions %}
