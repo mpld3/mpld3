@@ -135,6 +135,15 @@ class D3Figure(D3Base):
     <script type="text/javascript" src="{{ d3_url }}"></script>
     {% if extra_js %}{{ extra_js }}{% endif %}
     <script type="text/javascript">
+      if(typeof d3 === "undefined"){
+        // In IPython notebook: load d3 via require.js
+        require.config({paths: {d3: "http://d3js.org/d3.v3.min"}});
+
+        require(["d3"], function(d3) {
+          console.log("loading d3 version " + d3.version);
+        });
+      }
+      console.log(d3);
       {% for function in js_functions %}
         {{ function }}
       {% endfor %}
