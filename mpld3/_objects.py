@@ -455,7 +455,7 @@ class D3Axes(D3Base):
 
             if scale not in ['date', 'linear', 'log']:
                 raise ValueError("Unknown axis scale: "
-                                 "{0}".format(axis[xy].get_scale()))
+                                 "{0}".format(axis[axname].get_scale()))
 
             args[axname + 'scale'] = json.dumps(scale)
             args[axname + 'lim'] = lim
