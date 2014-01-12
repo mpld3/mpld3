@@ -132,22 +132,7 @@ class D3Figure(D3Base):
       {% endif %}
     {% endif %}
     {% if with_js_includes %}
-    <script type="text/javascript" src="{{ d3_url }}"></script>
     {% if extra_js %}{{ extra_js }}{% endif %}
-    <script type="text/javascript">
-      if(typeof d3 === "undefined"){
-        // In IPython notebook: load d3 via require.js
-        require.config({paths: {d3: "http://d3js.org/d3.v3.min"}});
-
-        require(["d3"], function(d3) {
-          console.log("loading d3 version " + d3.version);
-        });
-      }
-      console.log(d3);
-      {% for function in js_functions %}
-        {{ function }}
-      {% endfor %}
-    </script>
     {% endif %}
     {% if with_style %}
     <style>
@@ -168,11 +153,14 @@ class D3Figure(D3Base):
     {% endif %}
     </div>
     <script type="text/javascript">
-    var create_fig{{ figid }} = function(){
+    var create_fig{{ figid }} = function(d3, undefined){
+      {% for function in js_functions %}
+        {{ function }}
+      {% endfor %}
       var figwidth = {{ fig.get_figwidth() }} * {{ fig.dpi }};
       var figheight = {{ fig.get_figheight() }} * {{ fig.dpi }};
       var fig = new Figure("div#figure{{ figid }}",
-                                    figwidth, figheight);
+                           figwidth, figheight);
 
       {% for ax in axes %}
          {{ ax.html() }}
@@ -200,9 +188,33 @@ class D3Figure(D3Base):
       return fig
     }
 
-    // var fig_{{ figid }} = create_fig{{ figid }}();
     // set a timeout of 0: this makes things work in the IPython notebook
-    setTimeout(create_fig{{ figid }}, 0);
+    setTimeout(function(){
+      // we need to call the function, making sure d3 is defined appropriately
+      if(typeof define === "function" && define.amd){
+        // If require.js is available, use it to load d3
+        require.config({paths: {d3: "{{ d3_url[:-3] }}"}});
+        require(["d3"], create_fig{{ figid }});
+      }else if(typeof d3 === "undefined"){
+        // No require.js: dynamically load d3
+        var s = document.createElement('script');
+        s.src = "{{ d3_url }}";
+        s.async = true;
+        s.onreadystatechange = s.onload = s.onerror = function() {
+           if(typeof d3 === "undefined"){
+              document.getElementById("figure{{ figid }}").innerHTML =
+                    "<p style='color:red;'>(d3 failed to load)</p>";
+           }else{
+              create_fig{{ figid }}(d3);
+           }
+        };
+        document.getElementsByTagName("head")[0].appendChild(s);
+      }else{
+        // d3 is already globally loaded
+        create_fig{{ figid }}(d3);
+      }
+    }, 0);
+
     </script>
     {% if extra_body %}{{ extra_body }}{% endif %}
     {% endif %}
@@ -400,8 +412,8 @@ class D3Axes(D3Base):
             for child in ax.legend_.get_children():
                 if isinstance(child, Text):
                     # legend usually contains text with 'None': why?
-                    if (child is not ax.legend_.get_children()[-1]
-                        and child.get_text() != 'None'):
+                    if not (child is ax.legend_.get_children()[-1]
+                            and child.get_text() == 'None'):
                         self._add_children(D3Text(self, child))
                 elif isinstance(child, Patch):
                     pass
