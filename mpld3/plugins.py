@@ -89,7 +89,7 @@ class PointLabelTooltip(PluginBase):
                   .style("visibility", "hidden");
 
     {% if labels != 'null' %}
-    var labels = {{ labels }};
+    var labels{{ id }}  = {{ labels }};
     {% endif %}
 
     ax{{ axid }}.axes.selectAll(".{{ pointclass }}{{ elid }}")
@@ -97,7 +97,7 @@ class PointLabelTooltip(PluginBase):
                            tooltip{{ id }}
                               .style("visibility", "visible")
                               {% if labels != 'null' %}
-                              .text(labels[i])
+                              .text(labels{{ id }} [i])
                               {% else %}
                               .text("(" + d[0] + ", " + d[1] + ")")
                               {% endif %};})
