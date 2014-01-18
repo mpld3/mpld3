@@ -138,3 +138,84 @@ class PointLabelTooltip(PluginBase):
                     axid=obj.axid,
                     elid=obj.elcount,
                     labels=json.dumps(self.labels))
+
+
+class LineLabelTooltip(PluginBase):
+    """A Plugin to enable a tooltip: text which hovers over points.
+
+    Parameters
+    ----------
+    line : matplotlib Line2D object
+        The figure element to apply the tooltip to
+    label : string
+    hoffset, voffset : integer
+        The number of pixels to offset the tooltip text.  Default is
+        hoffset = 0, voffset = 10
+
+    Examples
+    --------
+    >>> import matplotlib.pyplot as plt
+    >>> from mpld3 import fig_to_d3
+    >>> fig, ax = plt.subplots()
+    >>> line, = ax.plot(range(10), '-')
+    >>> fig.plugins = [LineLabelTooltip(line, 'some label')]
+    >>> fig_to_d3(fig)
+
+    To label multiple lines, create multiple LineLabelToopTips.
+
+    >>> fig, ax = plt.subplots()
+    >>> x = [0, 1, 2, 3]
+    >>> lines = ax.plot(x, [0, 1, 3, 8], x , [5, 7, 1, 2], '-', lw=5)
+    >>> labels = ['a', 'b']
+    >>> fig.plugins = []
+    >>> for line, label in zip(lines, labels)
+    >>>     fig.plugins.append(mpld3.plugins.LineLabelTooltip(line, label))
+    >>> fig_to_d3(fig)
+    """
+
+    FIG_JS = jinja2.Template("""
+    var tooltip{{ id }} = fig.canvas.append("text")
+                  .attr("class", "tooltip-text")
+                  .attr("x", 0)
+                  .attr("y", 0)
+                  .text("")
+                  .attr("style", "text-anchor: middle;")
+                  .style("visibility", "hidden");
+
+    ax{{ axid }}.axes.selectAll(".line{{ elid }}")
+        .on("mouseover", function(d, i){
+                           tooltip{{ id }}
+                              .style("visibility", "visible")
+                              .text({{label}});})
+        .on("mousemove", function(d, i){
+                          // For some reason, this doesn't work in the notebook
+                          // xy = d3.mouse(fig.canvas.node());
+                          // use this instead
+                          var ctm = fig.canvas.node().getScreenCTM();
+                          tooltip{{ id }}
+                             .attr('x', event.x - ctm.e - {{ hoffset }})
+                             .attr('y', event.y - ctm.f - {{ voffset }});})
+        .on("mouseout", function(d, i){tooltip{{ id }}.style("visibility",
+                                                             "hidden");});
+    """)
+
+    def __init__(self, line, label,
+                 hoffset=0, voffset=10):
+        self.line = line
+        self.label = label
+        self.voffset = voffset
+        self.hoffset = hoffset
+        self.id = self.generate_unique_id()
+
+    def _fig_js_args(self):
+        obj = self._get_d3obj(self.line)
+
+        if not isinstance(obj, D3Line2D):
+            raise ValueError("expected Line2D objects")
+
+        return dict(id=self.id,
+                    hoffset=self.hoffset,
+                    voffset=self.voffset,
+                    axid=obj.axid,
+                    elid=obj.elcount,
+                    label=json.dumps(self.label))
