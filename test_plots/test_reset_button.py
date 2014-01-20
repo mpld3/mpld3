@@ -22,4 +22,4 @@ def main():
 
 if __name__ == '__main__':
     fig = main()
-    print fig_to_d3(fig, with_reset_button=False) 
+    plt.show()

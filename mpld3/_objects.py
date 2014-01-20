@@ -148,9 +148,6 @@ class D3Figure(D3Base):
     {% endif %}
     {% if with_body %}
     <div id='figure{{ figid }}'>
-    {% if with_reset_button %}
-      <button class='reset'>Reset</button>
-    {% endif %}
     </div>
     <script type="text/javascript">
     var create_fig{{ figid }} = function(d3, undefined){
@@ -176,12 +173,6 @@ class D3Figure(D3Base):
       {% endfor %}
 
       fig.draw();
-
-      {% if with_reset_button %}
-        d3.select("#figure{{ figid }}")
-          .select("button.reset")
-          .on("click", fig.reset.bind(fig));
-      {% endif %}
 
       {% if extra_fig_js %}{{ extra_fig_js }}{% endif %}
 
@@ -273,8 +264,7 @@ class D3Figure(D3Base):
                 with_js_includes=True, extra_js=None,
                 with_style=True, extra_style=None,
                 with_body=True, extra_body=None,
-                extra_fig_js=None,
-                with_reset_button=False):
+                extra_fig_js=None):
         """Render the figure (or parts of the figure) as d3."""
         # here we call savefig so that draw() commands will happen
         self.fig.savefig(io.BytesIO(), format='png')
@@ -314,7 +304,6 @@ class D3Figure(D3Base):
                                        extra_style=extra_style,
                                        with_body=with_body,
                                        extra_body=extra_body,
-                                       with_reset_button=with_reset_button,
                                        title=title))
 
 
