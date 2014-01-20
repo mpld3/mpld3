@@ -5,10 +5,7 @@ from mpld3 import plugins, fig_to_d3
 
 def main():
     fig, ax = plt.subplots()
-    line, = ax.plot([0, 1, 3, 8, 5], '-', lw=5)
-    fig.plugins = [plugins.LineLabelTooltip(line, 'Line A')]
-    ax.set_title('Line with Tooltip')
-
+    points = ax.plot(range(10), 'o', color='none', mec='k')
     return fig
 
 if __name__ == '__main__':

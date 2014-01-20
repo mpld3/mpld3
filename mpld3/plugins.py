@@ -2,7 +2,7 @@
 Plugins to add behavior to mpld3 charts
 """
 
-__all__ = ['ToolTip']
+__all__ = ['ToolTip', 'ResetButton']
 
 import jinja2
 import json
@@ -219,3 +219,24 @@ class LineLabelTooltip(PluginBase):
                     axid=obj.axid,
                     elid=obj.elcount,
                     label=json.dumps(self.label))
+
+
+class ResetButton(PluginBase):
+    """A Plugin to add a universal reset button
+
+    Example
+    -------
+    >>> import matplotlib.pyplot as plt
+    >>> from mpld3 import fig_to_d3, plugins
+    >>> fig, ax = plt.subplots()
+    >>> points = ax.plot(range(10), 'o')
+    >>> fig.plugins = [plugins.ResetButton()]
+    >>> fig_to_d3(fig)
+    """
+
+    FIG_JS = jinja2.Template("""
+        fig.root.append("div")
+          .append("button")
+            .text("Reset")
+            .on("click", fig.reset.bind(fig));
+    """)
