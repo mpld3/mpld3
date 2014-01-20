@@ -54,6 +54,13 @@ class PluginBase(object):
             obj = obj or ax.objmap.get(mplobj, None)
         return obj
 
+    def plug(self, fig):
+        """Apply plugin to a figure"""
+        if not hasattr(fig, 'plugins'):
+            fig.plugins = []
+        fig.plugins.append(self)
+        return self
+
 
 class PointLabelTooltip(PluginBase):
     """A Plugin to enable a tooltip: text which hovers over points.
