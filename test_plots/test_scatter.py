@@ -19,7 +19,7 @@ def main():
 
     labels = ['point {0}'.format(i + 1) for i in range(N)]
     tooltip = plugins.PointLabelTooltip(scatter, labels=labels)
-    tooltip.plug(fig)
+    plugins.connect(fig, tooltip)
 
     return fig
 

@@ -5,12 +5,12 @@ from mpld3 import plugins, fig_to_d3
 
 def main():
     fig, ax = plt.subplots()
-    fig.plugins = []
     colors = plt.rcParams['axes.color_cycle']
-    points = []
+    points = []                    
     for i, color in enumerate(colors):
-        fig.plugins.append(
-            plugins.PointLabelTooltip(ax.plot(i, 0, 'o')[0], [color]))
+        points = ax.plot(i, 0, 'o', c=color)
+        plugins.connect(fig,
+                        plugins.PointLabelTooltip(points[0], [color]))
     ax.set_xlim(-1, len(colors) + 1)
 
     return fig

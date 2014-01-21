@@ -3,12 +3,12 @@ http://jakevdp.github.io/blog/2014/01/10/d3-plugins-truly-interactive/
 """
 import matplotlib.pyplot as plt
 import numpy as np
-from mpld3.plugins import PluginBase
+from mpld3 import plugins
 import jinja2
 import json
 
 
-class LinkedView(PluginBase):
+class LinkedView(plugins.PluginBase):
     """A simple plugin showing how multiple axes can be linked"""
     
     FIG_JS = jinja2.Template("""
@@ -62,7 +62,7 @@ def main():
 
     # transpose line data and add plugin
     linedata = data.transpose(0, 2, 1).tolist()
-    fig.plugins = [LinkedView(points, lines[0], linedata)]
+    plugins.connect(fig, LinkedView(points, lines[0], linedata))
 
     return fig
 
