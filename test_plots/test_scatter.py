@@ -18,7 +18,8 @@ def main():
     ax.set_title("Scatter Plot (with tooltips!)", size=20)
 
     labels = ['point {0}'.format(i + 1) for i in range(N)]
-    fig.plugins = [plugins.PointLabelTooltip(scatter, labels=labels)]
+    tooltip = plugins.PointLabelTooltip(scatter, labels=labels)
+    plugins.connect(fig, tooltip)
 
     return fig
 

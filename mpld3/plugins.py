@@ -2,13 +2,39 @@
 Plugins to add behavior to mpld3 charts
 """
 
-__all__ = ['ToolTip', 'ResetButton']
+__all__ = ['ToolTip', 'ResetButton', 'connect']
 
 import jinja2
 import json
 import uuid
 
 from ._objects import D3Line2D, D3Collection
+
+
+def connect(fig, *plugins):
+    """Connect one or more plugins to a figure
+
+    Parameters
+    ----------
+    fig : matplotlib Figure instance
+        The figure to which the plugins will be connected
+
+    *plugins :
+        Additional arguments should be plugins which will be connected
+        to the figure.
+
+    Examples
+    --------
+    >>> import matplotlib.pyplot as plt
+    >>> from mpld3 import plugins
+    >>> fig, ax = plt.subplots()
+    >>> lines = ax.plot(range(10), '-k')
+    >>> plugins.connect(fig, plugins.LineLabelTooltip(lines[0]))
+    """
+    if not hasattr(fig, 'plugins'):
+        fig.plugins = []
+    for plugin in plugins:
+        fig.plugins.append(plugin)
 
 
 class PluginBase(object):
@@ -72,10 +98,10 @@ class PointLabelTooltip(PluginBase):
     Examples
     --------
     >>> import matplotlib.pyplot as plt
-    >>> from mpld3 import fig_to_d3
+    >>> from mpld3 import fig_to_d3, plugins
     >>> fig, ax = plt.subplots()
     >>> points = ax.plot(range(10), 'o')
-    >>> fig.plugins = [PointLabelTooltip(points[0])]
+    >>> plugins.connect(fig, PointLabelTooltip(points[0]))
     >>> fig_to_d3(fig)
     """
 
@@ -155,10 +181,10 @@ class LineLabelTooltip(PluginBase):
     Examples
     --------
     >>> import matplotlib.pyplot as plt
-    >>> from mpld3 import fig_to_d3
+    >>> from mpld3 import fig_to_d3, plugins
     >>> fig, ax = plt.subplots()
     >>> line, = ax.plot(range(10), '-')
-    >>> fig.plugins = [LineLabelTooltip(line, 'some label')]
+    >>> plugins.connect(fig, LineLabelTooltip(line, 'some label'))
     >>> fig_to_d3(fig)
 
     To label multiple lines, create multiple LineLabelToopTips.
@@ -167,9 +193,8 @@ class LineLabelTooltip(PluginBase):
     >>> x = [0, 1, 2, 3]
     >>> lines = ax.plot(x, [0, 1, 3, 8], x , [5, 7, 1, 2], '-', lw=5)
     >>> labels = ['a', 'b']
-    >>> fig.plugins = []
     >>> for line, label in zip(lines, labels)
-    >>>     fig.plugins.append(mpld3.plugins.LineLabelTooltip(line, label))
+    >>>     plugins.connect(fig, mpld3.plugins.LineLabelTooltip(line, label))
     >>> fig_to_d3(fig)
     """
 
@@ -230,7 +255,7 @@ class ResetButton(PluginBase):
     >>> from mpld3 import fig_to_d3, plugins
     >>> fig, ax = plt.subplots()
     >>> points = ax.plot(range(10), 'o')
-    >>> fig.plugins = [plugins.ResetButton()]
+    >>> plugins.connect(fig, plugins.ResetButton())
     >>> fig_to_d3(fig)
     """
 

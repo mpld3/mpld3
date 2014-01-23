@@ -17,7 +17,7 @@ def main():
 
     ax.set_title('Reset Button Test', size=14)
 
-    fig.plugins = [plugins.ResetButton()]
+    plugins.connect(fig, plugins.ResetButton())
     return fig
 
 if __name__ == '__main__':
