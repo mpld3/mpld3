@@ -19,7 +19,7 @@ def connect(fig, *plugins):
     fig : matplotlib Figure instance
         The figure to which the plugins will be connected
 
-    *args :
+    *plugins :
         Additional arguments should be plugins which will be connected
         to the figure.
 
