@@ -165,6 +165,92 @@ class PointLabelTooltip(PluginBase):
                     elid=obj.elcount,
                     labels=json.dumps(self.labels))
 
+class PointHTMLTooltip(PluginBase):
+    """A Plugin to enable an HTML tooltip: formated text which hovers over points.
+
+    Parameters
+    ----------
+    points : matplotlib Collection or Line2D object
+        The figure element to apply the tooltip to
+    labels : list
+        The labels for each point in points, as strings of unescaped HTML.
+    hoffset, voffset : integer, optional
+        The number of pixels to offset the tooltip text.  Default is
+        hoffset = 0, voffset = 10
+    css : str, optional
+        css to be included, for styling the label html if desired
+    Examples
+    --------
+    >>> import matplotlib.pyplot as plt
+    >>> from mpld3 import fig_to_d3, plugins
+    >>> fig, ax = plt.subplots()
+    >>> points = ax.plot(range(10), 'o')
+    >>> labels = ['<h1>{title}</h1>'.format(title=i) for i in range(10)]
+    >>> plugins.connect(fig, PointHTMLTooltip(points[0], labels))
+    >>> fig_to_d3(fig)
+    """
+
+    def __init__(self, points, labels=None,
+                 hoffset=0, voffset=10, css=None):
+        self.points = points
+        self.labels = labels
+        self.voffset = voffset
+        self.hoffset = hoffset
+        self.css = css
+        self.id = self.generate_unique_id()
+
+    def _html_args(self):
+        return dict(id=self.id,
+                    css=self.css)
+
+    HTML = jinja2.Template("""
+    <style>
+    {{ css }}
+    </style>
+    """)
+
+    def _fig_js_args(self):
+        obj = self._get_d3obj(self.points)
+
+        if isinstance(obj, D3Line2D):
+            pointclass = 'points'
+        elif isinstance(obj, D3Collection):
+            pointclass = 'paths'
+        else:
+            raise ValueError("unrecognized object type")
+
+        return dict(id=self.id,
+                    hoffset=self.hoffset,
+                    voffset=self.voffset,
+                    pointclass=pointclass,
+                    axid=obj.axid,
+                    elid=obj.elcount,
+                    labels=self.labels)
+
+
+    FIG_JS = jinja2.Template("""
+    var tooltip = fig.root.append("div")
+                    .attr("class", "tooltip")
+                    .style("position", "absolute")
+                    .style("z-index", "10")
+                    .style("visibility", "hidden");
+
+    var labels  = {{ labels }};
+
+
+    ax{{ axid }}.axes.selectAll(".{{ pointclass }}{{ elid }}")
+        .on("mouseover", function(d, i){
+                           tooltip
+                             .html(labels[i])
+                             .style("visibility", "visible");})
+        .on("mousemove", function(d, i){
+                           tooltip
+                             .style("top", (event.pageY-{{ voffset }})+"px")
+                             .style("left",(event.pageX+{{ hoffset }})+"px");})
+        .on("mouseout",  function(d, i){
+                           tooltip
+                             .style("visibility", "hidden");});
+    """)
 
 class LineLabelTooltip(PluginBase):
     """A Plugin to enable a tooltip: text which hovers over points.
