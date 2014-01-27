@@ -8,10 +8,10 @@ developers
 
 - [Jake Vanderplas](http://github.com/jakevdp)
 - [Abraham Flaxman](https://github.com/aflaxman)
+- [Dan Allan](http://github.com/danielballan)
 
 ## Authors
 
-- [Dan Allan](http://github.com/danielballan): ``plt.imshow`` support; plugins; etc.
 - [Rob Story](http://github.com/wrobstory): packaging help
 - [jmeppley](http://github.com/jmeppley): various line markers
 - [Michael Waskom](http://github.com/mwaskom): API design
