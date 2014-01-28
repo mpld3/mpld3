@@ -51,12 +51,13 @@ Currently the support of matplotlib features is very limited.  The code
 supports the following:
 
 - multiple axes, placed correctly on the figure
-- lines and scatter plots created with ``plt.plot`` (not ``plt.scatter``, etc.)
+- lines and scatter plots created with ``plt.plot``, ``plt.scatter``, etc.
 - grid lines and their properties
 - title and axis labels
 - patches (i.e. shapes like histograms, etc.)
 - polygons (filled plots, etc.)
 - some collections (scatter plots, etc.)
+- interactive plugins such as tooltips (see http://jakevdp.github.io/blog/2014/01/10/d3-plugins-truly-interactive/)
 
 ### TODO List
 
@@ -65,11 +66,10 @@ straightforward to fairly difficult.
 
 - fine-grained text formatting (multi-lines, vertical alignment, etc.)
 - containers (errorbars, etc.)
-- axes aspect ratio
 - tick specification & formatting
+- some legend features
 - twin axes (i.e. multiple scales on one plot) tied together
 - adding a box-zoom tool
-- adding tooltips
 
 If any of these look like something you'd like to tackle, feel free to submit
 a pull request!
