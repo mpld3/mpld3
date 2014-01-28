@@ -22,9 +22,9 @@ def fig_to_d3(fig, d3_url=None, **kwargs):
 
     See Also
     --------
-    - show_d3 : show a figure in a new browser window, notebook not required.
-    - display_d3 : embed figure within the IPython notebook
-    - enable_notebook : automatically embed figures in the IPython notebook
+    show_d3 : show a figure in a new browser window, notebook not required.
+    display_d3 : embed figure within the IPython notebook
+    enable_notebook : automatically embed figures in the IPython notebook
     """
     return D3Figure(fig).html(d3_url=d3_url, **kwargs)
 
@@ -50,8 +50,8 @@ def display_d3(fig=None, closefig=True, d3_url=None):
 
     See Also
     --------
-    - show_d3 : show a figure in a new browser window, notebook not required.
-    - enable_notebook : automatically embed figures in the IPython notebook
+    show_d3 : show a figure in a new browser window, notebook not required.
+    enable_notebook : automatically embed figures in the IPython notebook
     """
     # import here, in case users don't have requirements installed
     from IPython.display import HTML
@@ -88,8 +88,8 @@ def show_d3(fig=None, d3_url=None, ip='127.0.0.1', port=8888, n_retries=50):
 
     See Also
     --------
-    - display_d3 : embed figure within the IPython notebook
-    - enable_notebook : automatically embed figures in the IPython notebook
+    display_d3 : embed figure within the IPython notebook
+    enable_notebook : automatically embed figures in the IPython notebook
     """
     if fig is None:
         # import here, in case matplotlib.use(...) is called by user
@@ -116,8 +116,8 @@ def enable_notebook(d3_url=None):
 
     See Also
     --------
-    - disable_notebook : undo this operation
-    - display_d3 : display a single figure in the notebook
+    disable_notebook : undo this operation
+    display_d3 : display a single figure in the notebook
     """
     try:
         from IPython.core.getipython import get_ipython
@@ -134,7 +134,7 @@ def disable_notebook():
 
     See Also
     --------
-    - enable_notebook : the operation this function undoes
+    enable_notebook : the operation this function undoes
     """
     try:
         from IPython.core.getipython import get_ipython

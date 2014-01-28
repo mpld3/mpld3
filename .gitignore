@@ -46,3 +46,7 @@ nosetests.xml
 *.js
 *.html
 *.png
+
+# documentation
+doc/_build
+doc/examples
