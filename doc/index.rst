@@ -8,6 +8,7 @@ Contents:
    :maxdepth: 2
 
    modules/API
+   examples/index
 
 
 Indices and tables
