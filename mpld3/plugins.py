@@ -2,7 +2,8 @@
 Plugins to add behavior to mpld3 charts
 """
 
-__all__ = ['ToolTip', 'ResetButton', 'connect']
+__all__ = ['connect', 'PluginBase', 'PointLabelTooltip', 'PointHTMLTooltip',
+           'LineLabelTooltip', 'ResetButton']
 
 import jinja2
 import json
