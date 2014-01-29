@@ -8,8 +8,19 @@ import shutil
 import matplotlib
 matplotlib.use('Agg')  # don't display plots
 
-from mpld3 import fig_to_d3
+import mpld3
 from matplotlib import image
+
+
+class disable_mpld3(object):
+    """Context manager to temporarily disable mpld3 show_d3() command"""
+    def __enter__(self):
+        self.show_d3 = mpld3.show_d3
+        mpld3.show_d3 = lambda *args, **kwargs: None
+        return self
+
+    def __exit__(self, type, value, traceback):
+        mpld3.show_d3 = self.show_d3
 
 
 RST_TEMPLATE = """
@@ -192,22 +203,20 @@ class ExampleGenerator(object):
         self.end_line = erow + 1 + start_row
 
     def exec_file(self):
-        dirname, fname = os.path.split(self.filename)
-        modulename = os.path.splitext(fname)[0]
-        if dirname not in sys.path:
-            sys.path.append(dirname)
-        f = __import__(modulename)
+        print("running {0}".format(self.filename))
+        with disable_mpld3():
+            import matplotlib.pyplot as plt
+            plt.close('all')
+            my_globals = {'pl': plt,
+                          'plt': plt}
+            execfile(self.filename, my_globals)
 
-        if hasattr(f, 'main'):
-            print("running {0}".format(self.filename))
-            fig = f.main()
-            self.html = fig_to_d3(fig)
-            thumbfile = os.path.join(self.target_dir,
-                                     self.pngfilename)
-            fig.savefig(thumbfile)
-            create_thumbnail(thumbfile, thumbfile)
-        else:
-            self.html = ""
+        fig = plt.gcf()
+        self.html = mpld3.fig_to_d3(fig)
+        thumbfile = os.path.join(self.target_dir,
+                                 self.pngfilename)
+        fig.savefig(thumbfile)
+        create_thumbnail(thumbfile, thumbfile)
 
     def toctree_entry(self):
         return "   ./%s\n\n" % os.path.splitext(self.htmlfilename)[0]

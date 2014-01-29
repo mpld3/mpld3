@@ -42,34 +42,28 @@ class LinkedView(plugins.PluginBase):
                     lineid=line.lineid,
                     linedata=json.dumps(self.linedata))
 
-def main():
-    fig, ax = plt.subplots(2)
+fig, ax = plt.subplots(2)
 
-    # scatter periods and amplitudes
-    np.random.seed(0)
-    P = 0.2 + np.random.random(size=20)
-    A = np.random.random(size=20)
-    x = np.linspace(0, 10, 100)
-    data = np.array([[x, Ai * np.sin(x / Pi)]
-                     for (Ai, Pi) in zip(A, P)])
-    points = ax[1].scatter(P, A, c=P + A,
-                           s=200, alpha=0.5)
-    ax[1].set_xlabel('Period')
-    ax[1].set_ylabel('Amplitude')
+# scatter periods and amplitudes
+np.random.seed(0)
+P = 0.2 + np.random.random(size=20)
+A = np.random.random(size=20)
+x = np.linspace(0, 10, 100)
+data = np.array([[x, Ai * np.sin(x / Pi)]
+                 for (Ai, Pi) in zip(A, P)])
+points = ax[1].scatter(P, A, c=P + A,
+                       s=200, alpha=0.5)
+ax[1].set_xlabel('Period')
+ax[1].set_ylabel('Amplitude')
 
-    # create the line object
-    lines = ax[0].plot(x, 0 * x, '-w', lw=3, alpha=0.5)
-    ax[0].set_ylim(-1, 1)
+# create the line object
+lines = ax[0].plot(x, 0 * x, '-w', lw=3, alpha=0.5)
+ax[0].set_ylim(-1, 1)
 
-    ax[0].set_title("Hover over points to see lines")
+ax[0].set_title("Hover over points to see lines")
 
-    # transpose line data and add plugin
-    linedata = data.transpose(0, 2, 1).tolist()
-    plugins.connect(fig, LinkedView(points, lines[0], linedata))
+# transpose line data and add plugin
+linedata = data.transpose(0, 2, 1).tolist()
+plugins.connect(fig, LinkedView(points, lines[0], linedata))
 
-    return fig
-
-
-if __name__ == '__main__':
-    main()
-    show_d3()
+show_d3()
