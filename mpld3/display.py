@@ -123,7 +123,7 @@ def enable_notebook(d3_url=None):
         from IPython.core.getipython import get_ipython
         from matplotlib.figure import Figure
     except ImportError:
-        raise ImportError('This feature requires IPython and Matplotlib')
+        raise ImportError('This feature requires IPython 1.0+ and Matplotlib')
     ip = get_ipython()
     formatter = ip.display_formatter.formatters['text/html']
     formatter.for_type(Figure, lambda fig: fig_to_d3(fig, d3_url))
@@ -140,7 +140,7 @@ def disable_notebook():
         from IPython.core.getipython import get_ipython
         from matplotlib.figure import Figure
     except ImportError:
-        raise ImportError('This feature requires IPython and Matplotlib')
+        raise ImportError('This feature requires IPython 1.0+ and Matplotlib')
     ip = get_ipython()
     formatter = ip.display_formatter.formatters['text/html']
     formatter.type_printers.pop(Figure, None)
