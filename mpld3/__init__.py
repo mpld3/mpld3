@@ -26,3 +26,7 @@ __all__ = ["fig_to_d3", "display_d3", "show_d3",
 
 from .display import fig_to_d3, display_d3, show_d3
 from .display import enable_notebook, disable_notebook
+
+
+class disable(object):
+    """Context manager to temporarily disable mpld3 show_d3() command"""
