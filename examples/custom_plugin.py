@@ -1,8 +1,9 @@
 """
 Custom Plugin
 =============
-Test the custom plugin demoed on
-http://jakevdp.github.io/blog/2014/01/10/d3-plugins-truly-interactive/
+Test the custom plugin demoed on the `Pythonic Perambulations
+<http://jakevdp.github.io/blog/2014/01/10/d3-plugins-truly-interactive/>`_
+blog.
 """
 import matplotlib.pyplot as plt
 import numpy as np

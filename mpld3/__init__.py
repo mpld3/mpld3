@@ -1,6 +1,6 @@
 """
-mpld3: interactive D3 rendering of matplotlib images
-====================================================
+Interactive D3 rendering of matplotlib images
+=============================================
 
 Functions: General Use
 ----------------------
