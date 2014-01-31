@@ -2,7 +2,8 @@
 Plugins to add behavior to mpld3 charts
 """
 
-__all__ = ['ToolTip', 'ResetButton', 'connect']
+__all__ = ['connect', 'PluginBase', 'PointLabelTooltip', 'PointHTMLTooltip',
+           'LineLabelTooltip', 'ResetButton']
 
 import jinja2
 import json
@@ -229,8 +230,8 @@ class PointHTMLTooltip(PluginBase):
 
 
     FIG_JS = jinja2.Template("""
-    var tooltip = fig.root.append("div")
-                    .attr("class", "tooltip")
+    var tooltip = d3.select("body").append("div")
+                    .attr("class", "mpld3-tooltip")
                     .style("position", "absolute")
                     .style("z-index", "10")
                     .style("visibility", "hidden");
@@ -245,7 +246,7 @@ class PointHTMLTooltip(PluginBase):
                              .style("visibility", "visible");})
         .on("mousemove", function(d, i){
                            tooltip
-                             .style("top", (event.pageY-{{ voffset }})+"px")
+                             .style("top", (event.pageY+{{ voffset }})+"px")
                              .style("left",(event.pageX+{{ hoffset }})+"px");})
         .on("mouseout",  function(d, i){
                            tooltip
