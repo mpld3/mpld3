@@ -648,7 +648,9 @@ class D3Text(D3Base):
                       .attr("class", "text")
                       .text(this.text)
                       .attr("class", "text{{ elid }}")
-                      .attr("style", "text-anchor: {{ h_anchor }};");
+                      .attr("style", "text-anchor: {{ h_anchor }};" +
+                                     "dominant-baseline: {{ v_baseline }}")
+
      }
 
      this.zoomed = function(){
@@ -680,10 +682,6 @@ class D3Text(D3Base):
 
         x, y = transform.transform(self.text.get_position())
 
-        # hack for y-label alignment
-        if self.text is self.ax.yaxis.label:
-            x += self.text.get_size()
-
         return x, y
 
     def get_rotation(self):
@@ -701,17 +699,23 @@ class D3Text(D3Base):
                     alpha=alpha)
 
     def _html_args(self):
-        # TODO: fix vertical anchor point
+        va_dict = {'bottom': 'auto',
+                   'baseline': 'auto',
+                   'center': 'central',
+                   'top': 'hanging'}
         ha_dict = {'left': 'start',
                    'center': 'middle',
                    'right': 'end'}
+
+        v_baseline = va_dict[self.text.get_verticalalignment()]
         h_anchor = ha_dict[self.text.get_horizontalalignment()]
 
         return dict(zoomable=self.zoomable(),
                     position=json.dumps(self.get_position()),
                     text=json.dumps(self.text.get_text()),
                     rotation=json.dumps(self.get_rotation()),
-                    h_anchor=h_anchor)
+                    h_anchor=h_anchor,
+                    v_baseline=v_baseline)
 
 
 class D3Line2D(D3Base):

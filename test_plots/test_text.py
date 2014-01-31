@@ -11,15 +11,21 @@ def main():
                        [8, 12, 16, 20, 24]):
         ax.text(x, y, "size={0}".format(size), size=size, ha='left')
 
-    # test alignment
+    # test horizontal alignment
     x = 0.5
     for y, align in zip([0.2, 0.4, 0.6],
                         ['left', 'center', 'right']):
-        ax.text(x, y, align, ha=align, size=25)
+        ax.text(x, y, "ha=" + align, ha=align, size=20)
+
+    # test vertical alignment
+    y = 0.9
+    for x, align in zip([0.5, 0.7, 0.9],
+                        ['top', 'center', 'bottom']):
+        ax.text(x, y, "va=" + align, ha='center', va=align, size=14)
 
     # test colors & rotations
     x = 0.8
-    for y, c, r in zip([0.25, 0.5, 0.75],
+    for y, c, r in zip([0.15, 0.4, 0.65],
                        ['red', 'blue', 'green'],
                        [-45, 0, 45]):
         ax.text(x, y, "{0} rot={1}".format(c, r),
