@@ -63,8 +63,8 @@ INDEX_TEMPLATE = """
 
 .. _{sphinx_tag}:
 
-Example Plots
-=============
+Example Gallery
+===============
 
 {toctree}
 
@@ -261,7 +261,7 @@ def main(app):
     # write index file
     index_file = os.path.join(target_dir, 'index.rst')
     with open(index_file, 'w') as index:
-        index.write(INDEX_TEMPLATE.format(sphinx_tag="examples",
+        index.write(INDEX_TEMPLATE.format(sphinx_tag="example-gallery",
                                           toctree=toctree,
                                           contents=contents))
 
