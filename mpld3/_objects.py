@@ -267,7 +267,8 @@ class D3Figure(D3Base):
                 extra_fig_js=None):
         """Render the figure (or parts of the figure) as d3."""
         # here we call savefig so that draw() commands will happen
-        self.fig.savefig(io.BytesIO(), format='png')
+        # use fig.dpi, otherwise rcparams savefig() can override this
+        self.fig.savefig(io.BytesIO(), format='png', dpi=self.fig.dpi)
 
         # now write the html
         if hasattr(self.fig, 'plugins'):
