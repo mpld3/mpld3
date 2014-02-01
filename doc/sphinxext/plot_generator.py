@@ -48,7 +48,7 @@ INDEX_TEMPLATE = """
         float: left;
         margin: 10px;
         width: 180px;
-        height: 180px;
+        height: 200px;
     }}
 
     .figure img {{
