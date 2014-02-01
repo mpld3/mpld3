@@ -4,6 +4,7 @@ import glob
 import token
 import tokenize
 import shutil
+import json
 
 import matplotlib
 matplotlib.use('Agg')  # don't display plots
@@ -46,17 +47,18 @@ INDEX_TEMPLATE = """
     .figure {{
         float: left;
         margin: 10px;
-        width: auto;
-        height: 200px;
         width: 180px;
+        height: 180px;
     }}
 
     .figure img {{
         display: inline;
+        width: 170px;
+        height: 170px;
     }}
 
     .figure .caption {{
-        width: 170px;
+        width: 180px;
         text-align: center !important;
     }}
     </style>
@@ -75,55 +77,131 @@ Example Gallery
     <div style="clear: both"></div>
 """
 
+TMP = """
 
-def create_thumbnail(infile, thumbfile, scale=0.2,
-                     max_width=200, max_height=200,
-                     interpolation='bilinear'):
-    """
-    Create a thumbnail of an image
-    """
-    basedir, basename = os.path.split(infile)
-    baseout, extout = os.path.splitext(thumbfile)
+/*
+var banner_data = [
+ {title: 'Custom Plugin', thumb: '_images/custom_plugin.png', url: 'examples/custom_plugin.html'},
+ {title: 'Scatter Tooltip', thumb: '_images/scatter_tooltip.png', url: 'examples/scatter_tooltip.html'},
+ {title: 'HTML Tooltip', thumb: '_images/html_tooltips.png', url: 'examples/html_tooltips.html'},
+ {title: 'Custom Plugin', thumb: '_images/custom_plugin.png', url: 'examples/custom_plugin.html'},
+ {title: 'Scatter Tooltip', thumb: '_images/scatter_tooltip.png', url: 'examples/scatter_tooltip.html'},
+ {title: 'HTML Tooltip', thumb: '_images/html_tooltips.png', url: 'examples/html_tooltips.html'},
+ {title: 'Custom Plugin', thumb: '_images/custom_plugin.png', url: 'examples/custom_plugin.html'},
+ {title: 'Scatter Tooltip', thumb: '_images/scatter_tooltip.png', url: 'examples/scatter_tooltip.html'},
+ {title: 'HTML Tooltip', thumb: '_images/html_tooltips.png', url: 'examples/html_tooltips.html'},
+];
+*/ 
+"""
 
-    im = image.imread(infile)
-    rows, cols, depth = im.shape
 
-    # this doesn't really matter, it will cancel in the end, but we
-    # need it for the mpl API
-    dpi = 100
+BANNER_JS_TEMPLATE = """
 
-    scale = min(scale, max_height / float(rows))
-    scale = min(scale, max_width / float(cols))
+var banner_data = {banner_data};
 
-    height = float(rows) / dpi * scale
-    width = float(cols) / dpi * scale
+banner_data.forEach(function(d, i) {{
+  d.i = i;
+}});
 
-    extension = extout.lower()
+var height = 150,
+    width = 900,
+    imageHeight = 150,
+    imageWidth = 150,
+    zoomfactor = 0.1;
 
-    if extension == '.png':
-        from matplotlib.backends.backend_agg \
-            import FigureCanvasAgg as FigureCanvas
-    elif extension == '.pdf':
-        from matplotlib.backends.backend_pdf \
-            import FigureCanvasPDF as FigureCanvas
-    elif extension == '.svg':
-        from matplotlib.backends.backend_svg \
-            import FigureCanvasSVG as FigureCanvas
-    else:
-        raise ValueError("Can only handle extensions 'png', 'svg' or 'pdf'")
+var banner = d3.select(".example-banner");
+ 
+banner.style("height", height + "px")
+      .style("width", width + "px")
+      .style("margin-left", "auto")
+      .style("margin-right", "auto");
 
-    from matplotlib.figure import Figure
-    fig = Figure(figsize=(width, height), dpi=dpi)
-    canvas = FigureCanvas(fig)
+var svg = banner.append("svg")
+                .attr("width", width + "px")
+                .attr("height", height + "px");
 
-    ax = fig.add_axes([0, 0, 1, 1], aspect='auto',
-                      frameon=False, xticks=[], yticks=[])
+var anchor = svg.append("g")
+                  .attr("class", "example-anchor")
+                .selectAll("a")
+                .data(banner_data.slice(0, 7));
 
-    basename, ext = os.path.splitext(basename)
-    ax.imshow(im, aspect='auto', resample=True,
-              interpolation='bilinear')
-    fig.savefig(thumbfile, dpi=dpi)
-    return fig
+anchor.exit().remove();
+
+var anchor_elements = anchor.enter().append("a")
+      .attr("xlink:href", function(d) {{ return d.url; }})
+      .attr("xlink:title", function(d) {{ return d.title; }});
+     
+anchor_elements.append("svg:image")
+      .attr("width", (1 - zoomfactor) * imageWidth)
+      .attr("height", (1 - zoomfactor) * imageHeight)
+      .attr("xlink:href", function(d){{ return d.thumb; }})
+      .attr("xroot", function(d){{return d3.round(imageWidth * (d.i - 0.5));}})
+      .attr("x", function(d){{return d3.round(imageWidth * (d.i - 0.5));}})
+      .attr("y", d3.round(0.5 * zoomfactor * imageHeight))
+      .attr("i", function(d){{return d.i;}})
+     .on("mouseover", function() {{
+              var img = d3.select(this);
+              img.transition()
+                    .attr("width", imageWidth)
+                    .attr("height", height)
+                    .attr("x", img.attr("xroot")
+                               - d3.round(0.5 * zoomfactor * imageWidth))
+                    .attr("y", 0);
+              }})
+     .on("mouseout", function() {{
+              var img = d3.select(this);
+              img.transition()
+                    .attr("width", (1 - zoomfactor) * imageWidth)
+                    .attr("height", (1 - zoomfactor) * height)
+                    .attr("x", img.attr("xroot"))
+                    .attr("y", d3.round(0.5 * zoomfactor * imageHeight));
+              }});
+"""
+
+
+def create_thumbnail(infile, thumbfile,
+                     width=300, height=300,
+                     cx=0.5, cy=0.6, border=4):
+     # this doesn't really matter, it will cancel in the end, but we
+     # need it for the mpl API
+     dpi = 100
+
+     baseout, extout = os.path.splitext(thumbfile)
+     im = image.imread(infile)
+     rows, cols = im.shape[:2]
+     x0 = int(cx * cols - 0.5 * width)
+     y0 = int(cy * rows - 0.5 * height)
+     thumb = im[y0: y0 + height,
+                x0: x0 + width]
+     thumb[:border, :, :3] = thumb[-border:, :, :3] = 0
+     thumb[:, :border, :3] = thumb[:, -border:, :3] = 0
+
+     extension = extout.lower()
+
+     if extension == '.png':
+         from matplotlib.backends.backend_agg \
+             import FigureCanvasAgg as FigureCanvas
+     elif extension == '.pdf':
+         from matplotlib.backends.backend_pdf \
+             import FigureCanvasPDF as FigureCanvas
+     elif extension == '.svg':
+         from matplotlib.backends.backend_svg \
+             import FigureCanvasSVG as FigureCanvas
+     else:
+         raise ValueError("Can only handle extensions 'png', 'svg' or 'pdf'")
+
+     from matplotlib.figure import Figure
+     fig = Figure(figsize=(float(width) / dpi, float(height) / dpi),
+                  dpi=dpi)
+     canvas = FigureCanvas(fig)
+
+     ax = fig.add_axes([0, 0, 1, 1], aspect='auto',
+                       frameon=False, xticks=[], yticks=[])
+
+     ax.imshow(thumb, aspect='auto', resample=True,
+               interpolation='bilinear')
+     fig.savefig(thumbfile, dpi=dpi)
+     return fig     
 
 
 def indent(s, N=4):
@@ -168,8 +246,17 @@ class ExampleGenerator(object):
         return self.modulename + '.png'
 
     @property
+    def thumbfilename(self):
+        # TODO: don't hard-code image path
+        return "_images/" + self.pngfilename
+
+    @property
     def sphinxtag(self):
         return self.modulename
+
+    @property
+    def pagetitle(self):
+        return self.docstring.strip().split('\n')[0].strip()
 
     def extract_docstring(self):
         """ Extract a module-level docstring
@@ -231,12 +318,17 @@ class ExampleGenerator(object):
 
 
 def main(app):
+    static_dir = os.path.join(app.builder.srcdir, '_static')
     target_dir = os.path.join(app.builder.srcdir, 'examples')
     source_dir = os.path.abspath(os.path.join(app.builder.srcdir,
                                               '..', 'examples'))
+    if not os.path.exists(static_dir):
+        os.makedirs(static_dir)
 
     if not os.path.exists(target_dir):
         os.makedirs(target_dir)
+
+    banner_data = []
 
     toctree = ("\n\n"
                ".. toctree::\n"
@@ -246,6 +338,10 @@ def main(app):
     # Write individual example files
     for filename in glob.glob(os.path.join(source_dir, "*.py")):
         ex = ExampleGenerator(filename, target_dir)
+
+        banner_data.append({"title": ex.pagetitle,
+                            "url": os.path.join('examples', ex.htmlfilename),
+                            "thumb": os.path.join(ex.thumbfilename)})
         shutil.copyfile(filename, os.path.join(target_dir, ex.pyfilename))
         output = RST_TEMPLATE.format(sphinx_tag=ex.sphinxtag,
                                      docstring=ex.docstring,
@@ -258,12 +354,21 @@ def main(app):
         toctree += ex.toctree_entry()
         contents += ex.contents_entry()
 
+    if len(banner_data) < 10:
+        banner_data = (4 * banner_data)[:10]
+
     # write index file
     index_file = os.path.join(target_dir, 'index.rst')
     with open(index_file, 'w') as index:
         index.write(INDEX_TEMPLATE.format(sphinx_tag="example-gallery",
                                           toctree=toctree,
                                           contents=contents))
+
+    # write javascript include for front page
+    js_file = os.path.join(static_dir, 'banner_data.js')
+    with open(js_file, 'w') as js:
+        js.write(BANNER_JS_TEMPLATE.format(
+            banner_data=json.dumps(banner_data)))
 
 
 def setup(app):
