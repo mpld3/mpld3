@@ -22,8 +22,7 @@ import matplotlib as mpl
 from matplotlib.transforms import Affine2D
 from matplotlib.markers import MarkerStyle
 
-from ._utils import (color_to_hex, get_dasharray, get_d3_shape_for_marker,
-                     path_data, collection_data)
+from ._utils import (color_to_hex, get_dasharray, path_data, collection_data)
 from . import _js as js
 
 
