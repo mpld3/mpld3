@@ -20,6 +20,7 @@ from matplotlib.patches import Patch
 from matplotlib import ticker
 import matplotlib as mpl
 from matplotlib.transforms import Affine2D
+from matplotlib.markers import MarkerStyle
 
 from ._utils import (color_to_hex, get_dasharray, get_d3_shape_for_marker,
                      path_data, collection_data)
@@ -774,9 +775,7 @@ class D3Line2D(D3Base):
                            function(d){return !isNaN(d[0]) && !isNaN(d[1]); }))
                .enter().append("svg:path")
                    .attr('class', 'points{{ lineid }}')
-                   .attr("d", d3.svg.symbol()
-                                 .type("{{ markershape }}")
-                                 .size({{ markersize }}))
+                   .attr("d", construct_SVG_path({{ markerpath }}))
                    .attr("transform", this.translate.bind(this));
        {% endif %}
      };
@@ -832,13 +831,17 @@ class D3Line2D(D3Base):
     def _html_args(self):
         transform = self.line.get_transform() - self.ax.transData
         data = transform.transform(self.line.get_xydata()).tolist()
-        msh = get_d3_shape_for_marker(self.line.get_marker())
-        ms = self.line.get_markersize() ** 2
+
+        markerstyle = MarkerStyle(self.line.get_marker())
+        markersize = self.line.get_markersize()
+        markerpath = path_data(markerstyle.get_path(),
+                               (markerstyle.get_transform()
+                                + Affine2D().scale(markersize, -markersize)))
 
         return dict(lineid=self.lineid,
                     data=json.dumps(data),
-                    markersize=ms,
-                    markershape=msh)
+                    markerpath=json.dumps(markerpath),
+                    markersize=markersize)
 
 
 class D3Patch(D3Base):

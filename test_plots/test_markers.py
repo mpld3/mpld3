@@ -7,10 +7,12 @@ def main():
 
     np.random.seed(0)
     numPoints=10
-    for marker in ['or','vb','^g','+y','dw']:
+    for marker in ['oc','vr','^g','+k','db']:
         ax.plot(np.random.normal(size=numPoints),
                 np.random.normal(size=numPoints),
-                marker, ms=5+20*np.random.uniform(), alpha=0.5*np.random.uniform())
+                marker, ms=5+20*np.random.uniform(),
+                alpha=0.5*np.random.uniform(),
+                mew=1)
 
     ax.set_xlabel('this is x')
     ax.set_ylabel('this is y')
