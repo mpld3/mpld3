@@ -19,6 +19,7 @@ from matplotlib.text import Text
 from matplotlib.patches import Patch
 from matplotlib import ticker
 import matplotlib as mpl
+from matplotlib.transforms import Affine2D
 
 from ._utils import (color_to_hex, get_dasharray, get_d3_shape_for_marker,
                      path_data, collection_data)
@@ -1084,7 +1085,8 @@ class D3Collection(D3Base):
         if self.path_zoomable():
             return self.collection.get_transform() - self.ax.transData
         else:
-            return self.collection.get_transform()
+            # pixel coordinates start at top; we need to flip the path here
+            return self.collection.get_transform() + Affine2D().scale(1., -1.)
 
     def get_data_defaults(self):
         offset_transform = self.get_offset_transform()
