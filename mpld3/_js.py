@@ -158,6 +158,10 @@ AXES_CLASS = """
                           .x(this.xdom)
                           .y(this.ydom)
                           .on("zoom", this.zoomed.bind(this));
+      var canvas = this.fig.canvas;
+      canvas
+        .on("mousedown.cursor", function () { canvas.attr("style", "cursor:move"); })
+        .on("mouseup.cursor", function () { canvas.attr("style", "cursor:auto"); });
 
       this.baseaxes = this.fig.canvas.append("g")
                              .attr('transform', 'translate('

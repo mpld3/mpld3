@@ -333,6 +333,91 @@ class LineLabelTooltip(PluginBase):
                     label=json.dumps(self.label))
 
 
+class Zoom(PluginBase):
+    """Customize pan-and-zoom behavior for an axes
+
+    Parameters
+    ----------
+    To Come
+
+    Examples
+    --------
+    >>> import matplotlib.pyplot as plt
+    >>> from mpld3 import fig_to_d3, plugins
+    >>> fig, ax = plt.subplots()
+    >>> line, = ax.plot(range(10), '-')
+    >>> plugins.connect(fig, Zoom())
+    >>> fig_to_d3(fig)
+    """
+
+    FIG_JS = jinja2.Template("""
+      var a = fig.axes[0],
+          zoom_x = a.zoom,
+          zoom_y = d3.behavior.zoom()
+                          .y(a.ydom),
+          py0 = null,
+          ty0 = null;
+
+      var x_unit_scale = a.xdom.invert(a.width) - a.xdom.invert(0),
+          y_unit_scale = a.ydom.invert(a.height) - a.ydom.invert(0);
+
+      a.zoom
+        .y(d3.scale.linear()) // remove y scale from default controller
+        .on("zoom", function() {  // replace zoom event with one that bounds pan
+
+            // enforce pan limits
+            var screen_x_lower = a.xdom(-5),
+                screen_x_upper = a.xdom(4),
+                screen_y_lower = a.ydom(-3.5),
+                screen_y_upper = a.ydom(3.5),
+                t = [zoom_x.translate()[0],zoom_y.translate()[1]];
+
+            if((screen_x_lower > 0) && (screen_x_upper < a.width)) {
+              zoom_x.scale(x_unit_scale / (4 - (-5)));
+            }
+            if(screen_x_lower > 0) {
+              zoom_x.translate([t[0]-screen_x_lower, t[1]]);
+            }
+            else if(screen_x_upper < a.width) {
+              zoom_x.translate([t[0]+a.width-screen_x_upper, t[1]]);
+            }
+
+            if((screen_y_upper > 0) && (screen_y_lower < a.height)) {
+              zoom_y.scale(y_unit_scale / (3.5 - (-3.5)));
+            }
+            if(screen_y_lower < a.height) {
+              zoom_y.translate([t[0], t[1]+a.height-screen_y_lower]);
+            }
+            else if(screen_y_upper > 0) {
+              zoom_y.translate([t[0], t[1]-screen_y_upper]);
+            }
+
+            // redraw
+            a.zoomed.bind(a)();
+        });
+
+      // add pan-without-zoom behavior for y-axis      
+      a.baseaxes
+        .on("mousedown.zoom_y", function() {
+          ty0 = zoom_y.translate()[1];
+          py0 = d3.event.pageY;
+        })
+        .on("mousemove.zoom_y", function() {
+          if (py0 != null) {
+            zoom_y.translate([0, ty0 + d3.event.pageY - py0]);
+          }
+        })
+        .on("mouseup.zoom_y", function() {
+          py0 = null;
+        });
+
+      // change a.finalize_reset to reset zoom_x and zoom_y
+      a.finalize_reset = function() {
+        zoom_x.scale(1).translate([0,0]);
+        zoom_y.scale(1).translate([0,0]);
+      }
+""")
+
 class ResetButton(PluginBase):
     """A Plugin to add a universal reset button
 
