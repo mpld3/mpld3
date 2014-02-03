@@ -839,8 +839,7 @@ class D3Line2D(D3Base):
 
         return dict(lineid=self.lineid,
                     data=json.dumps(data),
-                    markerpath=json.dumps(markerpath),
-                    markersize=markersize)
+                    markerpath=json.dumps(markerpath))
 
 
 class D3Patch(D3Base):
