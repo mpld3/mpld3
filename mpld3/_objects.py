@@ -19,9 +19,10 @@ from matplotlib.text import Text
 from matplotlib.patches import Patch
 from matplotlib import ticker
 import matplotlib as mpl
+from matplotlib.transforms import Affine2D
+from matplotlib.markers import MarkerStyle
 
-from ._utils import (color_to_hex, get_dasharray, get_d3_shape_for_marker,
-                     path_data, collection_data)
+from ._utils import (color_to_hex, get_dasharray, path_data, collection_data)
 from . import _js as js
 
 
@@ -267,7 +268,8 @@ class D3Figure(D3Base):
                 extra_fig_js=None):
         """Render the figure (or parts of the figure) as d3."""
         # here we call savefig so that draw() commands will happen
-        self.fig.savefig(io.BytesIO(), format='png')
+        # use fig.dpi, otherwise rcparams savefig() can override this
+        self.fig.savefig(io.BytesIO(), format='png', dpi=self.fig.dpi)
 
         # now write the html
         if hasattr(self.fig, 'plugins'):
@@ -648,7 +650,9 @@ class D3Text(D3Base):
                       .attr("class", "text")
                       .text(this.text)
                       .attr("class", "text{{ elid }}")
-                      .attr("style", "text-anchor: {{ h_anchor }};");
+                      .attr("style", "text-anchor: {{ h_anchor }};" +
+                                     "dominant-baseline: {{ v_baseline }}")
+
      }
 
      this.zoomed = function(){
@@ -680,10 +684,6 @@ class D3Text(D3Base):
 
         x, y = transform.transform(self.text.get_position())
 
-        # hack for y-label alignment
-        if self.text is self.ax.yaxis.label:
-            x += self.text.get_size()
-
         return x, y
 
     def get_rotation(self):
@@ -701,17 +701,23 @@ class D3Text(D3Base):
                     alpha=alpha)
 
     def _html_args(self):
-        # TODO: fix vertical anchor point
+        va_dict = {'bottom': 'auto',
+                   'baseline': 'auto',
+                   'center': 'central',
+                   'top': 'hanging'}
         ha_dict = {'left': 'start',
                    'center': 'middle',
                    'right': 'end'}
+
+        v_baseline = va_dict[self.text.get_verticalalignment()]
         h_anchor = ha_dict[self.text.get_horizontalalignment()]
 
         return dict(zoomable=self.zoomable(),
                     position=json.dumps(self.get_position()),
                     text=json.dumps(self.text.get_text()),
                     rotation=json.dumps(self.get_rotation()),
-                    h_anchor=h_anchor)
+                    h_anchor=h_anchor,
+                    v_baseline=v_baseline)
 
 
 class D3Line2D(D3Base):
@@ -768,9 +774,7 @@ class D3Line2D(D3Base):
                            function(d){return !isNaN(d[0]) && !isNaN(d[1]); }))
                .enter().append("svg:path")
                    .attr('class', 'points{{ lineid }}')
-                   .attr("d", d3.svg.symbol()
-                                 .type("{{ markershape }}")
-                                 .size({{ markersize }}))
+                   .attr("d", construct_SVG_path({{ markerpath }}))
                    .attr("transform", this.translate.bind(this));
        {% endif %}
      };
@@ -826,13 +830,16 @@ class D3Line2D(D3Base):
     def _html_args(self):
         transform = self.line.get_transform() - self.ax.transData
         data = transform.transform(self.line.get_xydata()).tolist()
-        msh = get_d3_shape_for_marker(self.line.get_marker())
-        ms = self.line.get_markersize() ** 2
+
+        markerstyle = MarkerStyle(self.line.get_marker())
+        markersize = self.line.get_markersize()
+        markerpath = path_data(markerstyle.get_path(),
+                               (markerstyle.get_transform()
+                                + Affine2D().scale(markersize, -markersize)))
 
         return dict(lineid=self.lineid,
                     data=json.dumps(data),
-                    markersize=ms,
-                    markershape=msh)
+                    markerpath=json.dumps(markerpath))
 
 
 class D3Patch(D3Base):
@@ -1079,7 +1086,8 @@ class D3Collection(D3Base):
         if self.path_zoomable():
             return self.collection.get_transform() - self.ax.transData
         else:
-            return self.collection.get_transform()
+            # pixel coordinates start at top; we need to flip the path here
+            return self.collection.get_transform() + Affine2D().scale(1., -1.)
 
     def get_data_defaults(self):
         offset_transform = self.get_offset_transform()

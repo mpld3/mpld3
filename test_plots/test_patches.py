@@ -30,7 +30,7 @@ def main():
         ax.add_patch(patch)
 
     # add a static patch
-    ax.add_patch(patches.Rectangle((0.3, 0.3), 0.4, 0.4,
+    ax.add_patch(patches.Rectangle((0.3, 0.4), 0.4, 0.4,
                                    fc='yellow', ec='black', alpha=0.3,
                                    transform=ax.transAxes))
 

@@ -5,6 +5,8 @@ CONSTRUCT_SVG_PATH = """
     // This function constructs a mapped SVG path
     // from an input data array
     var construct_SVG_path = function(data, xmap, ymap){
+       xmap = (typeof xmap !== 'undefined') ? xmap : function(x){return x;};
+       ymap = (typeof ymap !== 'undefined') ? ymap : function(y){return y;};
        var result = "";
        for (var i=0;i<data.length;i++){
           result += data[i][0];
