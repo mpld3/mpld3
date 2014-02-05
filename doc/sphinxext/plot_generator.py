@@ -55,6 +55,14 @@ INDEX_TEMPLATE = """
         display: inline;
         width: 170px;
         height: 170px;
+        opacity:0.4;
+        filter:alpha(opacity=40); /* For IE8 and earlier */
+    }}
+    
+    .figure img:hover
+    {{
+        opacity:1.0;
+        filter:alpha(opacity=100); /* For IE8 and earlier */
     }}
 
     .figure .caption {{
