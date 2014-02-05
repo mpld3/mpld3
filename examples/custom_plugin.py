@@ -1,6 +1,6 @@
 """
-Custom Plugin
-=============
+Defining aCustom Plugin
+=======================
 Test the custom plugin demoed on the `Pythonic Perambulations
 <http://jakevdp.github.io/blog/2014/01/10/d3-plugins-truly-interactive/>`_
 blog.
