@@ -22,14 +22,17 @@ tools such as the `IPython notebook <http://ipython.org/notebook.html>`_.
 See the :ref:`example-gallery` for some interactive demonstrations of mpld3
 in action.
 
+For a quick overview of the package, see the :ref:`quickstart-guide`.
+
 Contents
 ========
 
 .. toctree::
    :maxdepth: 2
 
-   modules/API
+   quickstart
    examples/index
+   modules/API
 
 Source and Development
 ======================

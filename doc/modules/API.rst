@@ -1,3 +1,5 @@
+API documentation
+=================
 
 .. automodule:: mpld3
    :members:
