@@ -433,6 +433,9 @@ class ConfigurableZoomAndPan(PluginBase):
                 })
                 .on("mouseup.zoom_y", function() {
                   position_x0 = null;
+                })
+                .on("mouseout.zoom_y", function() {
+                  position_x0 = null;
                 });
             {% endif %}
 
@@ -446,38 +449,31 @@ class ConfigurableZoomAndPan(PluginBase):
                 var screen_x_lower = a.xdom({{xlim.0}}),
                     screen_x_upper = a.xdom({{xlim.1}}),
                     screen_y_lower = a.ydom({{ylim.0}}),
-                    screen_y_upper = a.ydom({{ylim.1}});
-
-                if((screen_x_lower >= 0) && (screen_x_upper < a.width)) {
-                  zoom_x.scale(x_min_scale);
-                }
-                if((screen_y_upper >= 0) && (screen_y_lower < a.height)) {
-                  zoom_y.scale(y_min_scale);
-                }
-
-                // enforce pan limits
-                screen_x_lower = a.xdom({{xlim.0}});
-                screen_x_upper = a.xdom({{xlim.1}});
-                screen_y_lower = a.ydom({{ylim.0}});
-                screen_y_upper = a.ydom({{ylim.1}});
-                var tx = zoom_x.translate()[0],
+                    screen_y_upper = a.ydom({{ylim.1}}),
+                    tx = zoom_x.translate()[0],
                     ty = zoom_y.translate()[1];
 
-                if(screen_x_lower > 0) {
+                if(zoom_x.scale() <= x_min_scale) {
+                  zoom_x.scale(x_min_scale);
+                }
+                if(screen_x_lower >= 0) {
                   tx = tx - screen_x_lower;
                 }
-                else if(screen_x_upper < a.width) {
+                if(screen_x_upper <= a.width) {
                   tx = tx + a.width - screen_x_upper;
                 }
 
-                if(screen_y_upper > 0) {
+                if(zoom_y.scale() <= y_min_scale) {
+                  zoom_y.scale(y_min_scale);
+                }
+                if(screen_y_upper >= 0) {
                   ty = ty - screen_y_upper;
                 }
-                else if(screen_y_lower < a.height) {
+                if(screen_y_lower <= a.height) {
                   ty = ty + a.height - screen_y_lower;
                 }
 
-                zoom_x.translate([tx, ty]);
+                zoom_x.translate([tx,ty]);
                 zoom_y.translate([tx,ty]);
 
                 // redraw
