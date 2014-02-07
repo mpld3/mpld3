@@ -15,19 +15,25 @@ of the basic mpld3 functions you should know about.
 General Functions
 -----------------
 
+These are the general functions used to convert matplotlib graphics into HTML
+and D3js. See some examples of these being used in the :ref:`example-gallery`.
+
 :func:`fig_to_d3`
     This is the core routine which takes a figure and constructs a string of
     html and javascript which can be embedded in any webpage.
 
 :func:`show_d3`
     This function is mpld3's equivalent of matplotlib's ``plt.show`` function.
-    It will convert the current figure to html, start a local webserver which
-    serves this html, and (if the operating system allows it) automatically
-    open this page in the web browser.
+    It will convert the current figure to html using :func:`fig_to_d3`, start
+    a local webserver which serves this html, and (if the operating system
+    allows it) automatically open this page in the web browser.
 
 
 IPython Notebook Functions
 --------------------------
+
+These are functions which enable the use of mpld3 within the IPython notebook.
+See some examples of these being used in the :ref:`notebook-examples`.
 
 :func:`display_d3`
     This function displays a single mpld3 figure inline within the IPython

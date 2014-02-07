@@ -11,6 +11,7 @@ matplotlib.use('Agg')  # don't display plots
 
 import mpld3
 from matplotlib import image
+from matplotlib.figure import Figure
 
 
 class disable_mpld3(object):
@@ -58,7 +59,7 @@ INDEX_TEMPLATE = """
         opacity:0.4;
         filter:alpha(opacity=40); /* For IE8 and earlier */
     }}
-    
+
     .figure img:hover
     {{
         opacity:1.0;
@@ -85,23 +86,6 @@ Example Gallery
     <div style="clear: both"></div>
 """
 
-TMP = """
-
-/*
-var banner_data = [
- {title: 'Custom Plugin', thumb: '_images/custom_plugin.png', url: 'examples/custom_plugin.html'},
- {title: 'Scatter Tooltip', thumb: '_images/scatter_tooltip.png', url: 'examples/scatter_tooltip.html'},
- {title: 'HTML Tooltip', thumb: '_images/html_tooltips.png', url: 'examples/html_tooltips.html'},
- {title: 'Custom Plugin', thumb: '_images/custom_plugin.png', url: 'examples/custom_plugin.html'},
- {title: 'Scatter Tooltip', thumb: '_images/scatter_tooltip.png', url: 'examples/scatter_tooltip.html'},
- {title: 'HTML Tooltip', thumb: '_images/html_tooltips.png', url: 'examples/html_tooltips.html'},
- {title: 'Custom Plugin', thumb: '_images/custom_plugin.png', url: 'examples/custom_plugin.html'},
- {title: 'Scatter Tooltip', thumb: '_images/scatter_tooltip.png', url: 'examples/scatter_tooltip.html'},
- {title: 'HTML Tooltip', thumb: '_images/html_tooltips.png', url: 'examples/html_tooltips.html'},
-];
-*/ 
-"""
-
 
 BANNER_JS_TEMPLATE = """
 
@@ -118,7 +102,7 @@ var height = 150,
     zoomfactor = 0.1;
 
 var banner = d3.select(".example-banner");
- 
+
 banner.style("height", height + "px")
       .style("width", width + "px")
       .style("margin-left", "auto")
@@ -138,7 +122,7 @@ anchor.exit().remove();
 var anchor_elements = anchor.enter().append("a")
       .attr("xlink:href", function(d) {{ return d.url; }})
       .attr("xlink:title", function(d) {{ return d.title; }});
-     
+
 anchor_elements.append("svg:image")
       .attr("width", (1 - zoomfactor) * imageWidth)
       .attr("height", (1 - zoomfactor) * imageHeight)
@@ -170,46 +154,45 @@ anchor_elements.append("svg:image")
 def create_thumbnail(infile, thumbfile,
                      width=300, height=300,
                      cx=0.5, cy=0.6, border=4):
-     # this doesn't really matter, it will cancel in the end, but we
-     # need it for the mpl API
-     dpi = 100
+    # this doesn't really matter, it will cancel in the end, but we
+    # need it for the mpl API
+    dpi = 100
 
-     baseout, extout = os.path.splitext(thumbfile)
-     im = image.imread(infile)
-     rows, cols = im.shape[:2]
-     x0 = int(cx * cols - 0.5 * width)
-     y0 = int(cy * rows - 0.5 * height)
-     thumb = im[y0: y0 + height,
-                x0: x0 + width]
-     thumb[:border, :, :3] = thumb[-border:, :, :3] = 0
-     thumb[:, :border, :3] = thumb[:, -border:, :3] = 0
+    baseout, extout = os.path.splitext(thumbfile)
+    im = image.imread(infile)
+    rows, cols = im.shape[:2]
+    x0 = int(cx * cols - 0.5 * width)
+    y0 = int(cy * rows - 0.5 * height)
+    thumb = im[y0: y0 + height,
+               x0: x0 + width]
+    thumb[:border, :, :3] = thumb[-border:, :, :3] = 0
+    thumb[:, :border, :3] = thumb[:, -border:, :3] = 0
 
-     extension = extout.lower()
+    extension = extout.lower()
 
-     if extension == '.png':
-         from matplotlib.backends.backend_agg \
-             import FigureCanvasAgg as FigureCanvas
-     elif extension == '.pdf':
-         from matplotlib.backends.backend_pdf \
-             import FigureCanvasPDF as FigureCanvas
-     elif extension == '.svg':
-         from matplotlib.backends.backend_svg \
-             import FigureCanvasSVG as FigureCanvas
-     else:
-         raise ValueError("Can only handle extensions 'png', 'svg' or 'pdf'")
+    if extension == '.png':
+        from matplotlib.backends.backend_agg \
+            import FigureCanvasAgg as FigureCanvas
+    elif extension == '.pdf':
+        from matplotlib.backends.backend_pdf \
+            import FigureCanvasPDF as FigureCanvas
+    elif extension == '.svg':
+        from matplotlib.backends.backend_svg \
+            import FigureCanvasSVG as FigureCanvas
+    else:
+        raise ValueError("Can only handle extensions 'png', 'svg' or 'pdf'")
 
-     from matplotlib.figure import Figure
-     fig = Figure(figsize=(float(width) / dpi, float(height) / dpi),
-                  dpi=dpi)
-     canvas = FigureCanvas(fig)
+    fig = Figure(figsize=(float(width) / dpi, float(height) / dpi),
+                 dpi=dpi)
+    canvas = FigureCanvas(fig)
 
-     ax = fig.add_axes([0, 0, 1, 1], aspect='auto',
-                       frameon=False, xticks=[], yticks=[])
+    ax = fig.add_axes([0, 0, 1, 1], aspect='auto',
+                      frameon=False, xticks=[], yticks=[])
 
-     ax.imshow(thumb, aspect='auto', resample=True,
-               interpolation='bilinear')
-     fig.savefig(thumbfile, dpi=dpi)
-     return fig     
+    ax.imshow(thumb, aspect='auto', resample=True,
+              interpolation='bilinear')
+    fig.savefig(thumbfile, dpi=dpi)
+    return fig
 
 
 def indent(s, N=4):

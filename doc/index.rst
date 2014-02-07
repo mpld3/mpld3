@@ -32,6 +32,7 @@ Contents
 
    quickstart
    examples/index
+   notebooks/index
    modules/API
 
 Source and Development

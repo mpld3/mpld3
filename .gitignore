@@ -50,3 +50,4 @@ nosetests.xml
 # documentation
 doc/_build
 doc/examples
+doc/notebooks
