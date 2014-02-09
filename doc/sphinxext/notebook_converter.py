@@ -14,11 +14,29 @@ INDEX_TEMPLATE = jinja2.Template("""
 Notebook Examples
 =================
 
-{% for notebook in notebooks %}
-- :download:`{{ notebook }} <{{ notebook }}.html>`
-  [:download:`raw <{{notebook}}.ipynb>`]
+.. toctree::
+   {% for notebook in notebooks %}
+   ./{{ notebook }}
+   {% endfor %}
 
-{% endfor %}
+""")
+
+
+RST_TEMPLATE = jinja2.Template("""
+{{ title }}
+{% for c in title %}={% endfor %}
+
+[
+:download:`{{ nbroot }}.html <rendered/{{ nbroot }}.html>`
+|
+:download:`{{ nbroot }}.ipynb <{{ nbroot }}.ipynb>`
+]
+
+.. raw:: html
+
+    <iframe src="../_downloads/{{ nbroot }}.html"
+      width="100%" height="400px"></iframe>
+
 """)
 
 
@@ -28,11 +46,16 @@ def main(app):
     source_dir = os.path.abspath(os.path.join(app.builder.srcdir,
                                               '..', 'notebooks'))
 
+    rendered_dir = os.path.join(target_dir, 'rendered')
+
     if not os.path.exists(static_dir):
         os.makedirs(static_dir)
 
     if not os.path.exists(target_dir):
         os.makedirs(target_dir)
+
+    if not os.path.exists(rendered_dir):
+        os.makedirs(rendered_dir)
 
     nbroots = []
     exporter = HTMLExporter(template_file='full')
@@ -49,11 +72,16 @@ def main(app):
         (body, resources) = exporter.from_notebook_node(nb_json)
 
         root, ext = os.path.splitext(nbname)
-        nb_html_dest = os.path.join(target_dir, root + '.html')
+        nb_html_dest = os.path.join(rendered_dir, root + '.html')
         with open(nb_html_dest, 'w') as f:
             f.write(body)
 
         nbroots.append(root)
+
+    for nbroot in nbroots:
+        with open(os.path.join(target_dir, nbroot + '.rst'), 'w') as f:
+            f.write(RST_TEMPLATE.render(title=nbroot,
+                                        nbroot=nbroot))
 
     with open(os.path.join(target_dir, 'index.rst'), 'w') as f:
         f.write(INDEX_TEMPLATE.render(notebooks=nbroots,

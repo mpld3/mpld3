@@ -19,8 +19,8 @@ result is a simple API for exporting your matplotlib graphics to HTML code
 which can be used within the browser, within standard web pages, blogs, or
 tools such as the `IPython notebook <http://ipython.org/notebook.html>`_.
 
-See the :ref:`example-gallery` for some interactive demonstrations of mpld3
-in action.
+See the :ref:`example-gallery` or :ref:`notebook-examples` for some
+interactive demonstrations of mpld3 in action.
 
 For a quick overview of the package, see the :ref:`quickstart-guide`.
 
