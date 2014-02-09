@@ -20,7 +20,9 @@ def main():
         for j in range(2):
             txt = '({i}, {j})'.format(i=i, j=j)
             ax[i, j].set_title(txt, size=14)
-            ax[i, j].plot(np.random.randn(N), np.random.randn(N), 'o-', mec='w', mew=3)
+            ax[i, j].plot(10**i * 100**j * np.random.randn(N),
+                          10**i * 100**j * np.random.randn(N),
+                          'o-', mec='w', mew=3)
             ax[i, j].grid(True, color='lightgray')
             ax[i, j].set_xlabel('xlabel')
             ax[i, j].set_ylabel('ylabel')
