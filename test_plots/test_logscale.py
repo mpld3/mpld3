@@ -1,6 +1,10 @@
 """Plot to test logscale"""
+import matplotlib
+matplotlib.use('Agg')
+
 import matplotlib.pyplot as plt
 import numpy as np
+from mpld3 import plugins, fig_to_d3
 
 def main():
     fig = plt.figure()
@@ -17,8 +21,9 @@ def main():
     for ax in [ax1, ax2, ax3, ax4]:
         ax.plot(x, y)
 
+    plugins.connect(fig, plugins.ResetButton())
     return fig
 
 if __name__ == '__main__':
-    main()
-    plt.show()
+    fig = main()
+    print fig_to_d3(fig)

@@ -209,16 +209,28 @@ AXES_CLASS = """
         this.elements[i].zoomed();
       }
 
+      t = this.zoom.translate();
+      s = this.zoom.scale();
       if(propagate){
-        // update shared x axes
-        for(var i=0; i<this.sharex.length; i++){
-          this.sharex[i].zoom.x().domain(this.zoom.x().domain());
-          this.sharex[i].zoomed(false);
-        }
         // update shared y axes
         for(var i=0; i<this.sharey.length; i++){
-          this.sharey[i].zoom.y().domain(this.zoom.y().domain());
+          ti = this.sharey[i].zoom.translate();
+          this.sharey[i].zoom.translate([ti[0], t[1]]);
+          this.sharey[i].zoom.scale(s);
+        }
+        // update shared x axes
+        for(var i=0; i<this.sharex.length; i++){
+          ti = this.sharex[i].zoom.translate();
+          this.sharex[i].zoom.translate([t[0], ti[1]]);
+          this.sharex[i].zoom.scale(s);
+        }
+        // render updates to shared x axes
+        for(var i=0; i<this.sharey.length; i++){
           this.sharey[i].zoomed(false);
+        }
+        // render updates to shared y axes
+        for(var i=0; i<this.sharex.length; i++){
+          this.sharex[i].zoomed(false);
         }
       }
     };
