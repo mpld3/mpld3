@@ -2,7 +2,8 @@
 Plugins to add behavior to mpld3 charts
 """
 
-__all__ = ['ToolTip', 'ResetButton', 'connect']
+__all__ = ['connect', 'PluginBase', 'PointLabelTooltip', 'PointHTMLTooltip',
+           'LineLabelTooltip', 'ResetButton']
 
 import jinja2
 import json
@@ -133,8 +134,8 @@ class PointLabelTooltip(PluginBase):
                           // use this instead
                           var ctm = fig.canvas.node().getScreenCTM();
                           tooltip{{ id }}
-                             .attr('x', event.x - ctm.e - {{ hoffset }})
-                             .attr('y', event.y - ctm.f - {{ voffset }});})
+                             .attr('x', d3.event.x - ctm.e - {{ hoffset }})
+                             .attr('y', d3.event.y - ctm.f - {{ voffset }});})
         .on("mouseout", function(d, i){tooltip{{ id }}.style("visibility",
                                                              "hidden");});
     """)
@@ -229,8 +230,8 @@ class PointHTMLTooltip(PluginBase):
 
 
     FIG_JS = jinja2.Template("""
-    var tooltip = fig.root.append("div")
-                    .attr("class", "tooltip")
+    var tooltip = d3.select("body").append("div")
+                    .attr("class", "mpld3-tooltip")
                     .style("position", "absolute")
                     .style("z-index", "10")
                     .style("visibility", "hidden");
@@ -245,8 +246,8 @@ class PointHTMLTooltip(PluginBase):
                              .style("visibility", "visible");})
         .on("mousemove", function(d, i){
                            tooltip
-                             .style("top", (event.pageY-{{ voffset }})+"px")
-                             .style("left",(event.pageX+{{ hoffset }})+"px");})
+                             .style("top", (d3.event.pageY+{{ voffset }})+"px")
+                             .style("left",(d3.event.pageX+{{ hoffset }})+"px");})
         .on("mouseout",  function(d, i){
                            tooltip
                              .style("visibility", "hidden");});
@@ -304,8 +305,8 @@ class LineLabelTooltip(PluginBase):
                           // use this instead
                           var ctm = fig.canvas.node().getScreenCTM();
                           tooltip{{ id }}
-                             .attr('x', event.x - ctm.e - {{ hoffset }})
-                             .attr('y', event.y - ctm.f - {{ voffset }});})
+                             .attr('x', d3.event.x - ctm.e - {{ hoffset }})
+                             .attr('y', d3.event.y - ctm.f - {{ voffset }});})
         .on("mouseout", function(d, i){tooltip{{ id }}.style("visibility",
                                                              "hidden");});
     """)
