@@ -13,7 +13,7 @@ MAINTAINER_EMAIL = "jakevdp@cs.washington.edu"
 URL = 'http://mpld3.github.com'
 DOWNLOAD_URL = 'http://github.com/jakevdp/mpld3'
 LICENSE = 'BSD 3-clause'
-VERSION = '0.0.2'
+VERSION = '0.0.1'
 
 setup(name=NAME,
       version=VERSION,
