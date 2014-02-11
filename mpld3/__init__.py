@@ -20,7 +20,7 @@ Functions: IPython Notebook
                              in the IPython
 """
 
-__version__ = '0.0.1'
+__version__ = '0.0.2'
 __all__ = ["fig_to_d3", "display_d3", "show_d3",
            "enable_notebook", "disable_notebook"]
 
