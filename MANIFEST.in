@@ -1,0 +1,6 @@
+include *.md
+recursive-include examples *.py
+recursive-include notebooks *.ipynb
+recursive-include test_plots *.py
+recursive-include mpld3 *.py
+include LICENSE
