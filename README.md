@@ -14,8 +14,11 @@ available in the ``notebooks`` directory of this repository.
 
 Installation
 ------------
-mpld3 requires [jinja2](http://jinja.pocoo.org/) and
-[matplotlib](http://matplotlib.org).
+mpld3 requires [jinja2](http://jinja.pocoo.org/) version 2.7+
+and [matplotlib](http://matplotlib.org) version 1.3+.
+
+Optionally, mpld3 can be used with [IPython](http://ipython.org), and requires
+version 1.1+.
 
 To install the library system-wide, download the source and type
 
