@@ -1,6 +1,11 @@
 """Plot to test imshow"""
+
+import matplotlib
+matplotlib.use('Agg')
+
 import matplotlib.pyplot as plt
 import numpy as np
+from mpld3 import plugins, fig_to_d3
 
 def main():
     fig, ax = plt.subplots()
@@ -25,8 +30,11 @@ def main():
     ax.set_xlim(9, 21)
     ax.set_ylim(9, 21)
 
+    plugins.connect(fig, plugins.ConfigurableZoomAndPan(ax, xlim=(9,21), ylim=(9,21)))
+    plugins.connect(fig, plugins.ResetButton())
+
     return fig
 
 if __name__ == '__main__':
-    main()
-    plt.show()
+    fig = main()
+    print fig_to_d3(fig)

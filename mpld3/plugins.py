@@ -13,6 +13,7 @@ __all__ = ['connect', 'PluginBase', 'PointLabelTooltip', 'PointHTMLTooltip',
 import jinja2
 import json
 import uuid
+import numpy as np
 
 from ._objects import D3Line2D, D3Collection
 
@@ -85,6 +86,12 @@ class PluginBase(object):
         for ax in self.figure.axes:
             obj = obj or ax.objmap.get(mplobj, None)
         return obj
+
+    def _get_axes(self, ax):
+        for d3ax in self.figure.axes:
+            if d3ax._ax == ax:
+                return d3ax
+        return None
 
 
 class PointLabelTooltip(PluginBase):
@@ -337,6 +344,154 @@ class LineLabelTooltip(PluginBase):
                     elid=obj.elcount,
                     label=json.dumps(self.label))
 
+
+class ConfigurableZoomAndPan(PluginBase):
+    """Customize pan-and-zoom behavior for an axes
+
+    Parameters
+    ----------
+    To Come
+
+    Examples
+    --------
+    >>> import matplotlib.pyplot as plt
+    >>> from mpld3 import fig_to_d3, plugins
+    >>> fig, ax = plt.subplots()
+    >>> line, = ax.plot(range(10), '-')
+    >>> plugins.connect(fig, Zoom())
+    >>> fig_to_d3(fig)
+    """
+
+    def __init__(self, ax, zoom_x=True, zoom_y=True, xlim=None, ylim=None):
+        id = self.generate_unique_id()
+        if xlim == None:
+            xlim = [-np.Inf, np.Inf]
+        if ylim == None:
+            ylim = [-np.Inf, np.Inf]
+
+        xlim = np.nan_to_num(np.array(xlim, dtype=float))
+        ylim = np.nan_to_num(np.array(ylim, dtype=float))
+
+        self.params = locals()
+
+    def _fig_js_args(self):
+        self.params['axid'] = self._get_axes(self.params['ax'])._axid
+
+        return self.params
+
+    FIG_JS = jinja2.Template("""
+      var _ = function() {
+          var a = ax{{ axid }};
+            {% if zoom_x and zoom_y %}
+              var zoom_x = a.zoom,
+                  zoom_y = a.zoom;
+            {% elif not zoom_x and not zoom_y %}
+              var zoom_x = a.zoom,
+                  zoom_y = a.zoom;
+              a.zoom.scaleExtent([1,1]);
+            {% elif zoom_x and not zoom_y %}
+              var zoom_x = a.zoom,
+                  zoom_y = d3.behavior.zoom()
+                              .y(a.ydom),
+                  position_y0 = null,
+                  translate_y0 = null;
+
+              // remove y scale from default controller
+              a.zoom
+                .y(d3.scale.linear())
+
+              // add pan-without-zoom behavior for y-axis      
+              a.baseaxes
+                .on("mousedown.zoom_y", function() {
+                  translate_y0 = zoom_y.translate()[1];
+                  position_y0 = d3.event.pageY;
+                })
+                .on("mousemove.zoom_y", function() {
+                  if (position_y0 != null) {
+                    zoom_y.translate([0, translate_y0 + d3.event.pageY - position_y0]);
+                  }
+                })
+                .on("mouseup.zoom_y", function() {
+                  position_y0 = null;
+                });
+            {% elif not zoom_x and zoom_y %}
+              var zoom_x = d3.behavior.zoom()
+                              .x(a.xdom),
+              position_x0 = null,
+              translate_x0 = null,
+              zoom_y = a.zoom;
+
+              // remove x scale from default controller
+              a.zoom
+                .x(d3.scale.linear())
+
+              // add pan-without-zoom behavior for x-axis
+              a.baseaxes
+                .on("mousedown.zoom_x", function() {
+                  translate_x0 = zoom_x.translate()[0];
+                  position_x0 = d3.event.pageX;
+                })
+                .on("mousemove.zoom_y", function() {
+                  if (position_x0 != null) {
+                    zoom_x.translate([translate_x0 + d3.event.pageX - position_x0, 0]);
+                  }
+                })
+                .on("mouseup.zoom_y", function() {
+                  position_x0 = null;
+                })
+                .on("mouseout.zoom_y", function() {
+                  position_x0 = null;
+                });
+            {% endif %}
+
+          var x_min_scale = (a.xdom.invert(a.width) - a.xdom.invert(0)) / ({{xlim.1}} - {{xlim.0}}),
+              y_min_scale = (a.ydom.invert(0) - a.ydom.invert(a.height)) / ({{ylim.1}} - {{ylim.0}});
+
+          a.zoom
+            .on("zoom", function() {  // replace zoom event with one that bounds pan
+
+                // enforce zoom limits
+                var screen_x_lower = a.xdom({{xlim.0}}),
+                    screen_x_upper = a.xdom({{xlim.1}}),
+                    screen_y_lower = a.ydom({{ylim.0}}),
+                    screen_y_upper = a.ydom({{ylim.1}}),
+                    tx = zoom_x.translate()[0],
+                    ty = zoom_y.translate()[1];
+
+                if(zoom_x.scale() <= x_min_scale) {
+                  zoom_x.scale(x_min_scale);
+                }
+                if(screen_x_lower >= 0) {
+                  tx = tx - screen_x_lower;
+                }
+                if(screen_x_upper <= a.width) {
+                  tx = tx + a.width - screen_x_upper;
+                }
+
+                if(zoom_y.scale() <= y_min_scale) {
+                  zoom_y.scale(y_min_scale);
+                }
+                if(screen_y_upper >= 0) {
+                  ty = ty - screen_y_upper;
+                }
+                if(screen_y_lower <= a.height) {
+                  ty = ty + a.height - screen_y_lower;
+                }
+
+                zoom_x.translate([tx,ty]);
+                zoom_y.translate([tx,ty]);
+
+                // redraw
+                a.zoomed.bind(a)();
+            });
+
+          // change a.finalize_reset to reset zoom_x and zoom_y
+          a.finalize_reset = function() {
+            zoom_x.scale(1).translate([0,0]);
+            zoom_y.scale(1).translate([0,0]);
+          }
+    }() // function-level scope
+""")
 
 class ResetButton(PluginBase):
     """A Plugin to add a universal reset button
