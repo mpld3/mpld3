@@ -4,20 +4,23 @@ mpld3: A D3 Viewer for Matplotlib
 - Author: Jake Vanderplas <jakevdp@cs.washington.edu>
 - License: BSD 3-clause
 
-This is a minimal interactive viewer for matplotlib graphics built on D3.
-For an example of the code in action, see the [blog post](http://jakevdp.github.io/blog/2013/12/19/a-d3-viewer-for-matplotlib/), or the
-[IPython notebook examples](http://nbviewer.ipython.org/github/jakevdp/mpld3/tree/master/examples/)
-available in the ``examples`` directory of this repository.
+This is an interactive D3js-based viewer which brings matplotlib graphics to the browser.
+Please visit [http://mpld3.github.io](http://mpld3.github.io) for documentation and examples.
 
-The code is still very incomplete, and does not (yet) support all of
-matplotlib's features.  It should be considered a proof-of-concept, for now.
+You may also see the [blog post](http://jakevdp.github.io/blog/2013/12/19/a-d3-viewer-for-matplotlib/), or the
+[IPython notebook examples](http://nbviewer.ipython.org/github/jakevdp/mpld3/tree/master/notebooks/)
+available in the ``notebooks`` directory of this repository.
+
 
 Installation
 ------------
-mpld3 requires [jinja2](http://jinja.pocoo.org/) and
-[matplotlib](http://matplotlib.org).
+mpld3 requires [jinja2](http://jinja.pocoo.org/) version 2.7+
+and [matplotlib](http://matplotlib.org) version 1.3+.
 
-To install the library system-wide
+Optionally, mpld3 can be used with [IPython](http://ipython.org), and requires
+version 1.1+.
+
+To install the library system-wide, download the source and type
 
     [~]$ python setup.py install
 
@@ -64,12 +67,10 @@ supports the following:
 There are many features still missing, and they range from fairly
 straightforward to fairly difficult.
 
-- fine-grained text formatting (multi-lines, vertical alignment, etc.)
-- containers (errorbars, etc.)
 - tick specification & formatting
 - some legend features
 - twin axes (i.e. multiple scales on one plot) tied together
-- adding a box-zoom tool
+- additional tools, such as box-zoom
 
 If any of these look like something you'd like to tackle, feel free to submit
 a pull request!

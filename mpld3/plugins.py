@@ -1,5 +1,10 @@
 """
 Plugins to add behavior to mpld3 charts
+=======================================
+
+Plugins are means of adding additional javascript features to D3-rendered
+matplotlib plots.  A number of plugins are defined here; it is also possible
+to create nearly any imaginable behavior by defining your own custom plugin.
 """
 
 __all__ = ['connect', 'PluginBase', 'PointLabelTooltip', 'PointHTMLTooltip',
