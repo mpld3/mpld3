@@ -156,10 +156,12 @@ AXES_CLASS = """
     }
 
     Axes.prototype.draw = function(){
-      this.zoom = d3.behavior.zoom()
+      this.zoom_x = d3.behavior.zoom()
                           .x(this.xdom)
-                          .y(this.ydom)
                           .on("zoom", this.zoomed.bind(this));
+      this.zoom_y = d3.behavior.zoom()
+                          .y(this.ydom);
+      this.aspect_ratio = 1;
 
       this.baseaxes = this.fig.canvas.append("g")
                              .attr('transform', 'translate('
@@ -170,7 +172,7 @@ AXES_CLASS = """
                              .attr('class', "baseaxes");
 
       if(this.zoomable){
-        this.baseaxes.call(this.zoom);
+        this.baseaxes.call(this.zoom_x);
       }
 
       this.axesbg = this.baseaxes.append("svg:rect")
@@ -205,24 +207,36 @@ AXES_CLASS = """
       //console.log(this.zoom.x().domain());
       //console.log(this.zoom.y().domain());
 
+      t = this.zoom_x.translate();
+      s = this.zoom_x.scale();
+
+      //this.zoom_y.scale(s);
+      //this.zoom_y.translate([t[0]/s, t[1]/s]);
+      this.zoom_y.scale(s * this.aspect_ratio);
+      //if (y1) y1.domain(y0.range().map(function(y) { return (y - view.y) / view.k; }).map(y0.invert));
+
       for(var i=0; i<this.elements.length; i++){
         this.elements[i].zoomed();
       }
 
-      t = this.zoom.translate();
-      s = this.zoom.scale();
       if(propagate){
         // update shared y axes
         for(var i=0; i<this.sharey.length; i++){
-          ti = this.sharey[i].zoom.translate();
-          this.sharey[i].zoom.translate([ti[0], t[1]]);
-          this.sharey[i].zoom.scale(s);
+          si = this.sharey[i].zoom_x.scale();
+          this.sharey[i].aspect_ratio = s / si;
+
+          ti = this.sharey[i].zoom_x.translate();
+          this.sharey[i].zoom_x.translate([ti[0], t[1]]);
+          //this.sharey[i].zoom_x.scale(s);
+          //this.sharey[i].zoom_x.scale(si);
         }
         // update shared x axes
         for(var i=0; i<this.sharex.length; i++){
-          ti = this.sharex[i].zoom.translate();
-          this.sharex[i].zoom.translate([t[0], ti[1]]);
-          this.sharex[i].zoom.scale(s);
+          this.sharex[i].aspect_ratio = this.sharex[i].zoom_y.scale() / s;
+          
+          this.sharex[i].zoom_x.scale(s);
+          ti = this.sharex[i].zoom_x.translate();
+          this.sharex[i].zoom_x.translate([t[0], ti[1]]);
         }
         // render updates to shared x axes
         for(var i=0; i<this.sharey.length; i++){
@@ -272,18 +286,21 @@ AXES_CLASS = """
       }else{
         this.iy = d3.interpolate(this.ydom.domain(), this.ylim);
       }
+
+      this.aspect_ratio = 1;
     }
 
     Axes.prototype.finalize_reset = function(){
-      this.zoom.scale(1).translate([0, 0]);
+      this.zoom_x.scale(1).translate([0, 0]);
+      this.zoom_y.scale(1).translate([0, 0]);
     }
 
     Axes.prototype.reset = function(){
       this.prep_reset();
       d3.transition().duration(750).tween("zoom", function() {
         return function(t) {
-          this.zoom.x(this.xdom.domain(this.ix(t)))
-                   .y(this.ydom.domain(this.iy(t)));
+          this.zoom_x.x(this.xdom.domain(this.ix(t)));
+          this.zoom_y.y(this.ydom.domain(this.iy(t)));
           this.zoomed();
         };
       });

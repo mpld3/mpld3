@@ -352,3 +352,9 @@ class ResetButton(PluginBase):
             .text("Reset")
             .on("click", fig.reset.bind(fig));
     """)
+
+class Debug(PluginBase):
+
+    FIG_JS = jinja2.Template("""
+        d3.fig = fig;
+    """)
