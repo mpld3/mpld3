@@ -352,7 +352,7 @@ class ResetButton(PluginBase):
     """
 
     FIG_JS = jinja2.Template("""
-        fig.root.append("div")
+        fig.toolbar
           .append("button")
             .text("Reset")
             .on("click", fig.reset.bind(fig));
@@ -372,8 +372,9 @@ class MousePosition(PluginBase):
     """
 
     FIG_JS = jinja2.Template("""
-    var coords = fig.root.append("div")
-                   .style("font-family", "monospace");
+    var coords = fig.toolbar.append("div")
+                   .style("font-family", "monospace")
+                   .text("Mouse:");
 
     for (var i=0; i < fig.axes.length; i++) {
       var update_coords = function() {
