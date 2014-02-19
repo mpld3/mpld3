@@ -357,3 +357,12 @@ class ResetButton(PluginBase):
             .text("Reset")
             .on("click", fig.reset.bind(fig));
     """)
+
+class Debug(PluginBase):
+    """A Plugin to copy the figure javascript object
+    into the d3 namespace (`d3.fig`) to simplify in-browser
+    inspection and debugging"""
+
+    FIG_JS = jinja2.Template("""
+        d3.fig = fig;
+    """)
