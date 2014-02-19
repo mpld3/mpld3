@@ -156,12 +156,17 @@ AXES_CLASS = """
     }
 
     Axes.prototype.draw = function(){
-      this.zoom_x = d3.behavior.zoom()
-                          .x(this.xdom)
+      // zoom handles the mouse and touch behavior
+      this.zoom = d3.behavior.zoom()
                           .on("zoom", this.zoomed.bind(this));
+      this.zoom.last_t = this.zoom.translate();
+      this.zoom.last_s = this.zoom.scale();
+
+      // zoom_x and zoom_y do the actual work modifying scales
+      this.zoom_x = d3.behavior.zoom()
+                          .x(this.xdom);
       this.zoom_y = d3.behavior.zoom()
                           .y(this.ydom);
-      this.aspect_ratio = 1;
 
       this.baseaxes = this.fig.canvas.append("g")
                              .attr('transform', 'translate('
@@ -172,7 +177,7 @@ AXES_CLASS = """
                              .attr('class', "baseaxes");
 
       if(this.zoomable){
-        this.baseaxes.call(this.zoom_x);
+        this.baseaxes.call(this.zoom);
       }
 
       this.axesbg = this.baseaxes.append("svg:rect")
@@ -206,46 +211,44 @@ AXES_CLASS = """
       //console.log(this.zoom.scale());
       //console.log(this.zoom.x().domain());
       //console.log(this.zoom.y().domain());
-
-      t = this.zoom_x.translate();
-      s = this.zoom_x.scale();
-
-      //this.zoom_y.scale(s);
-      //this.zoom_y.translate([t[0]/s, t[1]/s]);
-      this.zoom_y.scale(s * this.aspect_ratio);
-      //if (y1) y1.domain(y0.range().map(function(y) { return (y - view.y) / view.k; }).map(y0.invert));
-
-      for(var i=0; i<this.elements.length; i++){
-        this.elements[i].zoomed();
-      }
-
       if(propagate){
-        // update shared y axes
-        for(var i=0; i<this.sharey.length; i++){
-          si = this.sharey[i].zoom_x.scale();
-          this.sharey[i].aspect_ratio = s / si;
+        // update scale and translation of zoom_x and zoom_y,
+        // based on change in this.zoom scale and translation values
+        dt0 = this.zoom.translate()[0] - this.zoom.last_t[0];
+        dt1 = this.zoom.translate()[1] - this.zoom.last_t[1];
+        ds = this.zoom.scale() / this.zoom.last_s;
 
-          ti = this.sharey[i].zoom_x.translate();
-          this.sharey[i].zoom_x.translate([ti[0], t[1]]);
-          //this.sharey[i].zoom_x.scale(s);
-          //this.sharey[i].zoom_x.scale(si);
-        }
-        // update shared x axes
+        this.zoom_x.translate([this.zoom_x.translate()[0]+dt0, 0]);
+        this.zoom_x.scale(this.zoom_x.scale() * ds)
+
+        this.zoom_y.translate([0, this.zoom_y.translate()[1]+dt1]);
+        this.zoom_y.scale(this.zoom_y.scale() * ds)
+
+        // update last translate and scale values for future use
+        this.zoom.last_t = this.zoom.translate();
+        this.zoom.last_s = this.zoom.scale();
+
+        // update shared axeses
         for(var i=0; i<this.sharex.length; i++){
-          this.sharex[i].aspect_ratio = this.sharex[i].zoom_y.scale() / s;
-          
-          this.sharex[i].zoom_x.scale(s);
-          ti = this.sharex[i].zoom_x.translate();
-          this.sharex[i].zoom_x.translate([t[0], ti[1]]);
+          this.sharex[i].zoom_x.translate(this.zoom_x.translate());
+          this.sharex[i].zoom_x.scale(this.zoom_x.scale());
         }
-        // render updates to shared x axes
         for(var i=0; i<this.sharey.length; i++){
-          this.sharey[i].zoomed(false);
+          this.sharey[i].zoom_y.translate(this.zoom_y.translate());
+          this.sharey[i].zoom_y.scale(this.zoom_y.scale());
         }
-        // render updates to shared y axes
+
+        // render updates
         for(var i=0; i<this.sharex.length; i++){
           this.sharex[i].zoomed(false);
         }
+        for(var i=0; i<this.sharey.length; i++){
+          this.sharey[i].zoomed(false);
+        }
+      }
+
+      for(var i=0; i<this.elements.length; i++){
+        this.elements[i].zoomed();
       }
     };
 
@@ -286,11 +289,12 @@ AXES_CLASS = """
       }else{
         this.iy = d3.interpolate(this.ydom.domain(), this.ylim);
       }
-
-      this.aspect_ratio = 1;
     }
 
     Axes.prototype.finalize_reset = function(){
+      this.zoom.scale(1).translate([0, 0]);
+      this.zoom.last_t = this.zoom.translate();
+      this.zoom.last_s = this.zoom.scale();
       this.zoom_x.scale(1).translate([0, 0]);
       this.zoom_y.scale(1).translate([0, 0]);
     }
