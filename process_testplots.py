@@ -73,16 +73,33 @@ def combine_testplots(wildcard='test_plots/*.py',
         if dirname not in sys.path:
             sys.path.append(dirname)
 
-        f = __import__(modulename)
+        try:
+            f = __import__(modulename)
+        except Exception as e:
+            print "!!!  Exception raised in {0}".format(filename)
+            print "!!!   {0}: {1}".format(e.__class__.__name__,
+                                          e.message)
+            continue
+
         if hasattr(f, 'main'):
             print("running {0}".format(filename))
-            fig = f.main()
-            fig_html.append(fig_to_d3(fig, d3_url))
 
-            fig_png = os.path.splitext(filename)[0] + '.png'
-            fig.savefig(fig_png)
-            fig_names.append("\n<div class='fig'><img src={0}>"
-                             "</div>\n".format(fig_png))
+            try:
+                fig = f.main()
+            except Exception as e:
+                print "Exception raised in {0}".format(filename)
+                print " {0}: {1}".format(e.__class__.__name__,
+                                         e.message)
+                fig = None
+
+            if fig is not None:
+                fig_html.append(fig_to_d3(fig, d3_url))
+
+                fig_png = os.path.splitext(filename)[0] + '.png'
+                fig.savefig(fig_png)
+                fig_names.append("\n<div class='fig'><img src={0}>"
+                                 "</div>\n".format(fig_png))
+                plt.close(fig)
 
     print("writing results to {0}".format(outfile))
     with open(outfile, 'w') as f:
