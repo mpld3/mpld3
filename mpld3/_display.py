@@ -145,7 +145,7 @@ def fig_to_dict(fig, d3_url=None, mpld3_url=None,
     mpld3_url = mpld3_url or urls.MPLD3_URL
     figid = str(id(fig)) + str(int(random.random() * 1E10))
     renderer = MPLD3Renderer()
-    Exporter(renderer, **kwargs).run(fig)
+    Exporter(renderer, close_mpl=False, **kwargs).run(fig)
     fig, figure_json, extra_css, extra_js = renderer.finished_figures[0]
     return figure_json
 
@@ -198,7 +198,7 @@ def fig_to_html(fig, d3_url=None, mpld3_url=None, safemode=False,
     mpld3_url = mpld3_url or urls.MPLD3_URL
     figid = str(id(fig)) + str(int(random.random() * 1E10))
     renderer = MPLD3Renderer()
-    Exporter(renderer, **kwargs).run(fig)
+    Exporter(renderer, close_mpl=False, **kwargs).run(fig)
 
     fig, figure_json, extra_css, extra_js = renderer.finished_figures[0]
 
