@@ -978,7 +978,6 @@
 	var N = Math.max(this.prop.paths.length, offsets.length);
 	
 	if(offsets.length === N){
-            console.log("doing this");
             this.offsets = offsets;
         }else{
             this.offsets = [];
