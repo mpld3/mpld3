@@ -9,7 +9,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.datasets import load_iris
 
-from mpld3 import show_d3, plugins
+import mpld3
+from mpld3 import plugins
 
 data = load_iris()
 X = data.data
@@ -32,7 +33,4 @@ for axi in ax.flat:
     for axis in [axi.xaxis, axi.yaxis]:
         axis.set_major_formatter(plt.NullFormatter())
 
-# add a reset() button
-plugins.connect(fig, plugins.ResetButton())
-
-show_d3()
+mpld3.show()

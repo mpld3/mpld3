@@ -4,14 +4,20 @@ Interactive D3 rendering of matplotlib images
 
 Functions: General Use
 ----------------------
-- :func:`fig_to_d3` : convert a figure to an html string
+- :func:`fig_to_html` : convert a figure to an html string
 
-- :func:`show_d3` : save a figure to HTML, and open in a web browser window
+- :func:`fig_to_dict` : convert a figure to a dictionary representation
+
+- :func:`save_html` : save a figure to an html file
+
+- :func:`save_json` : save a JSON representation of a figure to file
+
+- :func:`show` : launch a web server to view an d3/html figure representation
 
 
 Functions: IPython Notebook
 ---------------------------
-- :func:`display_d3` : display a figure in an IPython notebook
+- :func:`display` : display a figure in an IPython notebook
 
 - :func:`enable_notebook` : enable automatic D3 display of figures
                             in the IPython notebook.
@@ -20,13 +26,7 @@ Functions: IPython Notebook
                              in the IPython
 """
 
-__version__ = '0.0.2'
-__all__ = ["fig_to_d3", "display_d3", "show_d3",
-           "enable_notebook", "disable_notebook"]
+__version__ = '0.1'
 
-from .display import fig_to_d3, display_d3, show_d3
-from .display import enable_notebook, disable_notebook
-
-
-class disable(object):
-    """Context manager to temporarily disable mpld3 show_d3() command"""
+from .urls import *
+from ._display import *

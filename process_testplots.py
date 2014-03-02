@@ -7,7 +7,8 @@ save them as D3js to a single HTML file for inspection.
 import os
 import glob
 import sys
-from mpld3 import fig_to_d3
+
+from mpld3 import urls, fig_to_html
 
 import matplotlib
 matplotlib.use('Agg') #don't display plots
@@ -28,6 +29,10 @@ TEMPLATE = """
     margin-left: 50%;
     width: 50%;
 }}
+
+.fig {{
+  height: 400px;
+}}
 </style>
 </head>
 
@@ -47,7 +52,7 @@ TEMPLATE = """
 
 def combine_testplots(wildcard='test_plots/*.py',
                       outfile='test_plots.html',
-                      d3_url=None):
+                      d3_url=None, mpld3_url=None):
     """Generate figures from the plots and save to an HTML file
 
     Parameters
@@ -59,6 +64,9 @@ def combine_testplots(wildcard='test_plots/*.py',
     d3_url : string
         the URL of the d3 library to use.  If not specified, a standard web
         address will be used.
+    mpld3_url : string
+        the URL of the mpld3 library to use.  If not specified, a standard web
+        address will be used.
     """
     if isinstance(wildcard, str):
         filenames = glob.glob(wildcard)
@@ -66,28 +74,47 @@ def combine_testplots(wildcard='test_plots/*.py',
         filenames = sum([glob.glob(w) for w in wildcard], [])
 
     fig_html = []
-    fig_names = []
+    fig_png = []
     for filename in filenames:
         dirname, fname = os.path.split(filename)
         modulename = os.path.splitext(fname)[0]
         if dirname not in sys.path:
             sys.path.append(dirname)
 
-        f = __import__(modulename)
+        try:
+            f = __import__(modulename)
+        except Exception as e:
+            print "!!!  Exception raised in {0}".format(filename)
+            print "!!!   {0}: {1}".format(e.__class__.__name__,
+                                          e.message)
+            continue
+
         if hasattr(f, 'main'):
             print("running {0}".format(filename))
-            fig = f.main()
-            fig_html.append(fig_to_d3(fig, d3_url))
 
-            fig_png = os.path.splitext(filename)[0] + '.png'
-            fig.savefig(fig_png)
-            fig_names.append("\n<div class='fig'><img src={0}>"
-                             "</div>\n".format(fig_png))
+            try:
+                fig = f.main()
+            except Exception as e:
+                print "Exception raised in {0}".format(filename)
+                print " {0}: {1}".format(e.__class__.__name__,
+                                         e.message)
+                fig = None
+
+            if fig is not None:
+                fig_html.append("\n<div class='fig'>\n{0}\n</div>"
+                                "\n".format(fig_to_html(fig, d3_url=d3_url,
+                                                        mpld3_url=mpld3_url)))
+
+                figfile = os.path.splitext(filename)[0] + '.png'
+                fig.savefig(figfile)
+                fig_png.append("\n<div class='fig'><img src={0}>"
+                                 "</div>\n".format(figfile))
+                plt.close(fig)
 
     print("writing results to {0}".format(outfile))
     with open(outfile, 'w') as f:
         f.write(TEMPLATE.format(left_col="".join(fig_html),
-                                right_col="".join(fig_names)))
+                                right_col="".join(fig_png)))
 
 
 def run_main():
@@ -98,9 +125,13 @@ def run_main():
     parser.add_argument("-d", "--d3-url",
                         help="location of d3 library",
                         type=str, default=None)
+    parser.add_argument("-m", "--mpld3-url",
+                        help="location of the mpld3 library",
+                        type=str, default=None)
     parser.add_argument("-o", "--output",
                         help="output filename",
                         type=str, default='test_plots.html')
+    parser.add_argument("-l", "--local", action="store_true")
     args = parser.parse_args()
 
     if len(args.files) == 0:
@@ -108,9 +139,14 @@ def run_main():
     else:
         wildcard = args.files
 
+    if args.local:
+        args.d3_url = urls.D3_LOCAL
+        args.mpld3_url = urls.MPLD3_LOCAL
+
     combine_testplots(wildcard=wildcard,
                       outfile=args.output,
-                      d3_url=args.d3_url)
+                      d3_url=args.d3_url,
+                      mpld3_url=args.mpld3_url)
     return args.output
     
 
