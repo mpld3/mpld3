@@ -352,8 +352,45 @@ class ResetButton(PluginBase):
     """
 
     FIG_JS = jinja2.Template("""
-        fig.root.append("div")
+        fig.toolbar
           .append("button")
             .text("Reset")
             .on("click", fig.reset.bind(fig));
+    """)
+
+class MousePosition(PluginBase):
+    """A Plugin to display coordinates for the current mouse position
+
+    Example
+    -------
+    >>> import matplotlib.pyplot as plt
+    >>> from mpld3 import fig_to_d3, plugins
+    >>> fig, ax = plt.subplots()
+    >>> points = ax.plot(range(10), 'o')
+    >>> plugins.connect(fig, plugins.MousePosition())
+    >>> fig_to_d3(fig)
+    """
+
+    FIG_JS = jinja2.Template("""
+    var coords = fig.toolbar.append("div")
+                   .style("font-family", "monospace")
+                   .text("Mouse:");
+
+    for (var i=0; i < fig.axes.length; i++) {
+      var update_coords = function() {
+            var a = fig.axes[i];  // use function closure to store current axes
+            return function() {
+              var pos = d3.mouse(this),
+                  x = a.x.invert(pos[0]),
+                  y = a.y.invert(pos[1]);
+
+              coords.text("Mouse: (" + d3.round(x,4) + ", " + d3.round(y,4) + ")");
+            }
+          }()
+      fig.axes[i].baseaxes
+        .on("mousemove", update_coords)
+        .on("mouseout", function() {
+          coords.text("Mouse:");});
+      fig.axes[i].baseaxes.style("cursor", "crosshair");
+    }
     """)

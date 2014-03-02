@@ -41,6 +41,8 @@ FIGURE_CLASS = """
                                  .attr('class', 'figure')
                                  .attr('width', this.width)
                                  .attr('height', this.height);
+      this.toolbar = this.root.append('div')
+                                 .attr('class', 'mpld3-toolbar');
       for (var i=0; i<this.axes.length; i++){
         this.axes[i].draw();
       }
