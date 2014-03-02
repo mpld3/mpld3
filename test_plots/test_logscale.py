@@ -1,4 +1,7 @@
 """Plot to test logscale"""
+import matplotlib
+matplotlib.use('Agg')
+
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -20,5 +23,5 @@ def main():
     return fig
 
 if __name__ == '__main__':
-    main()
+    fig = main()
     plt.show()

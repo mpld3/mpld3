@@ -4,8 +4,6 @@ Test Error bars
 import matplotlib.pyplot as plt
 import numpy as np
 
-from mpld3 import show_d3
-
 
 def main():
     np.random.seed(1)
@@ -25,4 +23,4 @@ def main():
 
 if __name__ == '__main__':
     fig = main()
-    show_d3()
+    plt.show()
