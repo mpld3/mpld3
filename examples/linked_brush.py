@@ -1,9 +1,12 @@
 """
-MultiAxes Plot
-==============
-This example shows how to create a multi-axis plot with tied zoom.
+Linked Brushing Example
+=======================
+This example shows a prototype of a linked brush plot, using the iris dataset
+from scikit-learn.  Eventually, this plugin will be made a part of the mpld3
+javascript source.  For now, this should be considered a proof-of-concept.
 
-It uses the iris dataset from scikit-learn.
+Click the paintbrush button at the bottom left to enable and disable the
+brushing behavior.
 """
 import jinja2
 
@@ -23,13 +26,24 @@ class LinkedBrush(plugins.PluginBase):
       this.fig = fig;
       this.prop = mpld3.process_props(this, prop, {}, ["id"]);
 
+      var brush_plug = this;
+
       mpld3.Toolbar.prototype.buttonDict["brush"] = mpld3.ButtonFactory({
-        icon: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABmJLR0QA/wD/AP+gvaeTAAAACXBI\nWXMAAEQkAABEJAFAZ8RUAAAAB3RJTUUH3gMCEiQKB9YaAgAAAWtJREFUOMuN0r1qVVEQhuFn700k\nnfEvBq0iNiIiOKXgH4KCaBeIhWARK/EibLwFCwVLjyAWaQzRGG9grC3URkHUBKKgRuWohWvL5pjj\nyTSLxcz7rZlZHyMiItqzFxGTEVF18/UoODNFxDIO4x12dkXqTcBPsCUzD+AK3ndFqhHwEsYz82gn\nN4dbmMRK9R/4KY7jAvbiWmYeHBT5Z4QCP8J1rGAeN3GvU3Mbl/Gq3qCDcxjLzOV+v78fq/iFIxFx\nPyJ2lNJpfBy2g59YzMyzEbEVLzGBJjOriLiBq5gaJrCIU3hcRCbwAtuwjm/Yg/V6I9NgDA1OR8RC\nZq6Vcd7iUwtn5h8fdMBdETGPE+Xe4ExELDRNs4bX2NfCUHe+7UExyfkCP8MhzOA7PuAkvrbwXyNF\nxF3MDqxiqlhXC7SPdaOKiN14g0u4g3H0MvOiTUSNY3iemb0ywmfMdfYyUmAJ2yPiBx6Wr/oy2Oqw\n+A1SupBzAOuE/AAAAABJRU5ErkJggg==\n",
         onClick: this.onClick.bind(this),
 	draw: function(){
 	    mpld3.BaseButton.prototype.draw.apply(this);
-            // Dumb: disable then enable to match state of plugin.
-	    this.onClick();},
+            var enable_zoom = brush_plug.fig.enable_zoom.bind(brush_plug.fig);
+            var disable_brush = brush_plug.disable.bind(brush_plug);
+            brush_plug.fig.enable_zoom = function(){
+                   disable_brush();
+                   fig.toolbar.toolbar.selectAll(".mpld3-brushbutton")
+		       .classed({pressed: false,
+			         active: false});
+                   enable_zoom();
+            };
+	    this.onClick();  // enable the button
+        },
+        icon: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABmJLR0QA/wD/AP+gvaeTAAAACXBI\nWXMAAEQkAABEJAFAZ8RUAAAAB3RJTUUH3gMCEiQKB9YaAgAAAWtJREFUOMuN0r1qVVEQhuFn700k\nnfEvBq0iNiIiOKXgH4KCaBeIhWARK/EibLwFCwVLjyAWaQzRGG9grC3URkHUBKKgRuWohWvL5pjj\nyTSLxcz7rZlZHyMiItqzFxGTEVF18/UoODNFxDIO4x12dkXqTcBPsCUzD+AK3ndFqhHwEsYz82gn\nN4dbmMRK9R/4KY7jAvbiWmYeHBT5Z4QCP8J1rGAeN3GvU3Mbl/Gq3qCDcxjLzOV+v78fq/iFIxFx\nPyJ2lNJpfBy2g59YzMyzEbEVLzGBJjOriLiBq5gaJrCIU3hcRCbwAtuwjm/Yg/V6I9NgDA1OR8RC\nZq6Vcd7iUwtn5h8fdMBdETGPE+Xe4ExELDRNs4bX2NfCUHe+7UExyfkCP8MhzOA7PuAkvrbwXyNF\nxF3MDqxiqlhXC7SPdaOKiN14g0u4g3H0MvOiTUSNY3iemb0ywmfMdfYyUmAJ2yPiBx6Wr/oy2Oqw\n+A1SupBzAOuE/AAAAABJRU5ErkJggg==\n",
        });
     }
 
@@ -38,6 +52,11 @@ class LinkedBrush(plugins.PluginBase):
         this.disable();
       }else{
         this.enable();
+        this.fig.disable_zoom();
+        fig.toolbar.toolbar.selectAll(".mpld3-movebutton")
+		   .classed({pressed: false,
+			     active: false});
+    
       }
       this.fig.toolbar.toolbar.selectAll(".mpld3-brushbutton")
 		.classed({pressed: this.enabled,
@@ -46,18 +65,19 @@ class LinkedBrush(plugins.PluginBase):
 
     LinkedBrushPlugin.prototype.draw = function(){
       var obj = mpld3.get_element(this.prop.id);
+      var fig = this.fig;
       var dataKey = ("offsets" in obj.prop) ? "offsets" : "data";
 
-      mpld3.insert_css("#" + this.fig.figid + " rect.extent",
+      mpld3.insert_css("#" + fig.figid + " rect.extent",
                        {"fill": "#000",
                         "fill-opacity": .125,
                         "stroke": "#fff"});
 
-      mpld3.insert_css("#" + this.fig.figid + " path.mpld3-hidden",
+      mpld3.insert_css("#" + fig.figid + " path.mpld3-hidden",
                        {"stroke": "#ccc !important",
                         "fill": "#ccc !important"});
 
-      var dataClass = "mpld3data-" + obj.prop.data;
+      var dataClass = "mpld3data-" + obj.prop[dataKey];
 
       var brush = d3.svg.brush()
                       .on("brushstart", brushstart)
@@ -65,51 +85,64 @@ class LinkedBrush(plugins.PluginBase):
                       .on("brushend", brushend);
 
       // Label all data points for access below
-      this.fig.axes.forEach(function(ax){
+      fig.axes.forEach(function(ax){
          ax.elements.forEach(function(el){
             if(el.prop[dataKey] === obj.prop[dataKey]){
                el.group.classed(dataClass, true);
             }
          });
          brush.x(ax.x).y(ax.y);
-         ax.axes.call(brush);
+         //ax.axes.call(brush);
       });
 
-      var brushAxes;
-      var brushAxObj;
-      var brushData;
-      var fig = this.fig;
 
-      function brushstart(){
-        if(brushAxes != this){
-          d3.select(brushAxes).call(brush.clear());
-          brushAxes = this;
-          // This is the slow part... it should be improved
-          brushAxObj = fig.axes.filter(function(ax)
-                          {return ax.axes[0][0] === brushAxes;})[0];
-          brushData = brushAxObj.elements.filter(function(el)
-                          {return el.prop[dataKey] === obj.prop[dataKey];})[0];
-          brush.x(brushAxObj.x).y(brushAxObj.y);
+      // For fast brushing, precompute a list of selection properties
+      // properties to apply to the selction.
+      var data_map = [];
+      var dataToBrush = fig.canvas.selectAll("." + dataClass)
+                           .each(function(){
+                              for(var i=0; i<fig.axes.length; i++){
+                                var ax = fig.axes[i];
+                                for(var j=0; j<ax.elements.length; j++){
+                                  var el = ax.elements[j];
+                                  if("group" in el && el.group[0][0] === this){
+                                    data_map.push({i_ax: i,
+                                                   ix: el.prop.xindex,
+                                                   iy: el.prop.yindex});
+                                    return;
+                                  }
+                                }
+                              }
+                            });
+
+      dataToBrush.data(data_map)
+                 .call(brush);
+
+      var currentData;
+
+      function brushstart(d){
+        if(currentData != this){
+          d3.select(currentData).call(brush.clear());
+          currentData = this;
+          brush.x(fig.axes[d.i_ax].x)
+               .y(fig.axes[d.i_ax].y);
         }
       }
 
-      function brushmove(){
+      function brushmove(d){
         var e = brush.extent();
-        fig.canvas.selectAll("." + dataClass)
-                  .selectAll("path")
-                      .classed("mpld3-hidden",
-                         function(d) {
-                             return e[0][0] > d[brushData.prop.xindex] ||
-                                    e[1][0] < d[brushData.prop.xindex] ||
-                                    e[0][1] > d[brushData.prop.yindex] ||
-                                    e[1][1] < d[brushData.prop.yindex];
-                         });
+        dataToBrush.selectAll("path")
+                   .classed("mpld3-hidden",
+                       function(p) {
+                           return e[0][0] > p[d.ix] ||  e[1][0] < p[d.ix] ||
+                                  e[0][1] > p[d.iy] || e[1][1] < p[d.iy];
+                       });
       }
 
-      function brushend(){
+      function brushend(d){
         if (brush.empty()){
-            fig.canvas.selectAll(".mpld3-hidden")
-                    .classed("mpld3-hidden", false);
+            dataToBrush.selectAll("path")
+                       .classed("mpld3-hidden", false);
         }
       }
 

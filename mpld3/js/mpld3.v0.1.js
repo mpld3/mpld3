@@ -215,7 +215,6 @@
     mpld3.BaseButton.prototype.deactivate = function(){};
     mpld3.BaseButton.prototype.onClick = function(){};
     mpld3.BaseButton.prototype.icon = "";
-    mpld3.BaseButton.prototype.members = {}
 
     /* Factory for button classes */
     mpld3.ButtonFactory = function(members){
