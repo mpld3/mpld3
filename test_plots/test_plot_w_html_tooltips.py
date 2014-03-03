@@ -8,7 +8,7 @@ matplotlib.use('Agg')
 
 import matplotlib.pyplot as plt
 import numpy as np, pandas as pd
-from mpld3 import plugins, fig_to_d3
+from mpld3 import plugins
 
 css = """
 table
@@ -60,5 +60,5 @@ def main():
 
 if __name__ == '__main__':
     fig = main()
-    print fig_to_d3(fig)
+    plt.show()
 

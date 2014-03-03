@@ -13,7 +13,7 @@ MAINTAINER_EMAIL = "jakevdp@cs.washington.edu"
 URL = 'http://mpld3.github.com'
 DOWNLOAD_URL = 'http://github.com/jakevdp/mpld3'
 LICENSE = 'BSD 3-clause'
-VERSION = '0.0.2'
+VERSION = '0.1'
 
 setup(name=NAME,
       version=VERSION,
@@ -26,7 +26,11 @@ setup(name=NAME,
       url=URL,
       download_url=DOWNLOAD_URL,
       license=LICENSE,
-      packages=['mpld3'],
+      packages=['mpld3',
+                'mpld3/mplexporter',
+                'mpld3/mplexporter/renderers',
+                'mpld3/mplexporter/renderers/plotly'],
+      package_data={'mpld3': ['js/*.js']},
       classifiers=[
         'Development Status :: 4 - Beta',
         'Environment :: Console',

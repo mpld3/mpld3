@@ -40,8 +40,6 @@
 	this.width = this.prop.width;
 	this.height = this.prop.height;
 	this.data = this.prop.data;
-
-	this.toolbar = new mpld3.Toolbar(this, this.prop.toolbar);
 	
 	this.axes = [];
 	for(var i=0; i<prop.axes.length; i++){
@@ -53,10 +51,25 @@
 	    this.add_plugin(this.prop.plugins[i]["type"],
 			    this.prop.plugins[i]);
 	}
+
+	this.toolbar = new mpld3.Toolbar(this, this.prop.toolbar);
     };
     
     mpld3.Figure.prototype.add_plugin = function(plug, props){
 	if(plug in mpld3.plugin_map) plug = mpld3.plugin_map[plug];
+
+	if(props.clear_toolbar){
+	    this.prop.toolbar = [];
+	}
+	if("buttons" in props){
+	    if(typeof(props.buttons) === "string"){
+		this.prop.toolbar.push(props.buttons);
+	    }else{
+		for(var i=0; i<props.buttons.length; i++){
+		    this.prop.toolbar.push(props.buttons[i]);
+		}
+	    }
+	}
 	this.plugins.push(new plug(this, props));
     };
     
@@ -193,54 +206,55 @@
     mpld3.BaseButton = function(toolbar, cssclass, icon){
 	this.toolbar = toolbar;
 	this.cssclass = cssclass;
-	this.icon = icon;
     };
-
     mpld3.BaseButton.prototype.draw = function(){
 	return this.toolbar.toolbar.append("img")
 	    .attr("class", this.cssclass)
-	    .attr("src", this.toolbar.icons[this.icon])
+	    .attr("src", this.icon)
 	    .on("click", this.onClick.bind(this));
     };
-
     mpld3.BaseButton.prototype.deactivate = function(){};
+    mpld3.BaseButton.prototype.onClick = function(){};
+    mpld3.BaseButton.prototype.icon = "";
 
+    /* Factory for button classes */
+    mpld3.ButtonFactory = function(members){
+	var F = function(){mpld3.BaseButton.apply(this, arguments);};
+	F.prototype = new mpld3.BaseButton();
+	F.prototype.constructor = F;
+	for(key in members)
+	    F.prototype[key] = members[key];
+	return F;
+    }
 
     /* Reset Button */
-    /* Man, JS Inheritance is ugly... */
-    mpld3.ResetButton = function(){mpld3.BaseButton.apply(this, arguments)};
-    mpld3.ResetButton.prototype = new mpld3.BaseButton();
-    mpld3.ResetButton.prototype.constructor = mpld3.ResetButton;
-    mpld3.ResetButton.prototype.onClick = function(){this.toolbar.fig.reset();};
-    
+    mpld3.ResetButton = mpld3.ButtonFactory({
+	onClick: function(){this.toolbar.fig.reset();},
+	icon: function(){return mpld3.icons["reset"];}
+    });
 
     /* Move Button */
-    mpld3.MoveButton = function(){mpld3.BaseButton.apply(this, arguments)};
-    mpld3.MoveButton.prototype = new mpld3.BaseButton();
-    mpld3.MoveButton.prototype.constructor = mpld3.MoveButton;
-    mpld3.MoveButton.prototype.draw = function(){
-	mpld3.BaseButton.prototype.draw.apply(this);
-	this.toolbar.fig.disable_zoom();
-    }
-    mpld3.MoveButton.prototype.onClick = function(){
-	this.toolbar.fig.toggle_zoom();
-	this.toolbar.toolbar.selectAll(".mpld3-movebutton")
-	    .classed({pressed: this.toolbar.fig.zoom_on,
-		      active: !this.toolbar.fig.zoom_on});
-    };
-    mpld3.MoveButton.prototype.deactivate = function(){
-	this.toolbar.fig.disable_zoom();
-	this.toolbar.toolbar.selectAll(".mpld3-movebutton")
-	    .classed({pressed: this.toolbar.fig.zoom_on,
-		      active: false});
-    }
+    mpld3.MoveButton = mpld3.ButtonFactory({
+	onClick: function(){
+	    this.toolbar.fig.toggle_zoom();
+	    this.toolbar.toolbar.selectAll(".mpld3-movebutton")
+		.classed({pressed: this.toolbar.fig.zoom_on,
+			  active: !this.toolbar.fig.zoom_on});},
+	draw: function(){
+	    mpld3.BaseButton.prototype.draw.apply(this);
+	    this.toolbar.fig.disable_zoom();},
+	deactivate: function(){
+	    this.toolbar.fig.disable_zoom();
+	    this.toolbar.toolbar.selectAll(".mpld3-movebutton")
+		.classed({pressed: this.toolbar.fig.zoom_on,
+			  active: false});},
+	icon: function(){return mpld3.icons["move"];}
+    });
     
     /* Set up the mapping of button types and icons */
     /* Icons come from the mpld3/icons/ directory   */
     mpld3.Toolbar.prototype.buttonDict = {move: mpld3.MoveButton,
 					  reset: mpld3.ResetButton};
-    mpld3.Toolbar.prototype.icons = {reset: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABmJLR0QA/wD/AP+gvaeTAAAACXBI\nWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH3gIcACMoD/OzIwAAAJhJREFUOMtjYKAx4KDUgNsMDAx7\nyNV8i4GB4T8U76VEM8mGYNNMtCH4NBM0hBjNMIwSsMzQ0MamcDkDA8NmQi6xggpUoikwQbIkHk2u\nE0rLI7vCBknBSyxeRDZAE6qHgQkq+ZeBgYERSfFPAoHNDNUDN4BswIRmKgxwEasP2dlsDAwMYlA/\n/mVgYHiBpkkGKscIDaPfVMmuAGnOTaGsXF0MAAAAAElFTkSuQmCC\n",
-				     move: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABmJLR0QA/wD/AP+gvaeTAAAACXBI\nWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH3gIcACQMfLHBNQAAANZJREFUOMud07FKA0EQBuAviaKB\nlFr7COJrpAyYRlKn8hECEkFEn8ROCCm0sBMRYgh5EgVFtEhsRjiO27vkBoZd/vn5d3b+XcrjFI9q\nxgXWkc8pUjOB93GMd3zgB9d1unjDSxmhWSHQqOJki+MtOuv/b3ZifUqctIrMxwhHuG1gim4Ma5kR\nWuEkXFgU4B0MW1Ho4TeyjX3s4TDq3zn8ALvZ7q5wX9DqLOHCDA95cFBAnOO1AL/ZdNopgY3fQcqF\nyriMe37hM9w521ZkkvlMo7o/8g7nZYQ/QDctp1nTCf0AAAAASUVORK5CYII=\n"};
 
 
     /* Coordinates Object: */
@@ -978,7 +992,6 @@
 	var N = Math.max(this.prop.paths.length, offsets.length);
 	
 	if(offsets.length === N){
-            console.log("doing this");
             this.offsets = offsets;
         }else{
             this.offsets = [];
@@ -1413,6 +1426,9 @@
     mpld3.path = function(){
 	return mpld3_path();
     }
+
+    mpld3.icons = {reset: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABmJLR0QA/wD/AP+gvaeTAAAACXBI\nWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH3gIcACMoD/OzIwAAAJhJREFUOMtjYKAx4KDUgNsMDAx7\nyNV8i4GB4T8U76VEM8mGYNNMtCH4NBM0hBjNMIwSsMzQ0MamcDkDA8NmQi6xggpUoikwQbIkHk2u\nE0rLI7vCBknBSyxeRDZAE6qHgQkq+ZeBgYERSfFPAoHNDNUDN4BswIRmKgxwEasP2dlsDAwMYlA/\n/mVgYHiBpkkGKscIDaPfVMmuAGnOTaGsXF0MAAAAAElFTkSuQmCC\n",
+		   move: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABmJLR0QA/wD/AP+gvaeTAAAACXBI\nWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH3gIcACQMfLHBNQAAANZJREFUOMud07FKA0EQBuAviaKB\nlFr7COJrpAyYRlKn8hECEkFEn8ROCCm0sBMRYgh5EgVFtEhsRjiO27vkBoZd/vn5d3b+XcrjFI9q\nxgXWkc8pUjOB93GMd3zgB9d1unjDSxmhWSHQqOJki+MtOuv/b3ZifUqctIrMxwhHuG1gim4Ma5kR\nWuEkXFgU4B0MW1Ho4TeyjX3s4TDq3zn8ALvZ7q5wX9DqLOHCDA95cFBAnOO1AL/ZdNopgY3fQcqF\nyriMe37hM9w521ZkkvlMo7o/8g7nZYQ/QDctp1nTCf0AAAAASUVORK5CYII=\n"};
     
     // put mpld3 in the global namespace
     this.mpld3 = mpld3;

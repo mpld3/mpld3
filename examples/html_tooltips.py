@@ -6,7 +6,8 @@ This is a demonstration of how to add rich HTML annotations to data plots
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from mpld3 import plugins, show_d3
+import mpld3
+from mpld3 import plugins
 
 # Define some CSS to control our custom labels
 css = """
@@ -58,5 +59,5 @@ tooltip = plugins.PointHTMLTooltip(points[0], labels,
                                    voffset=10, hoffset=10, css=css)
 plugins.connect(fig, tooltip)
 
-show_d3()
+mpld3.show()
 

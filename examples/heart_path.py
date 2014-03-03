@@ -9,7 +9,7 @@ import matplotlib.path as mpath
 import matplotlib.patches as mpatches
 import matplotlib.pyplot as plt
 
-from mpld3 import show_d3
+import mpld3
 
 
 fig, ax = plt.subplots()
@@ -38,4 +38,4 @@ line, = ax.plot(x, y, 'go-')
 ax.grid(True, color='gray', alpha=0.5)
 ax.axis('equal')
 
-show_d3()
+mpld3.show_d3()
