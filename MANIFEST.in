@@ -1,4 +1,5 @@
 include *.md
+include process_testplots.py
 recursive-include examples *.py
 recursive-include notebooks *.ipynb
 recursive-include test_plots *.py

@@ -3,7 +3,9 @@ Defining a Custom Plugin
 ========================
 Test the custom plugin demoed on the `Pythonic Perambulations
 <http://jakevdp.github.io/blog/2014/01/10/d3-plugins-truly-interactive/>`_
-blog.
+blog.  Hover over the points to see the associated sinusoid.
+Use the toolbar buttons at the bottom-right of the plot to enable zooming
+and panning, and to reset the view.
 """
 import matplotlib
 import matplotlib.pyplot as plt

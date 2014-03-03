@@ -3,6 +3,8 @@ Patches and Paths
 =================
 This is a demo adapted from a `matplotlib gallery example
 <http://matplotlib.org/examples/shapes_and_collections/path_patch_demo.html>`_
+Use the toolbar buttons at the bottom-right of the plot to enable zooming
+and panning, and to reset the view.
 """
 
 import matplotlib.path as mpath

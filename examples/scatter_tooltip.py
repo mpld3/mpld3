@@ -1,7 +1,10 @@
 """
 Scatter Plot With Tooltips
 ==========================
-A scatter-plot with tooltip labels on hover
+A scatter-plot with tooltip labels on hover.  Hover over the points to see
+the point labels.
+Use the toolbar buttons at the bottom-right of the plot to enable zooming
+and panning, and to reset the view.
 """
 import matplotlib.pyplot as plt
 import numpy as np

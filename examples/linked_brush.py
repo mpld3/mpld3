@@ -6,7 +6,7 @@ from scikit-learn.  Eventually, this plugin will be made a part of the mpld3
 javascript source.  For now, this should be considered a proof-of-concept.
 
 Click the paintbrush button at the bottom left to enable and disable the
-brushing behavior.
+brushing behavior.  The standard zoom and home buttons are available as well.
 """
 import jinja2
 

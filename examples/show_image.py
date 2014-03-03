@@ -1,7 +1,9 @@
 """
 Draw an Image
 =============
-This example shows how mpld3 can display images using plt.imshow()
+This example shows how mpld3 can display images using plt.imshow().
+Use the toolbar buttons at the bottom-right of the plot to enable zooming
+and panning, and to reset the view.
 """
 import matplotlib.pyplot as plt
 import numpy as np

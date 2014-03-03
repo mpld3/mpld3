@@ -1,7 +1,11 @@
 """
 HTML tooltip plugin
 ===================
-This is a demonstration of how to add rich HTML annotations to data plots
+This is a demonstration of how to add rich HTML annotations to data plots.
+The Plugin is defined within mpld3, and the user-provided CSS controls the
+format of the information shown on hover.
+Use the toolbar buttons at the bottom-right of the plot to enable zooming
+and panning, and to reset the view.
 """
 import matplotlib.pyplot as plt
 import numpy as np
