@@ -3,7 +3,7 @@ import json
 import jinja2
 
 from ._server import serve_and_open
-from .utils import deprecated
+from .utils import deprecated, get_id
 from .mplexporter import Exporter
 from .mpld3renderer import MPLD3Renderer
 from . import urls
@@ -143,7 +143,6 @@ def fig_to_dict(fig, d3_url=None, mpld3_url=None,
     """
     d3_url = d3_url or urls.D3_URL
     mpld3_url = mpld3_url or urls.MPLD3_URL
-    figid = str(id(fig)) + str(int(random.random() * 1E10))
     renderer = MPLD3Renderer()
     Exporter(renderer, close_mpl=False, **kwargs).run(fig)
     fig, figure_json, extra_css, extra_js = renderer.finished_figures[0]
@@ -196,7 +195,7 @@ def fig_to_html(fig, d3_url=None, mpld3_url=None, safemode=False,
     # TODO: allow fig to be a list of figures?
     d3_url = d3_url or urls.D3_URL
     mpld3_url = mpld3_url or urls.MPLD3_URL
-    figid = str(id(fig)) + str(int(random.random() * 1E10))
+    figid = get_id(fig) + str(int(random.random() * 1E10))
     renderer = MPLD3Renderer()
     Exporter(renderer, close_mpl=False, **kwargs).run(fig)
 

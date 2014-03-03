@@ -52,7 +52,10 @@ class PluginBase(object):
 
     def javascript(self):
         if hasattr(self, "JAVASCRIPT"):
-            return self.JAVASCRIPT
+            if hasattr(self, "js_args_"):
+                return self.JAVASCRIPT.render(self.js_args_)
+            else:
+                return self.JAVASCRIPT
         else:
             return ""
 

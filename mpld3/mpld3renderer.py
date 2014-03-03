@@ -85,11 +85,15 @@ class MPLD3Renderer(Renderer):
     def open_figure(self, fig, props):
         self.datasets = []
         self.datalabels = []
+        if hasattr(fig, "mpld3_toolbar"):
+            toolbar = fig.mpld3_toolbar
+        else:
+            toolbar = ["reset", "move"]
         self.figure_json = dict(width=props['figwidth'] * props['dpi'],
                                 height=props['figheight'] * props['dpi'],
                                 axes=[],
                                 data={},
-                                toolbar=["move", "reset"],
+                                toolbar=toolbar,
                                 id=get_id(fig))
 
     def close_figure(self, fig):

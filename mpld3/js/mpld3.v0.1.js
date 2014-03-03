@@ -40,8 +40,6 @@
 	this.width = this.prop.width;
 	this.height = this.prop.height;
 	this.data = this.prop.data;
-
-	this.toolbar = new mpld3.Toolbar(this, this.prop.toolbar);
 	
 	this.axes = [];
 	for(var i=0; i<prop.axes.length; i++){
@@ -53,10 +51,24 @@
 	    this.add_plugin(this.prop.plugins[i]["type"],
 			    this.prop.plugins[i]);
 	}
+
+	this.toolbar = new mpld3.Toolbar(this, this.prop.toolbar);
     };
     
     mpld3.Figure.prototype.add_plugin = function(plug, props){
 	if(plug in mpld3.plugin_map) plug = mpld3.plugin_map[plug];
+	if(props.clear_toolbar){
+	    this.prop.toolbar = [];
+	}
+	if("buttons" in props){
+	    if(typeof(props.buttons) === "string"){
+		this.prop.toolbar.push(props.buttons);
+	    }else{
+		for(var i=0; i<props.buttons.length; i++){
+		    this.prop.toolbar.push(props.buttons[i]);
+		}
+	    }
+	}
 	this.plugins.push(new plug(this, props));
     };
     

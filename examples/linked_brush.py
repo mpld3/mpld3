@@ -5,6 +5,8 @@ This example shows how to create a multi-axis plot with tied zoom.
 
 It uses the iris dataset from scikit-learn.
 """
+import jinja2
+
 import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
@@ -15,7 +17,7 @@ from mpld3 import plugins, utils
 
 
 class LinkedBrush(plugins.PluginBase):
-    JAVASCRIPT = """
+    JAVASCRIPT = r"""
     var LinkedBrushPlugin = function(fig, prop){
       window.fig = fig;
       this.fig = fig;
@@ -88,17 +90,18 @@ class LinkedBrush(plugins.PluginBase):
       }
 
       function brushend(p){
-        //console.log(this);
         if (brush.empty()){
             this.canvas.selectAll(".mpld3-hidden")
                     .classed("mpld3-hidden", false);
         }
       }
-
-      //obj.ax.axes.call(brush);
     }
 
-    mpld3.register_plugin("linkedbrush", LinkedBrushPlugin);
+    mpld3.Toolbar.prototype.buttonDict["brush"] = mpld3.ButtonFactory({
+      icon: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABmJLR0QA/wD/AP+gvaeTAAAACXBI\nWXMAAEQkAABEJAFAZ8RUAAAAB3RJTUUH3gMCEiQKB9YaAgAAAWtJREFUOMuN0r1qVVEQhuFn700k\nnfEvBq0iNiIiOKXgH4KCaBeIhWARK/EibLwFCwVLjyAWaQzRGG9grC3URkHUBKKgRuWohWvL5pjj\nyTSLxcz7rZlZHyMiItqzFxGTEVF18/UoODNFxDIO4x12dkXqTcBPsCUzD+AK3ndFqhHwEsYz82gn\nN4dbmMRK9R/4KY7jAvbiWmYeHBT5Z4QCP8J1rGAeN3GvU3Mbl/Gq3qCDcxjLzOV+v78fq/iFIxFx\nPyJ2lNJpfBy2g59YzMyzEbEVLzGBJjOriLiBq5gaJrCIU3hcRCbwAtuwjm/Yg/V6I9NgDA1OR8RC\nZq6Vcd7iUwtn5h8fdMBdETGPE+Xe4ExELDRNs4bX2NfCUHe+7UExyfkCP8MhzOA7PuAkvrbwXyNF\nxF3MDqxiqlhXC7SPdaOKiN14g0u4g3H0MvOiTUSNY3iemb0ywmfMdfYyUmAJ2yPiBx6Wr/oy2Oqw\n+A1SupBzAOuE/AAAAABJRU5ErkJggg==\n"
+    });
+
+    mpld3.register_plugin("linkedbrush", LinkedBrushPlugin);    
     """
 
     def __init__(self, points):
@@ -108,7 +111,10 @@ class LinkedBrush(plugins.PluginBase):
             suffix = None
 
         self.dict_ = {"type": "linkedbrush",
-                      "id": utils.get_id(points, suffix)}
+                      "clear_toolbar": False,
+                      "id": utils.get_id(points, suffix),
+                      "buttons":"brush"}
+
 
 data = load_iris()
 X = data.data
@@ -124,7 +130,7 @@ fig.subplots_adjust(left=0.05, right=0.95, bottom=0.05, top=0.95,
 for i in range(4):
     for j in range(4):
         points = ax[3 - i, j].scatter(X[:, j], X[:, i],
-                                      c=y, s=40, alpha=0.3)
+                                      c=y, s=40, alpha=0.6)
 
 # remove tick labels
 for axi in ax.flat:
