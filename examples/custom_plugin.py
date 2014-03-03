@@ -18,7 +18,7 @@ import json
 
 class LinkedView(plugins.PluginBase):
     """A simple plugin showing how multiple axes can be linked"""
-    
+
     JAVASCRIPT = """
     var LinkedViewPlugin = function(fig, prop){
       this.fig = fig;

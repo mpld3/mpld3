@@ -22,4 +22,6 @@ def deprecated(func, old_name, new_name):
                        "Use {1} instead".format(old_name, new_name)),
                       category=DeprecationWarning)
         return func(*args, **kwargs)
+    new_func.__doc__ = ("*%s is deprecated: use %s instead*\n\n    "
+                        % (old_name, new_name)) + new_func.__doc__
     return new_func

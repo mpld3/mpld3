@@ -30,18 +30,18 @@ class LinkedBrush(plugins.PluginBase):
 
       mpld3.Toolbar.prototype.buttonDict["brush"] = mpld3.ButtonFactory({
         onClick: this.onClick.bind(this),
-	draw: function(){
-	    mpld3.BaseButton.prototype.draw.apply(this);
+        draw: function(){
+            mpld3.BaseButton.prototype.draw.apply(this);
             var enable_zoom = brush_plug.fig.enable_zoom.bind(brush_plug.fig);
             var disable_brush = brush_plug.disable.bind(brush_plug);
             brush_plug.fig.enable_zoom = function(){
                    disable_brush();
                    fig.toolbar.toolbar.selectAll(".mpld3-brushbutton")
-		       .classed({pressed: false,
-			         active: false});
+                       .classed({pressed: false,
+                                 active: false});
                    enable_zoom();
             };
-	    this.onClick();  // enable the button
+            this.onClick();  // enable the button
         },
         icon: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABmJLR0QA/wD/AP+gvaeTAAAACXBI\nWXMAAEQkAABEJAFAZ8RUAAAAB3RJTUUH3gMCEiQKB9YaAgAAAWtJREFUOMuN0r1qVVEQhuFn700k\nnfEvBq0iNiIiOKXgH4KCaBeIhWARK/EibLwFCwVLjyAWaQzRGG9grC3URkHUBKKgRuWohWvL5pjj\nyTSLxcz7rZlZHyMiItqzFxGTEVF18/UoODNFxDIO4x12dkXqTcBPsCUzD+AK3ndFqhHwEsYz82gn\nN4dbmMRK9R/4KY7jAvbiWmYeHBT5Z4QCP8J1rGAeN3GvU3Mbl/Gq3qCDcxjLzOV+v78fq/iFIxFx\nPyJ2lNJpfBy2g59YzMyzEbEVLzGBJjOriLiBq5gaJrCIU3hcRCbwAtuwjm/Yg/V6I9NgDA1OR8RC\nZq6Vcd7iUwtn5h8fdMBdETGPE+Xe4ExELDRNs4bX2NfCUHe+7UExyfkCP8MhzOA7PuAkvrbwXyNF\nxF3MDqxiqlhXC7SPdaOKiN14g0u4g3H0MvOiTUSNY3iemb0ywmfMdfYyUmAJ2yPiBx6Wr/oy2Oqw\n+A1SupBzAOuE/AAAAABJRU5ErkJggg==\n",
        });
@@ -54,13 +54,12 @@ class LinkedBrush(plugins.PluginBase):
         this.enable();
         this.fig.disable_zoom();
         fig.toolbar.toolbar.selectAll(".mpld3-movebutton")
-		   .classed({pressed: false,
-			     active: false});
-    
+                   .classed({pressed: false,
+                             active: false});
       }
       this.fig.toolbar.toolbar.selectAll(".mpld3-brushbutton")
-		.classed({pressed: this.enabled,
-			  active: !this.enabled});
+                .classed({pressed: this.enabled,
+                          active: !this.enabled});
     }
 
     LinkedBrushPlugin.prototype.draw = function(){
@@ -176,7 +175,7 @@ class LinkedBrush(plugins.PluginBase):
       this.disable();
     }
 
-    mpld3.register_plugin("linkedbrush", LinkedBrushPlugin);    
+    mpld3.register_plugin("linkedbrush", LinkedBrushPlugin);
     """
 
     def __init__(self, points):
@@ -188,7 +187,7 @@ class LinkedBrush(plugins.PluginBase):
         self.dict_ = {"type": "linkedbrush",
                       "clear_toolbar": False,
                       "id": utils.get_id(points, suffix),
-                      "buttons":"brush"}
+                      "buttons": "brush"}
 
 
 data = load_iris()

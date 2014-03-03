@@ -50,7 +50,7 @@ for i in range(N):
     label = df.ix[[i], :].T
     label.columns = ['Row {0}'.format(i)]
     # .to_html() is unicode; so make leading 'u' go away with str()
-    labels.append(str(label.to_html()))  
+    labels.append(str(label.to_html()))
 
 points = ax.plot(df.x, df.y, 'o', color='b',
                  mec='k', ms=15, mew=1, alpha=.6)
@@ -64,4 +64,3 @@ tooltip = plugins.PointHTMLTooltip(points[0], labels,
 plugins.connect(fig, tooltip)
 
 mpld3.show()
-

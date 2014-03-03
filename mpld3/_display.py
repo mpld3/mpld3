@@ -134,12 +134,12 @@ def fig_to_dict(fig, d3_url=None, mpld3_url=None,
 
     See Also
     --------
-    - :func:`save_json`: save json representation of a figure to file
-    - :func:`save_html` : save html representation of a figure to file
-    - :func:`fig_to_html` : output html representation of the figure
-    - :func:`show` : launch a local server and show a figure in a browser
-    - :func:`display` : embed figure within the IPython notebook
-    - :func:`enable_notebook` : automatically embed figures in IPython notebook
+    :func:`save_json`: save json representation of a figure to file
+    :func:`save_html` : save html representation of a figure to file
+    :func:`fig_to_html` : output html representation of the figure
+    :func:`show` : launch a local server and show a figure in a browser
+    :func:`display` : embed figure within the IPython notebook
+    :func:`enable_notebook` : automatically embed figures in IPython notebook
     """
     d3_url = d3_url or urls.D3_URL
     mpld3_url = mpld3_url or urls.MPLD3_URL
@@ -168,13 +168,17 @@ def fig_to_html(fig, d3_url=None, mpld3_url=None, no_extras=False,
         to that if the representation output by fig_to_json is embedded in
         a web page.
     template_type : string
-        string specifying the type of HTML template to use. Options are
-        - "simple"   : suitable for a simple html page with one figure.  Will
-                       fail if require.js is available on the page.
-        - "notebook" : assumes require.js and jquery are available.
-        - "general"  : more complicated, but works both in and out of the
-                       notebook, whether or not require.js and jquery are
-                       available
+        string specifying the type of HTML template to use. Options are:
+
+        ``"simple"``
+             suitable for a simple html page with one figure.  Will
+             fail if require.js is available on the page.
+        ``"notebook"``
+             assumes require.js and jquery are available.
+        ``"general"``
+             more complicated, but works both in and out of the
+             notebook, whether or not require.js and jquery are available
+
     **kwargs :
         Additional keyword arguments passed to mplexporter.Exporter
 
@@ -185,12 +189,12 @@ def fig_to_html(fig, d3_url=None, mpld3_url=None, no_extras=False,
 
     See Also
     --------
-    - :func:`save_json`: save json representation of a figure to file
-    - :func:`save_html` : save html representation of a figure to file
-    - :func:`fig_to_dict` : output dictionary representation of the figure
-    - :func:`show` : launch a local server and show a figure in a browser
-    - :func:`display` : embed figure within the IPython notebook
-    - :func:`enable_notebook` : automatically embed figures in IPython notebook
+    :func:`save_json`: save json representation of a figure to file
+    :func:`save_html` : save html representation of a figure to file
+    :func:`fig_to_dict` : output dictionary representation of the figure
+    :func:`show` : launch a local server and show a figure in a browser
+    :func:`display` : embed figure within the IPython notebook
+    :func:`enable_notebook` : automatically embed figures in IPython notebook
     """
     template = TEMPLATE_DICT[template_type]
 
@@ -235,8 +239,8 @@ def display(fig=None, closefig=True, **kwargs):
 
     See Also
     --------
-    - :func:`show` : launch a local server and show a figure in a browser
-    - :func:`enable_notebook` : automatically embed figures in IPython notebook
+    :func:`show` : launch a local server and show a figure in a browser
+    :func:`enable_notebook` : automatically embed figures in IPython notebook
     """
     # import here, in case users don't have requirements installed
     from IPython.display import HTML
@@ -276,8 +280,8 @@ def show(fig=None, ip='127.0.0.1', port=8888, n_retries=50,
 
     See Also
     --------
-    - :func:`display` : embed figure within the IPython notebook
-    - :func:`enable_notebook` : automatically embed figures in IPython notebook
+    :func:`display` : embed figure within the IPython notebook
+    :func:`enable_notebook` : automatically embed figures in IPython notebook
     """
     if local:
         kwargs['mpld3_url'] = '/mpld3.js'
@@ -313,9 +317,9 @@ def enable_notebook(**kwargs):
 
     See Also
     --------
-    - :func:`disable_notebook` : undo the action of enable_notebook
-    - :func:`display` : embed figure within the IPython notebook
-    - :func:`show` : launch a local server and show a figure in a browser
+    :func:`disable_notebook` : undo the action of enable_notebook
+    :func:`display` : embed figure within the IPython notebook
+    :func:`show` : launch a local server and show a figure in a browser
     """
     try:
         from IPython.core.getipython import get_ipython
@@ -333,7 +337,7 @@ def disable_notebook():
 
     See Also
     --------
-    - :func:`enable_notebook` : automatically embed figures in IPython notebook
+    :func:`enable_notebook` : automatically embed figures in IPython notebook
     """
     try:
         from IPython.core.getipython import get_ipython
@@ -360,9 +364,9 @@ def save_html(fig, fileobj, **kwargs):
 
     See Also
     --------
-    - :func:`save_json`: save json representation of a figure to file
-    - :func:`fig_to_html` : output html representation of the figure
-    - :func:`fig_to_dict` : output dictionary representation of the figure
+    :func:`save_json`: save json representation of a figure to file
+    :func:`fig_to_html` : output html representation of the figure
+    :func:`fig_to_dict` : output dictionary representation of the figure
     """
     if isinstance(fileobj, str):
         fileobj = open(fileobj, 'w')
@@ -389,9 +393,9 @@ def save_json(fig, fileobj, **kwargs):
 
     See Also
     --------
-    - :func:`save_html` : save html representation of a figure to file
-    - :func:`fig_to_html` : output html representation of the figure
-    - :func:`fig_to_dict` : output dictionary representation of the figure
+    :func:`save_html` : save html representation of a figure to file
+    :func:`fig_to_html` : output html representation of the figure
+    :func:`fig_to_dict` : output dictionary representation of the figure
     """
     if isinstance(fileobj, str):
         fileobj = open(fileobj, 'w')

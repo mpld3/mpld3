@@ -22,7 +22,6 @@ def generate_handler(html, files=None):
     class MyHandler(server.BaseHTTPRequestHandler):
         def do_GET(self):
             """Respond to a GET request."""
-            print files.keys()
             if self.path == '/':
                 self.send_response(200)
                 self.send_header("Content-type", "text/html")

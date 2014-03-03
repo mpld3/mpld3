@@ -16,7 +16,7 @@ N = 100
 scatter = ax.scatter(np.random.normal(size=N),
                      np.random.normal(size=N),
                      c=np.random.random(size=N),
-                     s = 1000 * np.random.random(size=N),
+                     s=1000 * np.random.random(size=N),
                      alpha=0.3,
                      cmap=plt.cm.jet)
 ax.grid(color='white', linestyle='solid')
@@ -28,4 +28,3 @@ tooltip = mpld3.plugins.PointLabelTooltip(scatter, labels=labels)
 mpld3.plugins.connect(fig, tooltip)
 
 mpld3.show()
-

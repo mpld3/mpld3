@@ -15,6 +15,7 @@ import matplotlib.pyplot as plt
 import mpld3
 from mpld3 import plugins, utils
 
+
 class HighlightLines(plugins.PluginBase):
     """A plugin to highlight lines on hover"""
 

@@ -84,9 +84,9 @@ def combine_testplots(wildcard='test_plots/*.py',
         try:
             f = __import__(modulename)
         except Exception as e:
-            print "!!!  Exception raised in {0}".format(filename)
-            print "!!!   {0}: {1}".format(e.__class__.__name__,
-                                          e.message)
+            print("!!!  Exception raised in {0}".format(filename))
+            print("!!!   {0}: {1}".format(e.__class__.__name__,
+                                          e.message))
             continue
 
         if hasattr(f, 'main'):
@@ -95,9 +95,9 @@ def combine_testplots(wildcard='test_plots/*.py',
             try:
                 fig = f.main()
             except Exception as e:
-                print "Exception raised in {0}".format(filename)
-                print " {0}: {1}".format(e.__class__.__name__,
-                                         e.message)
+                print("Exception raised in {0}".format(filename))
+                print(" {0}: {1}".format(e.__class__.__name__,
+                                         e.message))
                 fig = None
 
             if fig is not None:
