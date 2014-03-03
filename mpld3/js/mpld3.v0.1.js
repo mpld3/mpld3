@@ -56,7 +56,12 @@
     };
     
     mpld3.Figure.prototype.add_plugin = function(plug, props){
-	if(plug in mpld3.plugin_map) plug = mpld3.plugin_map[plug];
+	if(plug in mpld3.plugin_map)
+          plug = mpld3.plugin_map[plug];
+	if(typeof(plug) === "string"){
+          console.warn("Skipping unrecognized plugin: " + plug);
+          return;
+        }
 
 	if(props.clear_toolbar){
 	    this.prop.toolbar = [];

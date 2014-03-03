@@ -5,7 +5,7 @@ A scatter-plot with tooltip labels on hover
 """
 import matplotlib.pyplot as plt
 import numpy as np
-from mpld3 import plugins, show_d3
+import mpld3
 
 fig, ax = plt.subplots(subplot_kw=dict(axisbg='#EEEEEE'))
 N = 100
@@ -21,8 +21,8 @@ ax.grid(color='white', linestyle='solid')
 ax.set_title("Scatter Plot (with tooltips!)", size=20)
 
 labels = ['point {0}'.format(i + 1) for i in range(N)]
-tooltip = plugins.PointLabelTooltip(scatter, labels=labels)
-plugins.connect(fig, tooltip)
+tooltip = mpld3.plugins.PointLabelTooltip(scatter, labels=labels)
+mpld3.plugins.connect(fig, tooltip)
 
-show_d3()
+mpld3.show()
 

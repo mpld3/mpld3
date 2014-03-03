@@ -8,7 +8,7 @@ to create nearly any imaginable behavior by defining your own custom plugin.
 """
 
 __all__ = ['connect', 'PluginBase', 'PointLabelTooltip', 'PointHTMLTooltip',
-           'LineLabelTooltip', 'ResetButton']
+           'LineLabelTooltip']
 
 import json
 import uuid

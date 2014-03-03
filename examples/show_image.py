@@ -6,7 +6,7 @@ This example shows how mpld3 can display images using plt.imshow()
 import matplotlib.pyplot as plt
 import numpy as np
 
-from mpld3 import show_d3
+import mpld3
 
 fig, ax = plt.subplots()
 
@@ -25,4 +25,4 @@ fig.colorbar(im, ax=ax)
 
 ax.set_title('An Image', size=20)
 
-show_d3()
+mpld3.show()

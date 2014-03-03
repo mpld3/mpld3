@@ -18,11 +18,17 @@ General Functions
 These are the general functions used to convert matplotlib graphics into HTML
 and D3js. See some examples of these being used in the :ref:`example-gallery`.
 
-:func:`fig_to_d3`
+:func:`fig_to_html`
     This is the core routine which takes a figure and constructs a string of
     html and javascript which can be embedded in any webpage.
 
-:func:`show_d3`
+:func:`fig_to_dict`
+    This routine converts a matplotlib image to a JSON-serializable dictionary,
+    which can be loaded into an appropriate HTML page and rendered via the
+    mpld3 Javascript library.  Note that custom plugins which are not built
+    into mpld3 will not be part of the JSON serialization.
+
+:func:`show`
     This function is mpld3's equivalent of matplotlib's ``plt.show`` function.
     It will convert the current figure to html using :func:`fig_to_d3`, start
     a local webserver which serves this html, and (if the operating system
@@ -35,7 +41,7 @@ IPython Notebook Functions
 These are functions which enable the use of mpld3 within the IPython notebook.
 See some examples of these being used in the :ref:`notebook-examples`.
 
-:func:`display_d3`
+:func:`display`
     This function displays a single mpld3 figure inline within the IPython
     notebook. It is useful if you want to use the standard static figure
     display hook through the notebook, but override it in a few cases.
@@ -55,6 +61,20 @@ See some examples of these being used in the :ref:`notebook-examples`.
 :func:`disable_notebook`
     This function undoes the changes made by :func:`enable_notebook`, so that
     the normal matplotlib backend is used instead.
+
+
+Saving Figures to File
+----------------------
+Figures can be saved to file either in a stand-alone HTML format, or in a JSON
+format.  mpld3 supplies the following convenience routines for this purpose:
+
+:func:`save_html`
+    Save a figure to a stand-alone HTML file.
+
+:func:`save_json`
+    Save the JSON representation of the figure to a file.
+    Note that custom plugins which are not built
+    into mpld3 will not be part of the JSON serialization.
 
 
 Plugins

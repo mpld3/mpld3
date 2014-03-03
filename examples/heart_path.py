@@ -38,4 +38,4 @@ line, = ax.plot(x, y, 'go-')
 ax.grid(True, color='gray', alpha=0.5)
 ax.axis('equal')
 
-mpld3.show_d3()
+mpld3.show()

@@ -149,7 +149,7 @@ def fig_to_dict(fig, d3_url=None, mpld3_url=None,
     return figure_json
 
 
-def fig_to_html(fig, d3_url=None, mpld3_url=None, safemode=False,
+def fig_to_html(fig, d3_url=None, mpld3_url=None, no_extras=False,
                 template_type="general", **kwargs):
     """Output html representation of the figure
 
@@ -163,8 +163,10 @@ def fig_to_html(fig, d3_url=None, mpld3_url=None, safemode=False,
     mpld3_url : string (optional)
         The URL of the mpld3 library.  If not specified, a standard web path
         will be used.
-    safemode : boolean
-        If true, scrub any additional html
+    no_extras : boolean
+        If true, remove any extra javascript or CSS. The output will be similar
+        to that if the representation output by fig_to_json is embedded in
+        a web page.
     template_type : string
         string specifying the type of HTML template to use. Options are
         - "simple"   : suitable for a simple html page with one figure.  Will
@@ -201,7 +203,7 @@ def fig_to_html(fig, d3_url=None, mpld3_url=None, safemode=False,
 
     fig, figure_json, extra_css, extra_js = renderer.finished_figures[0]
 
-    if safemode:
+    if no_extras:
         extra_css = ""
         extra_js = ""
 
@@ -371,7 +373,7 @@ def save_html(fig, fileobj, **kwargs):
 
 def save_json(fig, fileobj, **kwargs):
     """Save a matplotlib figure to a json file.
-    
+
     Note that any plugins which depend on generated HTML will not be included
     in the JSON encoding.
 
