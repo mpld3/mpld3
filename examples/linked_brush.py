@@ -22,7 +22,6 @@ from mpld3 import plugins, utils
 class LinkedBrush(plugins.PluginBase):
     JAVASCRIPT = r"""
     var LinkedBrushPlugin = function(fig, prop){
-      window.fig = fig;
       this.fig = fig;
       this.prop = mpld3.process_props(this, prop, {}, ["id"]);
 
@@ -53,7 +52,7 @@ class LinkedBrush(plugins.PluginBase):
       }else{
         this.enable();
         this.fig.disable_zoom();
-        fig.toolbar.toolbar.selectAll(".mpld3-movebutton")
+        this.fig.toolbar.toolbar.selectAll(".mpld3-movebutton")
                    .classed({pressed: false,
                              active: false});
       }
@@ -211,6 +210,6 @@ for axi in ax.flat:
     for axis in [axi.xaxis, axi.yaxis]:
         axis.set_major_formatter(plt.NullFormatter())
 
-plugins.connect(fig, LinkedBrush(ax[0, 2].collections[0]))
+plugins.connect(fig, LinkedBrush(points))
 
 mpld3.show()
