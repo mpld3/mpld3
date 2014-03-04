@@ -26,7 +26,6 @@ class DragPlugin(plugins.PluginBase):
 
     DragPlugin.prototype.draw = function(){
         var obj = mpld3.get_element(this.prop.id);
-        console.log(obj.ax.position);
 
         var drag = d3.behavior.drag()
             .origin(function(d) { return {x:obj.ax.x(d[0]),

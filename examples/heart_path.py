@@ -32,7 +32,6 @@ class LinkedDragPlugin(plugins.PluginBase):
         var patchobj = mpld3.get_element(this.prop.idpatch);
         var ptsobj = mpld3.get_element(this.prop.idpts);
         var lineobj = mpld3.get_element(this.prop.idline);
-        console.log(ptsobj.ax.position);
 
         var drag = d3.behavior.drag()
             .origin(function(d) { return {x:ptsobj.ax.x(d[0]),
@@ -68,7 +67,6 @@ class LinkedDragPlugin(plugins.PluginBase):
         }
 
         function dragended(d, i) {
-          console.log(ptsobj.data[i]);
           d3.select(this).classed("dragging", false);
         }
     }
