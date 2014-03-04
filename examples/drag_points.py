@@ -70,6 +70,7 @@ class DragPlugin(plugins.PluginBase):
 
 
 fig, ax = plt.subplots()
+np.random.seed(0)
 points = ax.plot(np.random.normal(size=20),
                  np.random.normal(size=20), 'or', alpha=0.5,
                  markersize=50, markeredgewidth=1)

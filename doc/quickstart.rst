@@ -3,8 +3,6 @@
 Quick Start Guide
 =================
 
-.. currentmodule:: mpld3
-
 The mpld3 package is extremely easy to use: you can simply take any script
 generating a matplotlib plot, run it through one of mpld3's convenience
 routines, and embed the result in a web page. For some example of this
@@ -14,6 +12,8 @@ of the basic mpld3 functions you should know about.
 
 General Functions
 -----------------
+
+.. currentmodule:: mpld3
 
 These are the general functions used to convert matplotlib graphics into HTML
 and D3js. See some examples of these being used in the :ref:`example-gallery`.
