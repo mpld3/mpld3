@@ -15,21 +15,30 @@ except ImportError:
     from http import server
 
 
-def generate_handler(html):
-    class MyHandler(server.BaseHTTPRequestHandler):
-        def do_HEAD(self):
-            self.send_response(200)
-            self.send_header("Content-type", "text/html")
-            self.end_headers()
+def generate_handler(html, files=None):
+    if files is None:
+        files = {}
 
+    class MyHandler(server.BaseHTTPRequestHandler):
         def do_GET(self):
             """Respond to a GET request."""
-            self.do_HEAD()
-            self.wfile.write("<html><head>"
-                             "<title>mpld3 plot</title>"
-                             "</head><body>\n")
-            self.wfile.write(html)
-            self.wfile.write("</body></html>")
+            if self.path == '/':
+                self.send_response(200)
+                self.send_header("Content-type", "text/html")
+                self.end_headers()
+                self.wfile.write("<html><head>"
+                                 "<title>mpld3 plot</title>"
+                                 "</head><body>\n")
+                self.wfile.write(html)
+                self.wfile.write("</body></html>")
+            elif self.path in files:
+                content_type, content = files[self.path]
+                self.send_response(200)
+                self.send_header("Content-type", content_type)
+                self.end_headers()
+                self.wfile.write(content)
+            else:
+                self.send_error(404)
 
     return MyHandler
 
@@ -48,7 +57,7 @@ def find_open_port(ip, port, n=50):
     raise ValueError("no open ports found")
 
 
-def serve_and_open(html, ip='127.0.0.1', port=8888, n_retries=50):
+def serve_and_open(html, ip='127.0.0.1', port=8888, n_retries=50, files=None):
     """Start a server serving the given HTML, and open a browser
 
     Parameters
@@ -61,9 +70,11 @@ def serve_and_open(html, ip='127.0.0.1', port=8888, n_retries=50):
         the port at which to serve the HTML
     n_retries : int (default = 50)
         the number of nearby ports to search if the specified port is in use.
+    files : dictionary (optional)
+        dictionary of extra content to serve
     """
     port = find_open_port(ip, port, n_retries)
-    Handler = generate_handler(html)
+    Handler = generate_handler(html, files)
     srvr = server.HTTPServer((ip, port), Handler)
 
     # Use a thread to open a web browser pointing to the server
