@@ -12,6 +12,15 @@ You may also see the [blog post](http://jakevdp.github.io/blog/2013/12/19/a-d3-v
 available in the ``notebooks`` directory of this repository.
 
 
+About
+-----
+mpld3 provides a custom stand-alone javascript library built on D3, which
+parses JSON representations of plots.  The mpld3 python module provides a
+set of routines which parses matplotlib plots (using the 
+[mplexporter](http://github.com/mpld3/mplexporter) framework) and outputs
+the JSON description readable by mpld3.js.
+
+
 Installation
 ------------
 mpld3 requires [jinja2](http://jinja.pocoo.org/) version 2.7+
@@ -20,11 +29,20 @@ and [matplotlib](http://matplotlib.org) version 1.3+.
 Optionally, mpld3 can be used with [IPython](http://ipython.org), and requires
 version 1.1+.
 
-To install the library system-wide, download the source and type
+This package is based on the [mplexporter](http://github.com/mpld3/mplexporter)
+framework for crawling and exporting matplotlib images. mplexporter is bundled
+with the source distribution via git submodule.
 
-    [~]$ python setup.py install
+Within the git source directory, you can download the mplexporter dependency
+and copy it into the mpld3 source directory using the following command:
 
-Or, to install locally, use
+    [~]$ make build
+
+To install the package via setup.py, type 
+
+    [~]$ make install
+
+Or, to install locally, after running ``make build`` use
 
     [~]$ python setup.py install --prefix=/path/to/location/
 
@@ -48,29 +66,15 @@ an html page with the D3 renderings beside corresponding matplotlib renderings.
 
 Features
 --------
-### Currently Supported
-
-Currently the support of matplotlib features is very limited.  The code
-supports the following:
-
-- multiple axes, placed correctly on the figure
-- lines and scatter plots created with ``plt.plot``, ``plt.scatter``, etc.
-- grid lines and their properties
-- title and axis labels
-- patches (i.e. shapes like histograms, etc.)
-- polygons (filled plots, etc.)
-- some collections (scatter plots, etc.)
-- interactive plugins such as tooltips (see http://jakevdp.github.io/blog/2014/01/10/d3-plugins-truly-interactive/)
-
-### TODO List
-
-There are many features still missing, and they range from fairly
-straightforward to fairly difficult.
+Many of the core features of matplotlib are already supported.  And additionally
+there is some extra interactivity provided via the plugin framework.  The
+following is a non-exhausive list of features that are yet to be supported:
 
 - tick specification & formatting
 - some legend features
+- blended transforms, such as those required by ``axvlines`` and ``axhlines``
 - twin axes (i.e. multiple scales on one plot) tied together
-- additional tools, such as box-zoom
+- additional interactivity tools, such as brushing and box-zoom.
 
 If any of these look like something you'd like to tackle, feel free to submit
 a pull request!

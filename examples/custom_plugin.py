@@ -1,47 +1,58 @@
 """
-Defining aCustom Plugin
-=======================
+Defining a Custom Plugin
+========================
 Test the custom plugin demoed on the `Pythonic Perambulations
 <http://jakevdp.github.io/blog/2014/01/10/d3-plugins-truly-interactive/>`_
-blog.
+blog.  Hover over the points to see the associated sinusoid.
+Use the toolbar buttons at the bottom-right of the plot to enable zooming
+and panning, and to reset the view.
 """
+import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
-from mpld3 import plugins, show_d3
+import mpld3
+from mpld3 import plugins, utils
 import jinja2
 import json
 
 
 class LinkedView(plugins.PluginBase):
     """A simple plugin showing how multiple axes can be linked"""
-    
-    FIG_JS = jinja2.Template("""
-    var linedata{{ id }} = {{ linedata }};
 
-    ax{{ axid }}.axes.selectAll(".paths{{ collid }}")
-	    .on("mouseover", function(d, i){
-             line{{ elid }}.data = linedata{{ id }}[i];
-             line{{ elid }}.lineobj.transition()
-                .attr("d", line{{ elid }}.line(line{{ elid }}.data))
-                .style("stroke", this.style.fill);})
-    """)
+    JAVASCRIPT = """
+    var LinkedViewPlugin = function(fig, prop){
+      this.fig = fig;
+      this.prop = mpld3.process_props(this, prop, {},
+                                      ["idpts", "idline", "data"]);
+    }
+
+    LinkedViewPlugin.prototype.draw = function(){
+      var pts = mpld3.get_element(this.prop.idpts);
+      var line = mpld3.get_element(this.prop.idline);
+      var data = this.prop.data;
+
+      function mouseover(d, i){
+        line.data = data[i];
+        line.elements().transition()
+            .attr("d", line.datafunc(line.data))
+            .style("stroke", this.style.fill);
+      }
+      pts.elements().on("mouseover", mouseover);
+    };
+
+    mpld3.register_plugin("linkedview", LinkedViewPlugin);
+    """
 
     def __init__(self, points, line, linedata):
-        self.points = points
-        self.line = line
-        self.linedata = linedata
-        self.id = self.generate_unique_id()
+        if isinstance(points, matplotlib.lines.Line2D):
+            suffix = "pts"
+        else:
+            suffix = None
 
-    def _fig_js_args(self):
-        points = self._get_d3obj(self.points)
-        line = self._get_d3obj(self.line)
-        return dict(id=self.id,
-                    axid=points.axid,
-                    collid=points.collid,
-                    elid=line.elid,
-                    lineaxid=line.axid,
-                    lineid=line.lineid,
-                    linedata=json.dumps(self.linedata))
+        self.dict_ = {"type": "linkedview",
+                      "idpts": utils.get_id(points, suffix),
+                      "idline": utils.get_id(line),
+                      "data": linedata}
 
 fig, ax = plt.subplots(2)
 
@@ -67,4 +78,4 @@ ax[0].set_title("Hover over points to see lines")
 linedata = data.transpose(0, 2, 1).tolist()
 plugins.connect(fig, LinkedView(points, lines[0], linedata))
 
-show_d3()
+mpld3.show()

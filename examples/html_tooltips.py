@@ -1,12 +1,17 @@
 """
 HTML tooltip plugin
 ===================
-This is a demonstration of how to add rich HTML annotations to data plots
+This is a demonstration of how to add rich HTML annotations to data plots.
+The Plugin is defined within mpld3, and the user-provided CSS controls the
+format of the information shown on hover.
+Use the toolbar buttons at the bottom-right of the plot to enable zooming
+and panning, and to reset the view.
 """
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from mpld3 import plugins, show_d3
+import mpld3
+from mpld3 import plugins
 
 # Define some CSS to control our custom labels
 css = """
@@ -45,7 +50,7 @@ for i in range(N):
     label = df.ix[[i], :].T
     label.columns = ['Row {0}'.format(i)]
     # .to_html() is unicode; so make leading 'u' go away with str()
-    labels.append(str(label.to_html()))  
+    labels.append(str(label.to_html()))
 
 points = ax.plot(df.x, df.y, 'o', color='b',
                  mec='k', ms=15, mew=1, alpha=.6)
@@ -58,5 +63,4 @@ tooltip = plugins.PointHTMLTooltip(points[0], labels,
                                    voffset=10, hoffset=10, css=css)
 plugins.connect(fig, tooltip)
 
-show_d3()
-
+mpld3.show()

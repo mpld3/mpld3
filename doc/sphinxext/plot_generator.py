@@ -15,14 +15,14 @@ from matplotlib.figure import Figure
 
 
 class disable_mpld3(object):
-    """Context manager to temporarily disable mpld3 show_d3() command"""
+    """Context manager to temporarily disable mpld3.show() command"""
     def __enter__(self):
-        self.show_d3 = mpld3.show_d3
-        mpld3.show_d3 = lambda *args, **kwargs: None
+        self.show = mpld3.show
+        mpld3.show = lambda *args, **kwargs: None
         return self
 
     def __exit__(self, type, value, traceback):
-        mpld3.show_d3 = self.show_d3
+        mpld3.show = self.show
 
 
 RST_TEMPLATE = """
@@ -290,7 +290,7 @@ class ExampleGenerator(object):
             execfile(self.filename, my_globals)
 
         fig = plt.gcf()
-        self.html = mpld3.fig_to_d3(fig)
+        self.html = mpld3.fig_to_html(fig)
         thumbfile = os.path.join(self.target_dir,
                                  self.pngfilename)
         fig.savefig(thumbfile)
