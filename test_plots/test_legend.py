@@ -10,7 +10,7 @@ def main():
     ax.plot(x, np.cos(x), label='cos', lw=3, alpha=0.5)
     ax.plot(x[::5], 0.5 * np.sin(x[::5] + 2), 'ob', label='dots')
 
-    ax.legend()
+    ax.legend(fancybox=True)
     ax.set_title("Legend test", size=20)
 
     return fig
