@@ -51,3 +51,6 @@ nosetests.xml
 doc/_build
 doc/examples
 doc/notebooks
+
+# submodules
+mpld3/mplexporter
