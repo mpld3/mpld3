@@ -35,8 +35,7 @@ def check_submodule_status(root=None):
     'unclean' - submodules have unstaged changes
     'clean' - all submodules are up to date
     """
-
-    if not root:
+    if root is None:
         root = os.path.dirname(os.path.abspath(__file__))
 
     if hasattr(sys, "frozen"):
@@ -96,7 +95,9 @@ def require_clean_submodules(repo_dir, argv):
     after everything has been set in motion,
     this is not a distutils command.
     """
-    # PACKAGERS: Add a return here to skip checks for git submodules
+    # Only do this if we are in the git source repository.
+    if not is_repo(repo_dir):
+        return
     
     # don't do anything if nothing is actually supposed to happen
     for do_nothing in ('-h', '--help', '--help-commands',
