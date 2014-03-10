@@ -43,7 +43,6 @@ nosetests.xml
 .ipynb_checkpoints
 
 # temporary files
-*.js
 *.html
 *.png
 
@@ -51,6 +50,7 @@ nosetests.xml
 doc/_build
 doc/examples
 doc/notebooks
+doc/_static
 
 # submodules
 mpld3/mplexporter
