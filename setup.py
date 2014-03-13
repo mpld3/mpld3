@@ -1,7 +1,12 @@
+import os
+import sys
+
 try:
     from setuptools import setup
 except ImportError:
     from distutils.core import setup
+
+from _mpld3_setup import require_clean_submodules, UpdateSubmodules
 
 DESCRIPTION = "D3 Viewer for Matplotlib"
 LONG_DESCRIPTION = open('README.md').read()
@@ -15,6 +20,11 @@ DOWNLOAD_URL = 'http://github.com/jakevdp/mpld3'
 LICENSE = 'BSD 3-clause'
 VERSION = '0.1'
 
+# Make sure submodules are updated and synced
+root_dir = os.path.abspath(os.path.dirname(__file__))
+require_clean_submodules(root_dir, sys.argv)
+
+
 setup(name=NAME,
       version=VERSION,
       description=DESCRIPTION,
@@ -26,10 +36,10 @@ setup(name=NAME,
       url=URL,
       download_url=DOWNLOAD_URL,
       license=LICENSE,
+      cmdclass = {'submodule' : UpdateSubmodules},
       packages=['mpld3',
                 'mpld3/mplexporter',
-                'mpld3/mplexporter/renderers',
-                'mpld3/mplexporter/renderers/plotly'],
+                'mpld3/mplexporter/renderers'],
       package_data={'mpld3': ['js/*.js']},
       classifiers=[
         'Development Status :: 4 - Beta',
