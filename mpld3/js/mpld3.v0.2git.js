@@ -17,6 +17,10 @@
 	plugin_map: {},
 	register_plugin: function(name, obj){mpld3.plugin_map[name] = obj;}
     };
+
+    var mpld3_zoomWheel = "onwheel" in document ? "wheel" :
+	"onmousewheel" in document ? "mousewheel" :
+	"MozMousePixelScroll";
     
     /* Figure object: */
     mpld3.Figure = function(figid, prop){
@@ -122,9 +126,9 @@
 	}
     };
     
-    mpld3.Figure.prototype.enable_zoom = function(){
+    mpld3.Figure.prototype.enable_zoom = function(noWheel){
 	for(var i=0; i<this.axes.length; i++){
-	    this.axes[i].enable_zoom();
+	    this.axes[i].enable_zoom(noWheel);
 	}
 	this.zoom_on = true;
     };
@@ -504,10 +508,14 @@
 	}
     };
     
-    mpld3.Axes.prototype.enable_zoom = function(){
+    mpld3.Axes.prototype.enable_zoom = function(noWheel){
 	if(this.prop.zoomable){
 	    this.zoom.on("zoom", this.zoomed.bind(this));
 	    this.axes.call(this.zoom);
+	    if(noWheel){
+		// disable mouse-wheel zooming
+		this.axes.on(mpld3_zoomWheel + ".zoom", null);
+	    }
 	    this.axes.style("cursor", 'move');
 	}
     };
