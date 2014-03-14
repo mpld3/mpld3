@@ -12,7 +12,7 @@
 
 !(function(d3){
     var mpld3 = {
-	version: "0.1",
+	version: "0.2git",
 	figures: [],
 	plugin_map: {},
 	register_plugin: function(name, obj){mpld3.plugin_map[name] = obj;}
@@ -127,6 +127,8 @@
 	    this.axes[i].enable_zoom();
 	}
 	this.zoom_on = true;
+	this.root.selectAll(".mpld3-movebutton")
+	    .classed({pressed: true});
     };
     
     mpld3.Figure.prototype.disable_zoom = function(){
@@ -134,6 +136,8 @@
 	    this.axes[i].disable_zoom();
 	}
 	this.zoom_on = false;
+	this.root.selectAll(".mpld3-movebutton")
+	    .classed({pressed: false});
     };
     
     mpld3.Figure.prototype.toggle_zoom = function(){
@@ -223,12 +227,16 @@
 	}
     };
 
+    // This will be filled by the ButtonFactory function
+    mpld3.Toolbar.prototype.buttonDict = {};
+
 
     /* Toolbar Button Object: */
     mpld3.BaseButton = function(toolbar, cssclass){
 	this.toolbar = toolbar;
 	this.cssclass = cssclass;
     };
+    mpld3.BaseButton.prototype.toolbarKey = "";
     mpld3.BaseButton.prototype.activate = function(){};
     mpld3.BaseButton.prototype.deactivate = function(){};
     mpld3.BaseButton.prototype.onClick = function(){};
@@ -242,38 +250,26 @@
 	B.prototype.constructor = B;
 	for(key in members)
 	    B.prototype[key] = members[key];
+	mpld3.Toolbar.prototype.buttonDict[members.toolbarKey] = B;
 	return B;
     }
 
     /* Reset Button */
     mpld3.ResetButton = mpld3.ButtonFactory({
+	toolbarKey: "reset",
 	onClick: function(){this.toolbar.fig.reset();},
 	icon: function(){return mpld3.icons["reset"];}
     });
 
     /* Move Button */
     mpld3.MoveButton = mpld3.ButtonFactory({
-	onClick: function(){
-	    this.toolbar.fig.toggle_zoom();
-	    this.toolbar.toolbar.selectAll(".mpld3-movebutton")
-		.classed({pressed: this.toolbar.fig.zoom_on,
-			  active: !this.toolbar.fig.zoom_on});},
-	activate: function(){
-	    this.toolbar.fig.enable_zoom();
-	    this.toolbar.toolbar.selectAll(".mpld3-movebutton")
-		.classed({pressed: true, active: false});},
-	deactivate: function(){
-	    this.toolbar.fig.disable_zoom();
-	    this.toolbar.toolbar.selectAll(".mpld3-movebutton")
-		.classed({pressed: false, active: false});},
+	toolbarKey: "move",
+	onClick: function(){this.toolbar.fig.toggle_zoom();},
+	activate: function(){this.toolbar.fig.enable_zoom();},
+	deactivate: function(){this.toolbar.fig.disable_zoom();},
 	post_draw: function(){this.toolbar.fig.disable_zoom();},
 	icon: function(){return mpld3.icons["move"];}
     });
-    
-    /* Set up the mapping of button types and icons */
-    /* Icons come from the mpld3/icons/ directory   */
-    mpld3.Toolbar.prototype.buttonDict = {move: mpld3.MoveButton,
-					  reset: mpld3.ResetButton};
 
     /* Coordinates Object: */
     /* Converts from the given units to axes (pixel) units */
