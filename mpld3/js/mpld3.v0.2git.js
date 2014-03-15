@@ -12,7 +12,7 @@
 
 !(function(d3){
     var mpld3 = {
-	version: "0.1",
+	version: "0.2git",
 	figures: [],
 	plugin_map: {},
 	register_plugin: function(name, obj){mpld3.plugin_map[name] = obj;}
@@ -127,6 +127,8 @@
 	    this.axes[i].enable_zoom();
 	}
 	this.zoom_on = true;
+	this.root.selectAll(".mpld3-movebutton")
+	    .classed({pressed: true});
     };
     
     mpld3.Figure.prototype.disable_zoom = function(){
@@ -134,6 +136,8 @@
 	    this.axes[i].disable_zoom();
 	}
 	this.zoom_on = false;
+	this.root.selectAll(".mpld3-movebutton")
+	    .classed({pressed: false});
     };
     
     mpld3.Figure.prototype.toggle_zoom = function(){
@@ -174,30 +178,47 @@
     };
     
     mpld3.Toolbar.prototype.draw = function(){
-	this.toolbar = this.fig.root.append("div")
-	    .attr("class", "mpld3-toolbar")
-            .style("position", "absolute") // relative to parent div
-            .style("bottom", "0px")
-            .style("left", "0px");
-
-	mpld3.insert_css("div#"+this.fig.figid + " .mpld3-toolbar img",
-			 {width: "16px", height: "16px",
-			  cursor: "pointer", opacity: 0.2,
+	mpld3.insert_css("div#"+this.fig.figid+" .mpld3-toolbar image",
+			 {cursor: "pointer", opacity: 0.2,
 			  display: "inline-block",
 			  margin: "0px"})
-	mpld3.insert_css("div#"+this.fig.figid + " .mpld3-toolbar img.active",
+	mpld3.insert_css("div#"+this.fig.figid+" .mpld3-toolbar image.active",
 			 {opacity: 0.4})
-	mpld3.insert_css("div#"+this.fig.figid + " .mpld3-toolbar img.pressed",
+	mpld3.insert_css("div#"+this.fig.figid+" .mpld3-toolbar image.pressed",
 			 {opacity: 0.6})
 
-	for(var i=0; i<this.buttons.length; i++){
-	    this.buttons[i].draw();
-	}
-	this.toolbar.selectAll("img")
-           .on("mouseenter", function(){d3.select(this).classed({active:1})})
-           .on("mouseleave", function(){d3.select(this).classed({active:0})})
-           .on("mousedown", function(){d3.select(this).classed({pressed:1})})
-           .on("mouseup", function(){d3.select(this).classed({pressed:0})});
+	this.fig.canvas
+	    .on("mouseenter", function(){this.buttonsobj
+					 .transition(750)
+					 .attr("y", 0);}.bind(this))
+	    .on("mouseleave", function(){this.buttonsobj
+					 .transition(750).delay(250)
+					 .attr("y", 16);}.bind(this))
+
+	this.toolbar = this.fig.canvas.append("svg:svg")
+	    .attr("width", 16 * this.buttons.length)
+	    .attr("height", 16)
+	    .attr("x", 2)
+	    .attr("y", this.fig.height - 16 - 2)
+	    .attr("class", "mpld3-toolbar");
+	
+	this.buttonsobj = this.toolbar.append("svg:g").selectAll("buttons")
+	    .data(this.buttons)
+	    .enter().append("svg:image")
+	    .attr("class", function(d){return d.cssclass;})
+	    .attr("xlink:href", function(d){return d.icon();})
+	    .attr("width", 16)
+	    .attr("height", 16)
+	    .attr("x", function(d, i){return i * 16;})
+	    .attr("y", 16)
+	    .on("click", function(d){d.onClick();})
+            .on("mouseenter", function(){d3.select(this).classed({active:1})})
+            .on("mouseleave", function(){d3.select(this).classed({active:0})})
+            .on("mousedown", function(){d3.select(this).classed({pressed:1})})
+            .on("mouseup", function(){d3.select(this).classed({pressed:0})});
+
+	for(var i=0; i<this.buttons.length; i++)
+	    this.buttons[i].post_draw();
     };
 
     mpld3.Toolbar.prototype.deactivate_all = function(){
@@ -206,61 +227,49 @@
 	}
     };
 
+    // This will be filled by the ButtonFactory function
+    mpld3.Toolbar.prototype.buttonDict = {};
+
 
     /* Toolbar Button Object: */
-    mpld3.BaseButton = function(toolbar, cssclass, icon){
+    mpld3.BaseButton = function(toolbar, cssclass){
 	this.toolbar = toolbar;
 	this.cssclass = cssclass;
     };
-    mpld3.BaseButton.prototype.draw = function(){
-	return this.toolbar.toolbar.append("img")
-	    .attr("class", this.cssclass)
-	    .attr("src", this.icon)
-	    .on("click", this.onClick.bind(this));
-    };
+    mpld3.BaseButton.prototype.toolbarKey = "";
+    mpld3.BaseButton.prototype.activate = function(){};
     mpld3.BaseButton.prototype.deactivate = function(){};
     mpld3.BaseButton.prototype.onClick = function(){};
-    mpld3.BaseButton.prototype.icon = "";
+    mpld3.BaseButton.prototype.icon = function(){return "";}
+    mpld3.BaseButton.prototype.post_draw = function(){};
 
     /* Factory for button classes */
     mpld3.ButtonFactory = function(members){
-	var F = function(){mpld3.BaseButton.apply(this, arguments);};
-	F.prototype = new mpld3.BaseButton();
-	F.prototype.constructor = F;
+	var B = function(){mpld3.BaseButton.apply(this, arguments);};
+	B.prototype = new mpld3.BaseButton();
+	B.prototype.constructor = B;
 	for(key in members)
-	    F.prototype[key] = members[key];
-	return F;
+	    B.prototype[key] = members[key];
+	mpld3.Toolbar.prototype.buttonDict[members.toolbarKey] = B;
+	return B;
     }
 
     /* Reset Button */
     mpld3.ResetButton = mpld3.ButtonFactory({
+	toolbarKey: "reset",
 	onClick: function(){this.toolbar.fig.reset();},
 	icon: function(){return mpld3.icons["reset"];}
     });
 
     /* Move Button */
     mpld3.MoveButton = mpld3.ButtonFactory({
-	onClick: function(){
-	    this.toolbar.fig.toggle_zoom();
-	    this.toolbar.toolbar.selectAll(".mpld3-movebutton")
-		.classed({pressed: this.toolbar.fig.zoom_on,
-			  active: !this.toolbar.fig.zoom_on});},
-	draw: function(){
-	    mpld3.BaseButton.prototype.draw.apply(this);
-	    this.toolbar.fig.disable_zoom();},
-	deactivate: function(){
-	    this.toolbar.fig.disable_zoom();
-	    this.toolbar.toolbar.selectAll(".mpld3-movebutton")
-		.classed({pressed: this.toolbar.fig.zoom_on,
-			  active: false});},
+	toolbarKey: "move",
+	onClick: function(){this.toolbar.fig.toggle_zoom();},
+	activate: function(){this.toolbar.fig.enable_zoom();},
+	deactivate: function(){this.toolbar.fig.disable_zoom();},
+	post_draw: function(){this.toolbar.fig.disable_zoom();},
 	icon: function(){return mpld3.icons["move"];}
     });
-    
-    /* Set up the mapping of button types and icons */
-    /* Icons come from the mpld3/icons/ directory   */
-    mpld3.Toolbar.prototype.buttonDict = {move: mpld3.MoveButton,
-					  reset: mpld3.ResetButton};
-
 
     /* Coordinates Object: */
     /* Converts from the given units to axes (pixel) units */
