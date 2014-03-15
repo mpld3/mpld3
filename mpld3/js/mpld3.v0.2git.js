@@ -99,27 +99,7 @@
     };
     
     mpld3.Figure.prototype.reset = function(duration){
-	duration = (typeof duration !== 'undefined') ? duration : 750;
-	for (var i=0; i<this.axes.length; i++){
-	    this.axes[i].prep_reset();
-	}
-	
-	var transition = function(t){
-	    for (var i=0; i<this.axes.length; i++){
-		this.axes[i].xdom(this.axes[i].xdom.domain(this.axes[i].ix(t)));
-		this.axes[i].ydom(this.axes[i].ydom.domain(this.axes[i].iy(t)));
-		
-		// don't propagate: this will be done as part of the loop.
-		this.axes[i].zoomed(false);
-	    }
-	}.bind(this)
-	
-	d3.transition().duration(duration)
-            .tween("zoom", function(){return transition;});
-	
-	for (var i=0; i<this.axes.length; i++){
-	    this.axes[i].finalize_reset();
-	}
+	this.axes.forEach(function(ax){ax.reset(duration, false);});
     };
     
     mpld3.Figure.prototype.enable_zoom = function(){
@@ -575,24 +555,27 @@
 	}
     };
     
-    mpld3.Axes.prototype.prep_reset = function(){
+    mpld3.Axes.prototype.reset = function(duration, propagate){
+	duration = (typeof duration !== 'undefined') ? duration : 750;
+
+	// set up the reset operation
 	// interpolate() does not work on dates, so we map dates to numbers,
 	// interpolate the numbers, and then invert the map.
-	// we use the same strategy for log for smooth interpolation
 	// There probably is a cleaner approach...
-	
+	var ix, iy;
+
 	if (this.prop.xscale === 'date'){
 	    var start = this.xdom.domain();
 	    var end = this.prop.xdomain;
 	    var interp = d3.interpolate(
 		[this.xmap(start[0]), this.xmap(start[1])],
 		[this.xmap(end[0]), this.xmap(end[1])]);
-	    this.ix = function(t){
+	    ix = function(t){
 		return [this.xmap.invert(interp(t)[0]),
 			this.xmap.invert(interp(t)[1])];
-	    }
+	    }.bind(this);
 	}else{
-	    this.ix = d3.interpolate(this.xdom.domain(), this.prop.xlim);
+	    ix = d3.interpolate(this.xdom.domain(), this.prop.xlim);
 	}
 	
 	if (this.prop.yscale === 'date'){
@@ -601,33 +584,32 @@
 	    var interp = d3.interpolate(
 		[this.ymap(start[0]), this.ymap(start[1])],
 		[this.ymap(end[0]), this.ymap(end[1])]);
-	    this.iy = function(t){
+	    iy = function(t){
 		return [this.ymap.invert(interp(t)[0]),
 			this.ymap.invert(interp(t)[1])];
-	    }
+	    }.bind(this);
 	}else{
-	    this.iy = d3.interpolate(this.ydom.domain(), this.prop.ylim);
+	    iy = d3.interpolate(this.ydom.domain(), this.prop.ylim);
 	}
-    }
-    
-    mpld3.Axes.prototype.finalize_reset = function(){
+
+	// now set up the transition
+	var transition = function(t) {
+	    this.zoom_x.x(this.xdom.domain(ix(t)));
+	    this.zoom_y.y(this.ydom.domain(iy(t)));
+	    this.zoomed(propagate);
+	}.bind(this);
+
+	// select({}) is a trick to make transitions run concurrently
+	d3.select({})
+	    .transition().duration(duration)
+	    .tween("zoom", function(){return transition;});
+
+	// finalize the reset operation
 	this.zoom.scale(1).translate([0, 0]);
 	this.zoom.last_t = this.zoom.translate();
 	this.zoom.last_s = this.zoom.scale();
 	this.zoom_x.scale(1).translate([0, 0]);
 	this.zoom_y.scale(1).translate([0, 0]);
-    }
-    
-    mpld3.Axes.prototype.reset = function(){
-	this.prep_reset();
-	d3.transition().duration(750).tween("zoom", function() {
-	    return function(t) {
-		this.zoom_x.x(this.xdom.domain(this.ix(t)));
-		this.zoom_y.y(this.ydom.domain(this.iy(t)));
-		this.zoomed();
-	    };
-	});
-	this.finalize_reset();
     };
     
     
