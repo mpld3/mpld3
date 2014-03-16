@@ -492,7 +492,7 @@
     
     mpld3.Axes.prototype.enable_zoom = function(){
 	if(this.prop.zoomable){
-	    this.zoom.on("zoom", this.zoomed.bind(this));
+	    this.zoom.on("zoom", this.zoomed.bind(this, true));
 	    this.axes.call(this.zoom);
 	    this.axes.style("cursor", 'move');
 	}
@@ -518,33 +518,27 @@
             var dt1 = this.zoom.translate()[1] - this.zoom.last_t[1];
             var ds = this.zoom.scale() / this.zoom.last_s;
 	    
-            this.zoom_x.translate([this.zoom_x.translate()[0]+dt0, 0]);
+            this.zoom_x.translate([this.zoom_x.translate()[0] + dt0, 0]);
             this.zoom_x.scale(this.zoom_x.scale() * ds)
 	    
-            this.zoom_y.translate([0, this.zoom_y.translate()[1]+dt1]);
+            this.zoom_y.translate([0, this.zoom_y.translate()[1] + dt1]);
             this.zoom_y.scale(this.zoom_y.scale() * ds)
 	    
             // update last translate and scale values for future use
             this.zoom.last_t = this.zoom.translate();
             this.zoom.last_s = this.zoom.scale();
-	    
-            // update shared axeses
-            for(var i=0; i<this.sharex.length; i++){
-		this.sharex[i].zoom_x.translate(this.zoom_x.translate());
-		this.sharex[i].zoom_x.scale(this.zoom_x.scale());
-            }
-            for(var i=0; i<this.sharey.length; i++){
-		this.sharey[i].zoom_y.translate(this.zoom_y.translate());
-		this.sharey[i].zoom_y.scale(this.zoom_y.scale());
-            }
+
+            // update shared axes objects
+	    this.sharex.forEach(function(ax){
+		ax.zoom_x.translate(this.zoom_x.translate())
+		    .scale(this.zoom_x.scale());}.bind(this));
+	    this.sharey.forEach(function(ax){
+		ax.zoom_y.translate(this.zoom_y.translate())
+		    .scale(this.zoom_y.scale());}.bind(this));
 	    
             // render updates
-            for(var i=0; i<this.sharex.length; i++){
-		this.sharex[i].zoomed(false);
-            }
-            for(var i=0; i<this.sharey.length; i++){
-		this.sharey[i].zoomed(false);
-            }
+	    this.sharex.forEach(function(ax){ax.zoomed(false);});
+	    this.sharey.forEach(function(ax){ax.zoomed(false);});
 	}
 	
 	for(var i=0; i<this.elements.length; i++){
@@ -559,9 +553,10 @@
 
     mpld3.Axes.prototype.set_axlim = function(xlim, ylim,
 					      duration, propagate){
-	xlim = (typeof xlim !== 'undefined') ? xlim : this.xdom.domain();
-	ylim = (typeof ylim !== 'undefined') ? ylim : this.xdom.domain();
-	duration = (typeof duration !== 'undefined') ? duration : 750;
+	xlim = isUndefinedOrNull(xlim) ? this.xdom.domain() : xlim;
+	ylim = isUndefinedOrNull(ylim) ? this.ydom.domain() : ylim;
+	duration = isUndefinedOrNull(duration) ? 750 : duration;
+	propagate = isUndefined(propagate) ? true : propagate;
 
 	// Create a transition function which will interpolate
 	// from the current axes limits to the final limits
@@ -576,7 +571,7 @@
 	var transition = function(t) {
 	    this.zoom_x.x(this.xdom.domain(interpX(t)));
 	    this.zoom_y.y(this.ydom.domain(interpY(t)));
-	    this.zoomed(propagate);
+	    this.zoomed(false); // don't propagate here; propagate below.
 	}.bind(this);
 
 	// select({}) is a trick to make transitions run concurrently
@@ -584,7 +579,15 @@
 	    .transition().duration(duration)
 	    .tween("zoom", function(){return transition;});
 
-	// finalize the reset operation
+	// propagate axis limits to shared axes
+	if(propagate){
+	    this.sharex.forEach(function(ax){
+		ax.set_axlim(xlim, null, duration, false);});
+	    this.sharey.forEach(function(ax){
+		ax.set_axlim(null, ylim, duration, false);});
+	}
+
+	// finalize the reset operation.
 	this.zoom.scale(1).translate([0, 0]);
 	this.zoom.last_t = this.zoom.translate();
 	this.zoom.last_s = this.zoom.scale();
@@ -1357,6 +1360,10 @@
 	    return v;
 	};
     }
+
+    function isUndefined(x){return (typeof(x) === "undefined");}
+
+    function isUndefinedOrNull(x){return (x == null || isUndefined(x));}
     
     function mpld3_path(_){
 	var x = function(d){return d[0];}
