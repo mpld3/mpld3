@@ -334,59 +334,56 @@
 			 (1 - bbox[1] - bbox[3]) * this.fig.height];
 	this.width = bbox[2] * this.fig.width;
 	this.height = bbox[3] * this.fig.height;
-	
+
+	// In the case of date scales, set the domain
 	function buildDate(d){return new Date(d[0],d[1],d[2],d[3],d[4],d[5]);}
-	
-	if(this.prop.xscale === 'log'){
-	    this.xdom = d3.scale.log();
-	}else if(this.prop.xscale === 'date'){
-	    this.prop.xdomain = [buildDate(this.prop.xdomain[0]),
-				 buildDate(this.prop.xdomain[1])];
-	    this.xdom = d3.time.scale();
-	}else{
-	    this.xdom = d3.scale.linear();
+	function setDomain(scale, domain){
+	    return (scale !== "date") ? domain : [buildDate(domain[0]),
+						  buildDate(domain[1])];
 	}
+
+	this.prop.xdomain = setDomain(this.prop.xscale, this.prop.xdomain);
+	this.prop.ydomain = setDomain(this.prop.yscale, this.prop.ydomain);
+
+	/*****************************************************************
+	  There are 3 different scales which come into play with axes.
+           - screen pixel scale
+           - data range
+           - data domain
+	  The data range and domain are only different in the case of
+	  date axes.  For log or linear axes, these are identical.
 	
-	if(this.prop.yscale === 'log'){
-	    this.ydom = d3.scale.log();
-	}else if(this.prop.yscale === 'date'){
-	    this.prop.ydomain = [buildDate(this.prop.ydomain[0]),
-				 buildDate(this.prop.ydomain[1])];
-	    this.ydom = d3.time.scale();
-	}else{
-	    this.ydom = d3.scale.linear();
+	  To convert between these, we have the following mappings:
+	   - [x,y]dom     : map from domain to screen
+	   - [x,y]        : map from range to screen
+	   - [x,y]datemap : map from domain to range (used only for dates)
+	  Here we'll construct these mappings.
+	*****************************************************************/
+
+	function build_scale(scale, domain, range){
+	    var dom = (scale === 'date') ? d3.time.scale() :
+		(scale === 'log') ? d3.scale.log() : d3.scale.linear();
+	    return dom.domain(domain).range(range);
 	}
-	
-	this.xdom.domain(this.prop.xdomain)
-            .range([0, this.width]);
-	
-	this.ydom.domain(this.prop.ydomain)
-            .range([this.height, 0]);
-	
-	if(this.prop.xscale === 'date'){
-	    this.xmap = d3.time.scale()
-		.domain(this.prop.xdomain)
-		.range(this.prop.xlim);
-	    this.x = function(x){return this.xdom(this.xmap.invert(x));}
-	}else if(this.prop.xscale === 'log'){
-	    this.xmap = this.xdom;
-	    this.x = this.xdom;
-	}else{
-	    this.xmap = this.xdom;
-	    this.x = this.xdom;
+
+	this.x = this.xdom = build_scale(this.prop.xscale,
+					 this.prop.xdomain,
+					 [0, this.width]);
+
+	this.y = this.ydom = build_scale(this.prop.yscale,
+					 this.prop.ydomain,
+					 [this.height, 0]);
+
+	if(this.prop.xscale === "date"){
+	    this.xdatemap = build_scale(this.prop.xscale,
+					this.prop.xdomain, this.prop.xlim);
+	    this.x = function(x){return this.xdom(this.xdatemap.invert(x));}
 	}
-	
-	if(this.prop.yscale === 'date'){
-	    this.ymap = d3.time.scale()
-		.domain(this.ydomain)
-		.range(this.prop.ylim);
-	    this.y = function(y){return this.ydom(this.ymap.invert(y));}
-	}else if(this.prop.yscale === 'log'){
-	    this.ymap = this.ydom;
-	    this.y = this.ydom;
-	}else{
-	    this.ymap = this.ydom;
-	    this.y = this.ydom;
+
+	if(this.prop.yscale === "date"){
+	    this.ydatemap = build_scale(this.prop.yscale,
+					this.prop.ydomain, this.prop.ylim);
+	    this.y = function(y){return this.ydom(this.ydatemap.invert(y));}
 	}
 	
 	// Add axes and grids
@@ -568,11 +565,11 @@
 	    var start = this.xdom.domain();
 	    var end = this.prop.xdomain;
 	    var interp = d3.interpolate(
-		[this.xmap(start[0]), this.xmap(start[1])],
-		[this.xmap(end[0]), this.xmap(end[1])]);
+		[this.xdatemap(start[0]), this.xdatemap(start[1])],
+		[this.xdatemap(end[0]), this.xdatemap(end[1])]);
 	    ix = function(t){
-		return [this.xmap.invert(interp(t)[0]),
-			this.xmap.invert(interp(t)[1])];
+		return [this.xdatemap.invert(interp(t)[0]),
+			this.xdatemap.invert(interp(t)[1])];
 	    }.bind(this);
 	}else{
 	    ix = d3.interpolate(this.xdom.domain(), this.prop.xlim);
@@ -582,11 +579,11 @@
 	    var start = this.ydom.domain();
 	    var end = this.ydomain;
 	    var interp = d3.interpolate(
-		[this.ymap(start[0]), this.ymap(start[1])],
-		[this.ymap(end[0]), this.ymap(end[1])]);
+		[this.ydatemap(start[0]), this.ydatemap(start[1])],
+		[this.ydatemap(end[0]), this.ydatemap(end[1])]);
 	    iy = function(t){
-		return [this.ymap.invert(interp(t)[0]),
-			this.ymap.invert(interp(t)[1])];
+		return [this.ydatemap.invert(interp(t)[0]),
+			this.ydatemap.invert(interp(t)[1])];
 	    }.bind(this);
 	}else{
 	    iy = d3.interpolate(this.ydom.domain(), this.prop.ylim);
