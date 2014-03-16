@@ -167,13 +167,17 @@
 	mpld3.insert_css("div#"+this.fig.figid+" .mpld3-toolbar image.pressed",
 			 {opacity: 0.6})
 
-	/*this.fig.canvas
-	    .on("mouseenter", function(){this.buttonsobj
-					 .transition(750)
-					 .attr("y", 0);}.bind(this))
-	    .on("mouseleave", function(){this.buttonsobj
-					 .transition(750).delay(250)
-					 .attr("y",16);}.bind(this))*/
+	function showButtons(){this.buttonsobj.transition(750).attr("y", 0);}
+	function hideButtons(){this.buttonsobj.transition(750)
+			       .delay(250).attr("y",16);}
+
+	// buttons will be shown and hidden on mouse movements.
+	// if a touch device is used, the buttons will be permanently shown.
+	this.fig.canvas
+	    .on("mouseenter", showButtons.bind(this))
+	    .on("mouseleave", hideButtons.bind(this))
+	    .on("touchenter", showButtons.bind(this))
+	    .on("touchstart", showButtons.bind(this));
 
 	this.toolbar = this.fig.canvas.append("svg:svg")
 	    .attr("width", 16 * this.buttons.length)
@@ -190,7 +194,7 @@
 	    .attr("width", 16)
 	    .attr("height", 16)
 	    .attr("x", function(d, i){return i * 16;})
-	    .attr("y", 0)
+	    .attr("y", 16)
 	    .on("click", function(d){d.onClick();})
             .on("mouseenter", function(){d3.select(this).classed({active:1})})
             .on("mouseleave", function(){d3.select(this).classed({active:0})})
