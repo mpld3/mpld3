@@ -551,48 +551,31 @@
             this.elements[i].zoomed();
 	}
     };
-    
+
     mpld3.Axes.prototype.reset = function(duration, propagate){
+	this.set_axlim(this.prop.xdomain, this.prop.ydomain,
+		       duration, propagate);
+    };
+
+    mpld3.Axes.prototype.set_axlim = function(xlim, ylim,
+					      duration, propagate){
+	xlim = (typeof xlim !== 'undefined') ? xlim : this.xdom.domain();
+	ylim = (typeof ylim !== 'undefined') ? ylim : this.xdom.domain();
 	duration = (typeof duration !== 'undefined') ? duration : 750;
 
-	// set up the reset operation
-	// interpolate() does not work on dates, so we map dates to numbers,
-	// interpolate the numbers, and then invert the map.
-	// There probably is a cleaner approach...
-	var ix, iy;
+	// Create a transition function which will interpolate
+	// from the current axes limits to the final limits
+	var interpX = (this.prop.xscale === 'date') ?
+	    mpld3.interpolateDates(this.xdom.domain(), xlim) :
+	    d3.interpolate(this.xdom.domain(), xlim);
 
-	if (this.prop.xscale === 'date'){
-	    var start = this.xdom.domain();
-	    var end = this.prop.xdomain;
-	    var interp = d3.interpolate(
-		[this.xdatemap(start[0]), this.xdatemap(start[1])],
-		[this.xdatemap(end[0]), this.xdatemap(end[1])]);
-	    ix = function(t){
-		return [this.xdatemap.invert(interp(t)[0]),
-			this.xdatemap.invert(interp(t)[1])];
-	    }.bind(this);
-	}else{
-	    ix = d3.interpolate(this.xdom.domain(), this.prop.xlim);
-	}
-	
-	if (this.prop.yscale === 'date'){
-	    var start = this.ydom.domain();
-	    var end = this.ydomain;
-	    var interp = d3.interpolate(
-		[this.ydatemap(start[0]), this.ydatemap(start[1])],
-		[this.ydatemap(end[0]), this.ydatemap(end[1])]);
-	    iy = function(t){
-		return [this.ydatemap.invert(interp(t)[0]),
-			this.ydatemap.invert(interp(t)[1])];
-	    }.bind(this);
-	}else{
-	    iy = d3.interpolate(this.ydom.domain(), this.prop.ylim);
-	}
+	var interpY = (this.prop.yscale === 'date') ?
+	    mpld3.interpolateDates(this.ydom.domain(), ylim) :
+	    d3.interpolate(this.ydom.domain(), ylim);
 
-	// now set up the transition
 	var transition = function(t) {
-	    this.zoom_x.x(this.xdom.domain(ix(t)));
-	    this.zoom_y.y(this.ydom.domain(iy(t)));
+	    this.zoom_x.x(this.xdom.domain(interpX(t)));
+	    this.zoom_y.y(this.ydom.domain(interpY(t)));
 	    this.zoomed(propagate);
 	}.bind(this);
 
@@ -1357,6 +1340,16 @@
 	}
 	head.appendChild(style);
     };
+
+    mpld3.interpolateDates = mpld3_interpolateDates;
+    function mpld3_interpolateDates(a, b){
+	var interp = d3.interpolate([a[0].valueOf(), a[1].valueOf()],
+				    [b[0].valueOf(), b[1].valueOf()])
+	return function(t){
+	    var i = interp(t);
+	    return [new Date(i[0]), new Date(i[1])];
+	}
+    }
     
     
     function mpld3_functor(v) {
