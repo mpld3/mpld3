@@ -107,8 +107,6 @@
 	    this.axes[i].enable_zoom();
 	}
 	this.zoom_on = true;
-	this.root.selectAll(".mpld3-movebutton")
-	    .classed({pressed: true});
     };
     
     mpld3.Figure.prototype.disable_zoom = function(){
@@ -116,8 +114,6 @@
 	    this.axes[i].disable_zoom();
 	}
 	this.zoom_on = false;
-	this.root.selectAll(".mpld3-movebutton")
-	    .classed({pressed: false});
     };
     
     mpld3.Figure.prototype.toggle_zoom = function(){
@@ -195,19 +191,24 @@
 	    .attr("height", 16)
 	    .attr("x", function(d, i){return i * 16;})
 	    .attr("y", 16)
-	    .on("click", function(d){d.onClick();})
+	    .on("click", function(d){d.click();})
             .on("mouseenter", function(){d3.select(this).classed({active:1})})
-            .on("mouseleave", function(){d3.select(this).classed({active:0})})
-            .on("mousedown", function(){d3.select(this).classed({pressed:1})})
-            .on("mouseup", function(){d3.select(this).classed({pressed:0})});
+            .on("mouseleave", function(){d3.select(this).classed({active:0})});
 
 	for(var i=0; i<this.buttons.length; i++)
-	    this.buttons[i].post_draw();
+	    this.buttons[i].onDraw();
     };
 
     mpld3.Toolbar.prototype.deactivate_all = function(){
-	for(var i=0; i<this.buttons.length; i++){
-	    this.buttons[i].deactivate();
+	this.buttons.forEach(function(b){b.deactivate();});
+    };
+
+    mpld3.Toolbar.prototype.deactivate_by_action = function(actions){
+	function filt(e){return actions.indexOf(e) !== -1;}
+	if(actions.length > 0){
+	    this.buttons.forEach(function(button){
+		if(button.actions.filter(filt).length > 0) button.deactivate();
+	    });
 	}
     };
 
@@ -216,16 +217,38 @@
 
 
     /* Toolbar Button Object: */
-    mpld3.BaseButton = function(toolbar, cssclass){
+    mpld3.BaseButton = function(toolbar, key){
 	this.toolbar = toolbar;
-	this.cssclass = cssclass;
+	this.cssclass = "mpld3-" + key + "button";
+	this.active = false;
     };
-    mpld3.BaseButton.prototype.toolbarKey = "";
-    mpld3.BaseButton.prototype.activate = function(){};
-    mpld3.BaseButton.prototype.deactivate = function(){};
-    mpld3.BaseButton.prototype.onClick = function(){};
+
+    mpld3.BaseButton.prototype.click = function(){
+	this.active ? this.deactivate() : this.activate();
+    };
+
+    mpld3.BaseButton.prototype.activate = function(){
+	this.toolbar.deactivate_by_action(this.actions);
+	this.onActivate();
+	this.active = true;
+	this.toolbar.toolbar.select('.' + this.cssclass)
+	    .classed({pressed: true});
+	if(!this.sticky)
+	    this.deactivate();
+    };
+
+    mpld3.BaseButton.prototype.deactivate = function(){
+	this.onDeactivate();
+	this.active = false;
+	this.toolbar.toolbar.select('.' + this.cssclass)
+	    .classed({pressed: false});
+    }
+    mpld3.BaseButton.prototype.sticky = false;
+    mpld3.BaseButton.prototype.actions = [];
     mpld3.BaseButton.prototype.icon = function(){return "";}
-    mpld3.BaseButton.prototype.post_draw = function(){};
+    mpld3.BaseButton.prototype.onActivate = function(){};
+    mpld3.BaseButton.prototype.onDeactivate = function(){};
+    mpld3.BaseButton.prototype.onDraw = function(){};
 
     /* Factory for button classes */
     mpld3.ButtonFactory = function(members){
@@ -241,17 +264,19 @@
     /* Reset Button */
     mpld3.ResetButton = mpld3.ButtonFactory({
 	toolbarKey: "reset",
-	onClick: function(){this.toolbar.fig.reset();},
+	sticky: false,
+	onActivate: function(){this.toolbar.fig.reset();},
 	icon: function(){return mpld3.icons["reset"];}
     });
 
     /* Move Button */
     mpld3.MoveButton = mpld3.ButtonFactory({
 	toolbarKey: "move",
-	onClick: function(){this.toolbar.fig.toggle_zoom();},
-	activate: function(){this.toolbar.fig.enable_zoom();},
-	deactivate: function(){this.toolbar.fig.disable_zoom();},
-	post_draw: function(){this.toolbar.fig.disable_zoom();},
+	sticky: true,
+	actions: ["scroll", "drag"],
+	onActivate: function(){this.toolbar.fig.enable_zoom();},
+	onDeactivate: function(){this.toolbar.fig.disable_zoom();},
+	onDraw: function(){this.toolbar.fig.disable_zoom();},
 	icon: function(){return mpld3.icons["move"];}
     });
 
