@@ -23,8 +23,8 @@ the JSON description readable by mpld3.js.
 
 Installation
 ------------
-mpld3 requires [jinja2](http://jinja.pocoo.org/) version 2.7+
-and [matplotlib](http://matplotlib.org) version 1.3+.
+mpld3 requires [matplotlib](http://matplotlib.org) version 1.3+ and
+[jinja2](http://jinja.pocoo.org/) version 2.7+.
 
 Optionally, mpld3 can be used with [IPython](http://ipython.org), and requires
 version 1.1+.
@@ -36,17 +36,24 @@ with the source distribution via git submodule.
 Within the git source directory, you can download the mplexporter dependency
 and copy it into the mpld3 source directory using the following command:
 
-    [~]$ make build
+    [~]$ python setup.py submodule
 
-To install the package via setup.py, type 
+The submodule command is not necessary if you are installing from a distribution
+rather than from the git source.
 
-    [~]$ make install
+Once the submodule command has been run, you can build the package locally using
 
-Or, to install locally, after running ``make build`` use
+    [~]$ python setup.py build
+
+or install the package to the standard Python path using:
+
+    [~]$ python setup.py install
+
+Or, to install to another location, use
 
     [~]$ python setup.py install --prefix=/path/to/location/
 
-Then make sure your Python path points to this location.
+Then make sure your PYTHONPATH environment variable points to this location.
 
 Trying it out
 -------------

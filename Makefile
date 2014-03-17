@@ -4,12 +4,10 @@ all: build
 sync_current : mplexporter
 	rsync -r mplexporter/mplexporter mpld3/
 
-sync_submodule : mplexporter
-	git submodule init
-	git submodule update
-	rsync -r mplexporter/mplexporter mpld3/
+submodule : mplexporter
+	python setup.py submodule
 
-build : sync_submodule
+build : submodule
 	python setup.py build
 
 inplace : build

@@ -12,7 +12,7 @@
 
 !(function(d3){
     var mpld3 = {
-	version: "0.1",
+	version: "0.2git",
 	figures: [],
 	plugin_map: {},
 	register_plugin: function(name, obj){mpld3.plugin_map[name] = obj;}
@@ -99,27 +99,7 @@
     };
     
     mpld3.Figure.prototype.reset = function(duration){
-	duration = (typeof duration !== 'undefined') ? duration : 750;
-	for (var i=0; i<this.axes.length; i++){
-	    this.axes[i].prep_reset();
-	}
-	
-	var transition = function(t){
-	    for (var i=0; i<this.axes.length; i++){
-		this.axes[i].xdom(this.axes[i].xdom.domain(this.axes[i].ix(t)));
-		this.axes[i].ydom(this.axes[i].ydom.domain(this.axes[i].iy(t)));
-		
-		// don't propagate: this will be done as part of the loop.
-		this.axes[i].zoomed(false);
-	    }
-	}.bind(this)
-	
-	d3.transition().duration(duration)
-            .tween("zoom", function(){return transition;});
-	
-	for (var i=0; i<this.axes.length; i++){
-	    this.axes[i].finalize_reset();
-	}
+	this.axes.forEach(function(ax){ax.reset(duration, false);});
     };
     
     mpld3.Figure.prototype.enable_zoom = function(){
@@ -127,6 +107,8 @@
 	    this.axes[i].enable_zoom();
 	}
 	this.zoom_on = true;
+	this.root.selectAll(".mpld3-movebutton")
+	    .classed({pressed: true});
     };
     
     mpld3.Figure.prototype.disable_zoom = function(){
@@ -134,6 +116,8 @@
 	    this.axes[i].disable_zoom();
 	}
 	this.zoom_on = false;
+	this.root.selectAll(".mpld3-movebutton")
+	    .classed({pressed: false});
     };
     
     mpld3.Figure.prototype.toggle_zoom = function(){
@@ -174,30 +158,51 @@
     };
     
     mpld3.Toolbar.prototype.draw = function(){
-	this.toolbar = this.fig.root.append("div")
-	    .attr("class", "mpld3-toolbar")
-            .style("position", "absolute") // relative to parent div
-            .style("bottom", "0px")
-            .style("left", "0px");
-
-	mpld3.insert_css("div#"+this.fig.figid + " .mpld3-toolbar img",
-			 {width: "16px", height: "16px",
-			  cursor: "pointer", opacity: 0.2,
+	mpld3.insert_css("div#"+this.fig.figid+" .mpld3-toolbar image",
+			 {cursor: "pointer", opacity: 0.2,
 			  display: "inline-block",
 			  margin: "0px"})
-	mpld3.insert_css("div#"+this.fig.figid + " .mpld3-toolbar img.active",
+	mpld3.insert_css("div#"+this.fig.figid+" .mpld3-toolbar image.active",
 			 {opacity: 0.4})
-	mpld3.insert_css("div#"+this.fig.figid + " .mpld3-toolbar img.pressed",
+	mpld3.insert_css("div#"+this.fig.figid+" .mpld3-toolbar image.pressed",
 			 {opacity: 0.6})
 
-	for(var i=0; i<this.buttons.length; i++){
-	    this.buttons[i].draw();
-	}
-	this.toolbar.selectAll("img")
-           .on("mouseenter", function(){d3.select(this).classed({active:1})})
-           .on("mouseleave", function(){d3.select(this).classed({active:0})})
-           .on("mousedown", function(){d3.select(this).classed({pressed:1})})
-           .on("mouseup", function(){d3.select(this).classed({pressed:0})});
+	function showButtons(){this.buttonsobj.transition(750).attr("y", 0);}
+	function hideButtons(){this.buttonsobj.transition(750)
+			       .delay(250).attr("y",16);}
+
+	// buttons will be shown and hidden on mouse movements.
+	// if a touch device is used, the buttons will be permanently shown.
+	this.fig.canvas
+	    .on("mouseenter", showButtons.bind(this))
+	    .on("mouseleave", hideButtons.bind(this))
+	    .on("touchenter", showButtons.bind(this))
+	    .on("touchstart", showButtons.bind(this));
+
+	this.toolbar = this.fig.canvas.append("svg:svg")
+	    .attr("width", 16 * this.buttons.length)
+	    .attr("height", 16)
+	    .attr("x", 2)
+	    .attr("y", this.fig.height - 16 - 2)
+	    .attr("class", "mpld3-toolbar");
+	
+	this.buttonsobj = this.toolbar.append("svg:g").selectAll("buttons")
+	    .data(this.buttons)
+	    .enter().append("svg:image")
+	    .attr("class", function(d){return d.cssclass;})
+	    .attr("xlink:href", function(d){return d.icon();})
+	    .attr("width", 16)
+	    .attr("height", 16)
+	    .attr("x", function(d, i){return i * 16;})
+	    .attr("y", 16)
+	    .on("click", function(d){d.onClick();})
+            .on("mouseenter", function(){d3.select(this).classed({active:1})})
+            .on("mouseleave", function(){d3.select(this).classed({active:0})})
+            .on("mousedown", function(){d3.select(this).classed({pressed:1})})
+            .on("mouseup", function(){d3.select(this).classed({pressed:0})});
+
+	for(var i=0; i<this.buttons.length; i++)
+	    this.buttons[i].post_draw();
     };
 
     mpld3.Toolbar.prototype.deactivate_all = function(){
@@ -206,61 +211,49 @@
 	}
     };
 
+    // This will be filled by the ButtonFactory function
+    mpld3.Toolbar.prototype.buttonDict = {};
+
 
     /* Toolbar Button Object: */
-    mpld3.BaseButton = function(toolbar, cssclass, icon){
+    mpld3.BaseButton = function(toolbar, cssclass){
 	this.toolbar = toolbar;
 	this.cssclass = cssclass;
     };
-    mpld3.BaseButton.prototype.draw = function(){
-	return this.toolbar.toolbar.append("img")
-	    .attr("class", this.cssclass)
-	    .attr("src", this.icon)
-	    .on("click", this.onClick.bind(this));
-    };
+    mpld3.BaseButton.prototype.toolbarKey = "";
+    mpld3.BaseButton.prototype.activate = function(){};
     mpld3.BaseButton.prototype.deactivate = function(){};
     mpld3.BaseButton.prototype.onClick = function(){};
-    mpld3.BaseButton.prototype.icon = "";
+    mpld3.BaseButton.prototype.icon = function(){return "";}
+    mpld3.BaseButton.prototype.post_draw = function(){};
 
     /* Factory for button classes */
     mpld3.ButtonFactory = function(members){
-	var F = function(){mpld3.BaseButton.apply(this, arguments);};
-	F.prototype = new mpld3.BaseButton();
-	F.prototype.constructor = F;
+	var B = function(){mpld3.BaseButton.apply(this, arguments);};
+	B.prototype = new mpld3.BaseButton();
+	B.prototype.constructor = B;
 	for(key in members)
-	    F.prototype[key] = members[key];
-	return F;
+	    B.prototype[key] = members[key];
+	mpld3.Toolbar.prototype.buttonDict[members.toolbarKey] = B;
+	return B;
     }
 
     /* Reset Button */
     mpld3.ResetButton = mpld3.ButtonFactory({
+	toolbarKey: "reset",
 	onClick: function(){this.toolbar.fig.reset();},
 	icon: function(){return mpld3.icons["reset"];}
     });
 
     /* Move Button */
     mpld3.MoveButton = mpld3.ButtonFactory({
-	onClick: function(){
-	    this.toolbar.fig.toggle_zoom();
-	    this.toolbar.toolbar.selectAll(".mpld3-movebutton")
-		.classed({pressed: this.toolbar.fig.zoom_on,
-			  active: !this.toolbar.fig.zoom_on});},
-	draw: function(){
-	    mpld3.BaseButton.prototype.draw.apply(this);
-	    this.toolbar.fig.disable_zoom();},
-	deactivate: function(){
-	    this.toolbar.fig.disable_zoom();
-	    this.toolbar.toolbar.selectAll(".mpld3-movebutton")
-		.classed({pressed: this.toolbar.fig.zoom_on,
-			  active: false});},
+	toolbarKey: "move",
+	onClick: function(){this.toolbar.fig.toggle_zoom();},
+	activate: function(){this.toolbar.fig.enable_zoom();},
+	deactivate: function(){this.toolbar.fig.disable_zoom();},
+	post_draw: function(){this.toolbar.fig.disable_zoom();},
 	icon: function(){return mpld3.icons["move"];}
     });
-    
-    /* Set up the mapping of button types and icons */
-    /* Icons come from the mpld3/icons/ directory   */
-    mpld3.Toolbar.prototype.buttonDict = {move: mpld3.MoveButton,
-					  reset: mpld3.ResetButton};
-
 
     /* Coordinates Object: */
     /* Converts from the given units to axes (pixel) units */
@@ -345,59 +338,56 @@
 			 (1 - bbox[1] - bbox[3]) * this.fig.height];
 	this.width = bbox[2] * this.fig.width;
 	this.height = bbox[3] * this.fig.height;
-	
+
+	// In the case of date scales, set the domain
 	function buildDate(d){return new Date(d[0],d[1],d[2],d[3],d[4],d[5]);}
-	
-	if(this.prop.xscale === 'log'){
-	    this.xdom = d3.scale.log();
-	}else if(this.prop.xscale === 'date'){
-	    this.prop.xdomain = [buildDate(this.prop.xdomain[0]),
-				 buildDate(this.prop.xdomain[1])];
-	    this.xdom = d3.time.scale();
-	}else{
-	    this.xdom = d3.scale.linear();
+	function setDomain(scale, domain){
+	    return (scale !== "date") ? domain : [buildDate(domain[0]),
+						  buildDate(domain[1])];
 	}
+
+	this.prop.xdomain = setDomain(this.prop.xscale, this.prop.xdomain);
+	this.prop.ydomain = setDomain(this.prop.yscale, this.prop.ydomain);
+
+	/*****************************************************************
+	  There are 3 different scales which come into play with axes.
+           - screen pixel scale
+           - data range
+           - data domain
+	  The data range and domain are only different in the case of
+	  date axes.  For log or linear axes, these are identical.
 	
-	if(this.prop.yscale === 'log'){
-	    this.ydom = d3.scale.log();
-	}else if(this.prop.yscale === 'date'){
-	    this.prop.ydomain = [buildDate(this.prop.ydomain[0]),
-				 buildDate(this.prop.ydomain[1])];
-	    this.ydom = d3.time.scale();
-	}else{
-	    this.ydom = d3.scale.linear();
+	  To convert between these, we have the following mappings:
+	   - [x,y]dom     : map from domain to screen
+	   - [x,y]        : map from range to screen
+	   - [x,y]datemap : map from domain to range (used only for dates)
+	  Here we'll construct these mappings.
+	*****************************************************************/
+
+	function build_scale(scale, domain, range){
+	    var dom = (scale === 'date') ? d3.time.scale() :
+		(scale === 'log') ? d3.scale.log() : d3.scale.linear();
+	    return dom.domain(domain).range(range);
 	}
-	
-	this.xdom.domain(this.prop.xdomain)
-            .range([0, this.width]);
-	
-	this.ydom.domain(this.prop.ydomain)
-            .range([this.height, 0]);
-	
-	if(this.prop.xscale === 'date'){
-	    this.xmap = d3.time.scale()
-		.domain(this.prop.xdomain)
-		.range(this.prop.xlim);
-	    this.x = function(x){return this.xdom(this.xmap.invert(x));}
-	}else if(this.prop.xscale === 'log'){
-	    this.xmap = this.xdom;
-	    this.x = this.xdom;
-	}else{
-	    this.xmap = this.xdom;
-	    this.x = this.xdom;
+
+	this.x = this.xdom = build_scale(this.prop.xscale,
+					 this.prop.xdomain,
+					 [0, this.width]);
+
+	this.y = this.ydom = build_scale(this.prop.yscale,
+					 this.prop.ydomain,
+					 [this.height, 0]);
+
+	if(this.prop.xscale === "date"){
+	    this.xdatemap = build_scale(this.prop.xscale,
+					this.prop.xdomain, this.prop.xlim);
+	    this.x = function(x){return this.xdom(this.xdatemap.invert(x));}
 	}
-	
-	if(this.prop.yscale === 'date'){
-	    this.ymap = d3.time.scale()
-		.domain(this.ydomain)
-		.range(this.prop.ylim);
-	    this.y = function(y){return this.ydom(this.ymap.invert(y));}
-	}else if(this.prop.yscale === 'log'){
-	    this.ymap = this.ydom;
-	    this.y = this.ydom;
-	}else{
-	    this.ymap = this.ydom;
-	    this.y = this.ydom;
+
+	if(this.prop.yscale === "date"){
+	    this.ydatemap = build_scale(this.prop.yscale,
+					this.prop.ydomain, this.prop.ylim);
+	    this.y = function(y){return this.ydom(this.ydatemap.invert(y));}
 	}
 	
 	// Add axes and grids
@@ -506,7 +496,7 @@
     
     mpld3.Axes.prototype.enable_zoom = function(){
 	if(this.prop.zoomable){
-	    this.zoom.on("zoom", this.zoomed.bind(this));
+	    this.zoom.on("zoom", this.zoomed.bind(this, true));
 	    this.axes.call(this.zoom);
 	    this.axes.style("cursor", 'move');
 	}
@@ -532,93 +522,81 @@
             var dt1 = this.zoom.translate()[1] - this.zoom.last_t[1];
             var ds = this.zoom.scale() / this.zoom.last_s;
 	    
-            this.zoom_x.translate([this.zoom_x.translate()[0]+dt0, 0]);
+            this.zoom_x.translate([this.zoom_x.translate()[0] + dt0, 0]);
             this.zoom_x.scale(this.zoom_x.scale() * ds)
 	    
-            this.zoom_y.translate([0, this.zoom_y.translate()[1]+dt1]);
+            this.zoom_y.translate([0, this.zoom_y.translate()[1] + dt1]);
             this.zoom_y.scale(this.zoom_y.scale() * ds)
 	    
             // update last translate and scale values for future use
             this.zoom.last_t = this.zoom.translate();
             this.zoom.last_s = this.zoom.scale();
-	    
-            // update shared axeses
-            for(var i=0; i<this.sharex.length; i++){
-		this.sharex[i].zoom_x.translate(this.zoom_x.translate());
-		this.sharex[i].zoom_x.scale(this.zoom_x.scale());
-            }
-            for(var i=0; i<this.sharey.length; i++){
-		this.sharey[i].zoom_y.translate(this.zoom_y.translate());
-		this.sharey[i].zoom_y.scale(this.zoom_y.scale());
-            }
+
+            // update shared axes objects
+	    this.sharex.forEach(function(ax){
+		ax.zoom_x.translate(this.zoom_x.translate())
+		    .scale(this.zoom_x.scale());}.bind(this));
+	    this.sharey.forEach(function(ax){
+		ax.zoom_y.translate(this.zoom_y.translate())
+		    .scale(this.zoom_y.scale());}.bind(this));
 	    
             // render updates
-            for(var i=0; i<this.sharex.length; i++){
-		this.sharex[i].zoomed(false);
-            }
-            for(var i=0; i<this.sharey.length; i++){
-		this.sharey[i].zoomed(false);
-            }
+	    this.sharex.forEach(function(ax){ax.zoomed(false);});
+	    this.sharey.forEach(function(ax){ax.zoomed(false);});
 	}
 	
 	for(var i=0; i<this.elements.length; i++){
             this.elements[i].zoomed();
 	}
     };
-    
-    mpld3.Axes.prototype.prep_reset = function(){
-	// interpolate() does not work on dates, so we map dates to numbers,
-	// interpolate the numbers, and then invert the map.
-	// we use the same strategy for log for smooth interpolation
-	// There probably is a cleaner approach...
-	
-	if (this.prop.xscale === 'date'){
-	    var start = this.xdom.domain();
-	    var end = this.prop.xdomain;
-	    var interp = d3.interpolate(
-		[this.xmap(start[0]), this.xmap(start[1])],
-		[this.xmap(end[0]), this.xmap(end[1])]);
-	    this.ix = function(t){
-		return [this.xmap.invert(interp(t)[0]),
-			this.xmap.invert(interp(t)[1])];
-	    }
-	}else{
-	    this.ix = d3.interpolate(this.xdom.domain(), this.prop.xlim);
+
+    mpld3.Axes.prototype.reset = function(duration, propagate){
+	this.set_axlim(this.prop.xdomain, this.prop.ydomain,
+		       duration, propagate);
+    };
+
+    mpld3.Axes.prototype.set_axlim = function(xlim, ylim,
+					      duration, propagate){
+	xlim = isUndefinedOrNull(xlim) ? this.xdom.domain() : xlim;
+	ylim = isUndefinedOrNull(ylim) ? this.ydom.domain() : ylim;
+	duration = isUndefinedOrNull(duration) ? 750 : duration;
+	propagate = isUndefined(propagate) ? true : propagate;
+
+	// Create a transition function which will interpolate
+	// from the current axes limits to the final limits
+	var interpX = (this.prop.xscale === 'date') ?
+	    mpld3.interpolateDates(this.xdom.domain(), xlim) :
+	    d3.interpolate(this.xdom.domain(), xlim);
+
+	var interpY = (this.prop.yscale === 'date') ?
+	    mpld3.interpolateDates(this.ydom.domain(), ylim) :
+	    d3.interpolate(this.ydom.domain(), ylim);
+
+	var transition = function(t) {
+	    this.zoom_x.x(this.xdom.domain(interpX(t)));
+	    this.zoom_y.y(this.ydom.domain(interpY(t)));
+	    this.zoomed(false); // don't propagate here; propagate below.
+	}.bind(this);
+
+	// select({}) is a trick to make transitions run concurrently
+	d3.select({})
+	    .transition().duration(duration)
+	    .tween("zoom", function(){return transition;});
+
+	// propagate axis limits to shared axes
+	if(propagate){
+	    this.sharex.forEach(function(ax){
+		ax.set_axlim(xlim, null, duration, false);});
+	    this.sharey.forEach(function(ax){
+		ax.set_axlim(null, ylim, duration, false);});
 	}
-	
-	if (this.prop.yscale === 'date'){
-	    var start = this.ydom.domain();
-	    var end = this.ydomain;
-	    var interp = d3.interpolate(
-		[this.ymap(start[0]), this.ymap(start[1])],
-		[this.ymap(end[0]), this.ymap(end[1])]);
-	    this.iy = function(t){
-		return [this.ymap.invert(interp(t)[0]),
-			this.ymap.invert(interp(t)[1])];
-	    }
-	}else{
-	    this.iy = d3.interpolate(this.ydom.domain(), this.prop.ylim);
-	}
-    }
-    
-    mpld3.Axes.prototype.finalize_reset = function(){
+
+	// finalize the reset operation.
 	this.zoom.scale(1).translate([0, 0]);
 	this.zoom.last_t = this.zoom.translate();
 	this.zoom.last_s = this.zoom.scale();
 	this.zoom_x.scale(1).translate([0, 0]);
 	this.zoom_y.scale(1).translate([0, 0]);
-    }
-    
-    mpld3.Axes.prototype.reset = function(){
-	this.prep_reset();
-	d3.transition().duration(750).tween("zoom", function() {
-	    return function(t) {
-		this.zoom_x.x(this.xdom.domain(this.ix(t)));
-		this.zoom_y.y(this.ydom.domain(this.iy(t)));
-		this.zoomed();
-	    };
-	});
-	this.finalize_reset();
     };
     
     
@@ -1369,6 +1347,16 @@
 	}
 	head.appendChild(style);
     };
+
+    mpld3.interpolateDates = mpld3_interpolateDates;
+    function mpld3_interpolateDates(a, b){
+	var interp = d3.interpolate([a[0].valueOf(), a[1].valueOf()],
+				    [b[0].valueOf(), b[1].valueOf()])
+	return function(t){
+	    var i = interp(t);
+	    return [new Date(i[0]), new Date(i[1])];
+	}
+    }
     
     
     function mpld3_functor(v) {
@@ -1376,6 +1364,10 @@
 	    return v;
 	};
     }
+
+    function isUndefined(x){return (typeof(x) === "undefined");}
+
+    function isUndefinedOrNull(x){return (x == null || isUndefined(x));}
     
     function mpld3_path(_){
 	var x = function(d){return d[0];}
