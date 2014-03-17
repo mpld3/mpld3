@@ -172,7 +172,7 @@
 			       .delay(250).attr("y",16);}
 
 	// buttons will be shown and hidden on mouse movements.
-	// if a touch device is used, the buttons will be permanently shown.
+	// (the buttons will be also be shown on touch events.)
 	this.fig.canvas
 	    .on("mouseenter", showButtons.bind(this))
 	    .on("mouseleave", hideButtons.bind(this))
