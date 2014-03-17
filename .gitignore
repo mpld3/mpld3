@@ -43,8 +43,8 @@ nosetests.xml
 .ipynb_checkpoints
 
 # temporary files
+test_plots/*.png
 *.html
-*.png
 
 # documentation
 doc/_build
