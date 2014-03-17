@@ -146,9 +146,7 @@
 	    if(typeof(Button) === "undefined"){
 		console.warn("Button type " + this.prop[i] + " not recognized");
 	    }else{
-		this.buttons.push(new Button(this,
-					     "mpld3-"+this.prop[i]+"button",
-					     this.prop[i]));
+		this.buttons.push(new Button(this, this.prop[i]));
 	    }
 	}
     };

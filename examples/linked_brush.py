@@ -130,7 +130,6 @@ class LinkedBrush(plugins.PluginBase):
       }
    
       function brushend_clear(d){
-        console.log(this);
         d3.select(this).call(brush.clear());
       }
 
