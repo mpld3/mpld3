@@ -10,23 +10,25 @@ class BoxZoomPlugin(PluginBase):
     mpld3.BoxZoomPlugin = function(fig, prop){
 	this.fig = fig;
 	this.prop = mpld3.process_props(this, prop, {}, []);
+        this.actions = ["drag"];
 
 	// add a button to enable/disable box zoom
 	mpld3.ButtonFactory({
 	    toolbarKey: "boxzoom",
+            sticky: true,
+            actions: ["drag"],
+	    onActivate: this.activate.bind(this),
+	    onDeactivate: this.deactivate.bind(this),
+            onDraw: this.deactivate.bind(this),
 	    icon: function(){return mpld3.icons["zoom"];},
-	    onClick: this.onClick.bind(this),
-	    activate: this.activate.bind(this),
-	    deactivate: this.deactivate.bind(this),
-	    post_draw: this.post_draw.bind(this),
 	});
 	this.fig.prop.toolbar.push("boxzoom");
     };
 
-    mpld3.BoxZoomPlugin.prototype.onClick = function(){this.toggle()};
-    mpld3.BoxZoomPlugin.prototype.activate = function(){this.enable()};
-    mpld3.BoxZoomPlugin.prototype.deactivate = function(){this.disable()};
-    mpld3.BoxZoomPlugin.prototype.post_draw = function(){this.disable()};
+    mpld3.BoxZoomPlugin.prototype.activate = function(){
+         if(this.enable) this.enable();};
+    mpld3.BoxZoomPlugin.prototype.deactivate = function(){
+         if(this.disable) this.disable();};
 
     mpld3.BoxZoomPlugin.prototype.draw = function(){
 	mpld3.insert_css("#" + this.fig.figid + " rect.extent",
@@ -36,8 +38,8 @@ class BoxZoomPlugin(PluginBase):
 
 	var brush = d3.svg.brush()
 	    .x(this.fig.axes[0].x)
-	    .y(this.fig.axes[0].y)
-	    .on("brushend", brushend.bind(this));
+            .y(this.fig.axes[0].y)
+            .on("brushend", brushend.bind(this));
 
 	this.fig.root.selectAll(".mpld3-axes")
 	    .data(this.fig.axes)
@@ -49,9 +51,6 @@ class BoxZoomPlugin(PluginBase):
 		.style("cursor", "crosshair");
             this.fig.canvas.selectAll("rect.extent, rect.resize")
 		.style("display", null);
-	    this.fig.canvas.selectAll(".mpld3-boxzoombutton")
-		.classed({pressed: true});
-	    this.fig.disable_zoom();
             this.enabled = true;
 	}
 	
@@ -61,8 +60,6 @@ class BoxZoomPlugin(PluginBase):
 		.style("cursor", null);
             this.fig.canvas.selectAll("rect.extent, rect.resize")
 		.style("display", "none");
-	    this.fig.canvas.selectAll(".mpld3-boxzoombutton")
-		.classed({pressed: false});
             this.enabled = false;
 	}
 
@@ -79,7 +76,6 @@ class BoxZoomPlugin(PluginBase):
 		var extent = brush.extent();
                 if(extent[0][0] != extent[1][0] &&
                    extent[0][1] != extent[1][1]){
-                    console.log(extent);
 		    d.set_axlim([extent[0][0], extent[1][0]],
 		        	[extent[0][1], extent[1][1]]);
                 }

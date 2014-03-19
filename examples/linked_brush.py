@@ -21,47 +21,32 @@ from mpld3 import plugins, utils
 
 class LinkedBrush(plugins.PluginBase):
     JAVASCRIPT = r"""
-    var LinkedBrushPlugin = function(fig, prop){
+    mpld3.LinkedBrushPlugin = function(fig, prop){
       this.fig = fig;
       this.prop = mpld3.process_props(this, prop, {}, ["id"]);
 
       var brush_plug = this;
 
-      mpld3.Toolbar.prototype.buttonDict["brush"] = mpld3.ButtonFactory({
-        onClick: this.onClick.bind(this),
-        draw: function(){
-            mpld3.BaseButton.prototype.draw.apply(this);
-            var enable_zoom = brush_plug.fig.enable_zoom.bind(brush_plug.fig);
-            var disable_brush = brush_plug.disable.bind(brush_plug);
-            brush_plug.fig.enable_zoom = function(){
-                   disable_brush();
-                   fig.toolbar.toolbar.selectAll(".mpld3-brushbutton")
-                       .classed({pressed: false,
-                                 active: false});
-                   enable_zoom();
-            };
-            this.onClick();  // enable the button
-        },
-        icon: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABmJLR0QA/wD/AP+gvaeTAAAACXBI\nWXMAAEQkAABEJAFAZ8RUAAAAB3RJTUUH3gMCEiQKB9YaAgAAAWtJREFUOMuN0r1qVVEQhuFn700k\nnfEvBq0iNiIiOKXgH4KCaBeIhWARK/EibLwFCwVLjyAWaQzRGG9grC3URkHUBKKgRuWohWvL5pjj\nyTSLxcz7rZlZHyMiItqzFxGTEVF18/UoODNFxDIO4x12dkXqTcBPsCUzD+AK3ndFqhHwEsYz82gn\nN4dbmMRK9R/4KY7jAvbiWmYeHBT5Z4QCP8J1rGAeN3GvU3Mbl/Gq3qCDcxjLzOV+v78fq/iFIxFx\nPyJ2lNJpfBy2g59YzMyzEbEVLzGBJjOriLiBq5gaJrCIU3hcRCbwAtuwjm/Yg/V6I9NgDA1OR8RC\nZq6Vcd7iUwtn5h8fdMBdETGPE+Xe4ExELDRNs4bX2NfCUHe+7UExyfkCP8MhzOA7PuAkvrbwXyNF\nxF3MDqxiqlhXC7SPdaOKiN14g0u4g3H0MvOiTUSNY3iemb0ywmfMdfYyUmAJ2yPiBx6Wr/oy2Oqw\n+A1SupBzAOuE/AAAAABJRU5ErkJggg==\n",
-       });
+      mpld3.ButtonFactory({
+          toolbarKey: "linkedbrush",
+          sticky: true,
+          actions: ["drag"],
+          onActivate: this.activate.bind(this),
+          onDeactivate: this.deactivate.bind(this),
+          onDraw: this.deactivate.bind(this),
+	  icon: function(){return mpld3.icons["brush"];},
+      });
+      this.fig.prop.toolbar.push("linkedbrush"); 
     }
 
-    LinkedBrushPlugin.prototype.onClick = function(){
-      if(this.enabled){
-        this.disable();
-      }else{
-        this.enable();
-        this.fig.disable_zoom();
-        this.fig.toolbar.toolbar.selectAll(".mpld3-movebutton")
-                   .classed({pressed: false,
-                             active: false});
-      }
-      this.fig.toolbar.toolbar.selectAll(".mpld3-brushbutton")
-                .classed({pressed: this.enabled,
-                          active: !this.enabled});
-    }
+    mpld3.LinkedBrushPlugin.prototype.activate = function(){
+         if(this.enable) this.enable();
+    };
+    mpld3.LinkedBrushPlugin.prototype.deactivate = function(){
+         if(this.disable) this.disable();
+    };
 
-    LinkedBrushPlugin.prototype.draw = function(){
+    mpld3.LinkedBrushPlugin.prototype.draw = function(){
       var obj = mpld3.get_element(this.prop.id);
       var fig = this.fig;
       var dataKey = ("offsets" in obj.prop) ? "offsets" : "data";
@@ -138,13 +123,13 @@ class LinkedBrush(plugins.PluginBase):
       }
 
       function brushend(d){
-        if (brush.empty()){
-            dataToBrush.selectAll("path")
-                       .classed("mpld3-hidden", false);
-        }
+         if (brush.empty()){
+             dataToBrush.selectAll("path")
+                        .classed("mpld3-hidden", false);
+         }
       }
-
-      function brushend_clear(){
+   
+      function brushend_clear(d){
         d3.select(this).call(brush.clear());
       }
 
@@ -162,8 +147,8 @@ class LinkedBrush(plugins.PluginBase):
       this.disable = function(){
         brush.on("brushstart", null)
              .on("brush", null)
-             .on("brushend", brushend_clear)
-             .clear();
+             .on("brushend", brushend_clear);
+        d3.select(currentData).call(brush.clear());
         this.fig.canvas.selectAll("rect.background")
               .style("cursor", null);
         this.fig.canvas.selectAll("rect.extent, rect.resize")
@@ -174,7 +159,9 @@ class LinkedBrush(plugins.PluginBase):
       this.disable();
     }
 
-    mpld3.register_plugin("linkedbrush", LinkedBrushPlugin);
+    mpld3.register_plugin("linkedbrush", mpld3.LinkedBrushPlugin);
+
+    mpld3.icons['brush'] = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABmJLR0QA/wD/AP+gvaeTAAAACXBI\nWXMAAEQkAABEJAFAZ8RUAAAAB3RJTUUH3gMCEiQKB9YaAgAAAWtJREFUOMuN0r1qVVEQhuFn700k\nnfEvBq0iNiIiOKXgH4KCaBeIhWARK/EibLwFCwVLjyAWaQzRGG9grC3URkHUBKKgRuWohWvL5pjj\nyTSLxcz7rZlZHyMiItqzFxGTEVF18/UoODNFxDIO4x12dkXqTcBPsCUzD+AK3ndFqhHwEsYz82gn\nN4dbmMRK9R/4KY7jAvbiWmYeHBT5Z4QCP8J1rGAeN3GvU3Mbl/Gq3qCDcxjLzOV+v78fq/iFIxFx\nPyJ2lNJpfBy2g59YzMyzEbEVLzGBJjOriLiBq5gaJrCIU3hcRCbwAtuwjm/Yg/V6I9NgDA1OR8RC\nZq6Vcd7iUwtn5h8fdMBdETGPE+Xe4ExELDRNs4bX2NfCUHe+7UExyfkCP8MhzOA7PuAkvrbwXyNF\nxF3MDqxiqlhXC7SPdaOKiN14g0u4g3H0MvOiTUSNY3iemb0ywmfMdfYyUmAJ2yPiBx6Wr/oy2Oqw\n+A1SupBzAOuE/AAAAABJRU5ErkJggg==\n";
     """
 
     def __init__(self, points):
@@ -185,8 +172,7 @@ class LinkedBrush(plugins.PluginBase):
 
         self.dict_ = {"type": "linkedbrush",
                       "clear_toolbar": False,
-                      "id": utils.get_id(points, suffix),
-                      "buttons": "brush"}
+                      "id": utils.get_id(points, suffix)}
 
 
 data = load_iris()
