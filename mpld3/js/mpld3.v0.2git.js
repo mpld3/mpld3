@@ -21,12 +21,13 @@
     /**********************************************************************/
     /* Base Object for Plot Elements */
     mpld3.PlotElement = mpld3_PlotElement;
-    function mpld3_PlotElement(parent, props, id){
+    function mpld3_PlotElement(parent, props){
 	this.parent = parent;
-	this.props = this.processProps(props, id);
+	if(typeof props !== "undefined")
+	    this.props = this.processProps(props);
 	this.fig = (parent instanceof mpld3_Figure) ? parent :
 	    (parent && "fig" in parent) ? parent.fig : null;
-	this.ax = (parent instanceof mpld3.Axes) ? parent :
+	this.ax = (parent instanceof mpld3_Axes) ? parent :
 	    (parent && "ax" in parent) ? parent.ax : null;
     }
     mpld3_PlotElement.prototype.requiredProps = [];
@@ -94,7 +95,8 @@
     mpld3.Figure = mpld3_Figure;
     mpld3_Figure.prototype = Object.create(mpld3_PlotElement.prototype);
     mpld3_Figure.prototype.constructor = mpld3_Figure;
-    mpld3_Figure.prototype.requiredProps = ["width", "height"];
+    mpld3_Figure.prototype.requiredProps = ["width",
+					    "height"];
     mpld3_Figure.prototype.defaultProps = {data:{},
 					   axes:[],
 					   plugins:[],
@@ -114,7 +116,7 @@
 	// Create all the axes elements in the figure
 	this.axes = [];
 	for(var i=0; i<this.props.axes.length; i++)
-	    this.axes.push(new mpld3.Axes(this, this.props.axes[i]));
+	    this.axes.push(new mpld3_Axes(this, this.props.axes[i]));
 	
 	// Connect the plugins to the figure
 	this.plugins = [];
@@ -122,14 +124,8 @@
 	    this.add_plugin(this.props.plugins[i]);
 
 	// Create the figure toolbar
-	this.toolbar = new mpld3.Toolbar(this, this.props.toolbar);
-    };
-
-    mpld3_Figure.prototype.requiredProps = ["width", "height"];
-    mpld3_Figure.prototype.defaultProps = {data:{},
-					   axes:[],
-					   plugins:[],
-					   toolbar:["reset", "move"]};
+	this.toolbar = new mpld3.Toolbar(this, {buttons:this.props.toolbar});
+    }
     
     mpld3_Figure.prototype.add_plugin = function(props){
 	var plug = props.type;
@@ -213,23 +209,30 @@
     }
     
     
-    /* Toolbar Object: */
-    mpld3.Toolbar = function(fig, prop){
-	this.name = "mpld3.Toolbar";
-	this.fig = fig;
-	this.prop = prop;
+    /**********************************************************************/
+    /* Toolbar object: */
+    mpld3.Toolbar = mpld3_Toolbar;
+    mpld3_Toolbar.prototype = Object.create(mpld3_PlotElement.prototype);
+    mpld3_Toolbar.prototype.constructor = mpld3_Toolbar;
+    mpld3_Toolbar.prototype.defaultProps = {buttons: ["reset", "move"]};
+    mpld3_Toolbar.prototype.buttonDict = {}; // to be filled by ButtonFactory
+
+    function mpld3_Toolbar(fig, props){
+	mpld3_PlotElement.call(this, fig, props)
 	this.buttons = [];
-	for(var i=0; i<this.prop.length; i++){
-	    var Button = this.buttonDict[this.prop[i]];
-	    if(typeof(Button) === "undefined"){
-		console.warn("Button type " + this.prop[i] + " not recognized");
-	    }else{
-		this.buttons.push(new Button(this, this.prop[i]));
-	    }
+	this.props.buttons.forEach(this.addButton.bind(this));
+    }
+
+    mpld3_Toolbar.prototype.addButton = function(key){
+	var Button = this.buttonDict[key];
+	if(typeof(Button) === "undefined"){
+	    console.warn("Skipping unrecognized Button type '" + key + "'.");
+	}else{
+	    this.buttons.push(new Button(this, key));
 	}
     };
     
-    mpld3.Toolbar.prototype.draw = function(){
+    mpld3_Toolbar.prototype.draw = function(){
 	mpld3.insert_css("div#"+this.fig.figid+" .mpld3-toolbar image",
 			 {cursor: "pointer", opacity: 0.2,
 			  display: "inline-block",
@@ -275,11 +278,11 @@
 	    this.buttons[i].onDraw();
     };
 
-    mpld3.Toolbar.prototype.deactivate_all = function(){
+    mpld3_Toolbar.prototype.deactivate_all = function(){
 	this.buttons.forEach(function(b){b.deactivate();});
     };
 
-    mpld3.Toolbar.prototype.deactivate_by_action = function(actions){
+    mpld3_Toolbar.prototype.deactivate_by_action = function(actions){
 	function filt(e){return actions.indexOf(e) !== -1;}
 	if(actions.length > 0){
 	    this.buttons.forEach(function(button){
@@ -288,22 +291,25 @@
 	}
     };
 
-    // This will be filled by the ButtonFactory function
-    mpld3.Toolbar.prototype.buttonDict = {};
+    
+    /**********************************************************************/
+    /* Button object: */
+    mpld3.Button = mpld3_Button;
+    mpld3_Button.prototype = Object.create(mpld3_PlotElement.prototype);
+    mpld3_Button.prototype.constructor = mpld3_Button;
 
-
-    /* Toolbar Button Object: */
-    mpld3.BaseButton = function(toolbar, key){
+    function mpld3_Button(toolbar, key){
+	mpld3_PlotElement.call(this, toolbar);
 	this.toolbar = toolbar;
 	this.cssclass = "mpld3-" + key + "button";
 	this.active = false;
-    };
+    }
 
-    mpld3.BaseButton.prototype.click = function(){
+    mpld3_Button.prototype.click = function(){
 	this.active ? this.deactivate() : this.activate();
     };
 
-    mpld3.BaseButton.prototype.activate = function(){
+    mpld3_Button.prototype.activate = function(){
 	this.toolbar.deactivate_by_action(this.actions);
 	this.onActivate();
 	this.active = true;
@@ -313,26 +319,25 @@
 	    this.deactivate();
     };
 
-    mpld3.BaseButton.prototype.deactivate = function(){
+    mpld3_Button.prototype.deactivate = function(){
 	this.onDeactivate();
 	this.active = false;
 	this.toolbar.toolbar.select('.' + this.cssclass)
 	    .classed({pressed: false});
     }
-    mpld3.BaseButton.prototype.sticky = false;
-    mpld3.BaseButton.prototype.actions = [];
-    mpld3.BaseButton.prototype.icon = function(){return "";}
-    mpld3.BaseButton.prototype.onActivate = function(){};
-    mpld3.BaseButton.prototype.onDeactivate = function(){};
-    mpld3.BaseButton.prototype.onDraw = function(){};
+    mpld3_Button.prototype.sticky = false;
+    mpld3_Button.prototype.actions = [];
+    mpld3_Button.prototype.icon = function(){return "";}
+    mpld3_Button.prototype.onActivate = function(){};
+    mpld3_Button.prototype.onDeactivate = function(){};
+    mpld3_Button.prototype.onDraw = function(){};
 
     /* Factory for button classes */
     mpld3.ButtonFactory = function(members){
-	var B = function(){mpld3.BaseButton.apply(this, arguments);};
-	B.prototype = new mpld3.BaseButton();
+	function B(toolbar, key){mpld3_Button.call(this, toolbar, key);};
+	B.prototype = Object.create(mpld3_Button.prototype);
 	B.prototype.constructor = B;
-	for(key in members)
-	    B.prototype[key] = members[key];
+	for(key in members) B.prototype[key] = members[key];
 	mpld3.Toolbar.prototype.buttonDict[members.toolbarKey] = B;
 	return B;
     }
@@ -356,85 +361,84 @@
 	icon: function(){return mpld3.icons["move"];}
     });
 
-    /* Coordinates Object: */
-    /* Converts from the given units to axes (pixel) units */
-    mpld3.Coordinates = function(trans, ax){
+    /***********************************************************************/
+    /* Coordinates Object: Converts from given units to screen/pixel units */
+    /*   `trans` is one of ["data", "figure", "axes", "display"]           */
+    mpld3.Coordinates = mpld3_Coordinates;
+
+    function mpld3_Coordinates(trans, ax){
 	if(typeof(ax) === "undefined"){
 	    this.ax = null;
 	    this.fig = null;
-	    if(this.trans !== "display"){
+	    if(this.trans !== "display")
 		throw "ax must be defined if transform != 'display'";
-	    }
 	}else{
 	    this.ax = ax;
 	    this.fig = ax.fig;
 	}
+	this.zoomable = (trans === "data");
 	this.x = this["x_" + trans];
 	this.y = this["y_" + trans];
-	if(typeof(this.x) === "undefined" || typeof(this.y) === "undefined"){
+	if(typeof(this.x) === "undefined" || typeof(this.y) === "undefined")
 	    throw "unrecognized coordinate code: " + trans;
-	}
-	this.zoomable = (trans === "data");
     }
 
-    mpld3.Coordinates.prototype.x_data = function(x){return this.ax.x(x);}
-    mpld3.Coordinates.prototype.y_data = function(y){return this.ax.y(y);}
-    mpld3.Coordinates.prototype.x_display = function(x){return x;}
-    mpld3.Coordinates.prototype.y_display = function(y){return y;}
-    mpld3.Coordinates.prototype.x_axes = function(x){return x * this.ax.width;}
-    mpld3.Coordinates.prototype.y_axes = function(y){
+    mpld3_Coordinates.prototype.x_data = function(x){return this.ax.x(x);}
+    mpld3_Coordinates.prototype.y_data = function(y){return this.ax.y(y);}
+    mpld3_Coordinates.prototype.x_display = function(x){return x;}
+    mpld3_Coordinates.prototype.y_display = function(y){return y;}
+    mpld3_Coordinates.prototype.x_axes = function(x){return x * this.ax.width;}
+    mpld3_Coordinates.prototype.y_axes = function(y){
 	return this.ax.height * (1 - y);}
-    mpld3.Coordinates.prototype.x_figure = function(x){
+    mpld3_Coordinates.prototype.x_figure = function(x){
 	return x * this.fig.width - this.ax.position[0];}
-    mpld3.Coordinates.prototype.y_figure = function(y){
+    mpld3_Coordinates.prototype.y_figure = function(y){
 	return (1 - y) * this.fig.height - this.ax.position[1];}
 
     
+    /**********************************************************************/
     /* Axes Object: */
-    mpld3.Axes = function(fig, prop){
-	this.name = "mpld3.Axes";
-	this.fig = fig;
-	this.axnum = fig.axes.length;
-	this.axid = fig.figid + '_ax' + (this.axnum + 1)
+    mpld3.Axes = mpld3_Axes;
+    mpld3_Axes.prototype = Object.create(mpld3_PlotElement.prototype);
+    mpld3_Axes.prototype.constructor = mpld3_Axes;
+    mpld3_Axes.prototype.requiredProps = ["xlim", "ylim"];
+    mpld3_Axes.prototype.defaultProps = {"bbox": [0.1, 0.1, 0.8, 0.8],
+					 "axesbg": "#FFFFFF",
+					 "axesbgalpha": 1.0,
+					 "gridOn": false,
+					 "xdomain": null,
+					 "ydomain": null,
+					 "xscale": "linear",
+					 "yscale": "linear",
+					 "zoomable": true,
+					 "axes": [{position:"left"},
+						  {position:"bottom"}],
+					 grids: [],
+					 "xgridprops": {},
+					 "ygridprops": {},
+					 "lines": [],
+					 "paths": [],
+					 "markers": [],
+					 "texts": [],
+					 "collections": [],
+					 "sharex": [],
+					 "sharey": [],
+					 "images": []};
+   
+    function mpld3_Axes(fig, props){
+	mpld3_PlotElement.call(this, fig, props);
+	this.axnum = this.fig.axes.length;
+	this.axid = this.fig.figid + '_ax' + (this.axnum + 1)
 	this.clipid = this.axid + '_clip'
-	
-	var required = ["xlim", "ylim"];
-	var defaults = {"bbox": [0.1, 0.1, 0.8, 0.8],
-			"axesbg": "#FFFFFF",
-			"id": mpld3.generate_id(),
-			"axesbgalpha": 1.0,
-			"gridOn": false,
-			"xdomain": null,
-			"ydomain": null,
-			"xscale": "linear",
-			"yscale": "linear",
-			"zoomable": true,
-			"axes": [{position:"left"},
-				 {position:"bottom"}],
-			grids: [],
-			"xgridprops": {},
-			"ygridprops": {},
-			"lines": [],
-			"paths": [],
-			"markers": [],
-			"texts": [],
-			"collections": [],
-			"sharex": [],
-			"sharey": [],
-			"images": []};
-	
-	this.prop = mpld3.process_props(this, prop, defaults, required)
-	this.prop.xdomain = this.prop.xdomain || this.prop.xlim;
-	this.prop.ydomain = this.prop.ydomain || this.prop.ylim;
-	
-	this.fig = fig;
+	this.props.xdomain = this.props.xdomain || this.props.xlim;
+	this.props.ydomain = this.props.ydomain || this.props.ylim;
 	
 	this.sharex = [];
 	this.sharey = [];
 	
 	this.elements = [];
 	
-	var bbox = this.prop.bbox;
+	var bbox = this.props.bbox;
 	this.position = [bbox[0] * this.fig.width,
 			 (1 - bbox[1] - bbox[3]) * this.fig.height];
 	this.width = bbox[2] * this.fig.width;
@@ -447,8 +451,8 @@
 						  buildDate(domain[1])];
 	}
 
-	this.prop.xdomain = setDomain(this.prop.xscale, this.prop.xdomain);
-	this.prop.ydomain = setDomain(this.prop.yscale, this.prop.ydomain);
+	this.props.xdomain = setDomain(this.props.xscale, this.props.xdomain);
+	this.props.ydomain = setDomain(this.props.yscale, this.props.ydomain);
 
 	/*****************************************************************
 	  There are 3 different scales which come into play with axes.
@@ -471,73 +475,68 @@
 	    return dom.domain(domain).range(range);
 	}
 
-	this.x = this.xdom = build_scale(this.prop.xscale,
-					 this.prop.xdomain,
+	this.x = this.xdom = build_scale(this.props.xscale,
+					 this.props.xdomain,
 					 [0, this.width]);
 
-	this.y = this.ydom = build_scale(this.prop.yscale,
-					 this.prop.ydomain,
+	this.y = this.ydom = build_scale(this.props.yscale,
+					 this.props.ydomain,
 					 [this.height, 0]);
 
-	if(this.prop.xscale === "date"){
-	    this.xdatemap = build_scale(this.prop.xscale,
-					this.prop.xdomain, this.prop.xlim);
+	if(this.props.xscale === "date"){
+	    this.xdatemap = build_scale(this.props.xscale,
+					this.props.xdomain, this.props.xlim);
 	    this.x = function(x){return this.xdom(this.xdatemap.invert(x));}
 	}
 
-	if(this.prop.yscale === "date"){
-	    this.ydatemap = build_scale(this.prop.yscale,
-					this.prop.ydomain, this.prop.ylim);
+	if(this.props.yscale === "date"){
+	    this.ydatemap = build_scale(this.props.yscale,
+					this.props.ydomain, this.props.ylim);
 	    this.y = function(y){return this.ydom(this.ydatemap.invert(y));}
 	}
 	
 	// Add axes and grids
-	var axes = this.prop.axes;
+	var axes = this.props.axes;
 	for(var i=0; i<axes.length; i++){
 	    var axis = new mpld3.Axis(this, axes[i])
 	    this.elements.push(axis);
-	    if(this.prop.gridOn || axis.prop.grid.gridOn){
+	    if(this.props.gridOn || axis.prop.grid.gridOn){
 		this.elements.push(axis.getGrid());
 	    }
 	}
-
-	var grids = this.prop.grids;
-	for(var i=0; i<grids.length; i++){
-	    this.elements.push(new Grid(this, grids[i])); 
-	}
 	
 	// Add paths
-	var paths = this.prop.paths;
+	var paths = this.props.paths;
 	for(var i=0; i<paths.length;i++){
 	    this.elements.push(new mpld3.Path(this, paths[i]));
 	}
 	
 	// Add lines
-	var lines = this.prop.lines;
+	var lines = this.props.lines;
 	for(var i=0; i<lines.length;i++){
 	    this.elements.push(new mpld3.Line(this, lines[i]));
 	}
 	
 	// Add markers
-	var markers = this.prop.markers;
+	var markers = this.props.markers;
 	for(var i=0; i<markers.length;i++){
 	    this.elements.push(new mpld3.Markers(this, markers[i]));
 	}
 	
 	// Add texts
-	var texts = this.prop.texts;
+	var texts = this.props.texts;
 	for(var i=0; i<texts.length; i++){
 	    this.elements.push(new mpld3.Text(this, texts[i]));
 	}
 	
 	// Add collections
-	var collections = this.prop.collections;
+	var collections = this.props.collections;
 	for(var i=0; i<collections.length; i++){
 	    this.elements.push(new mpld3.PathCollection(this, collections[i]));
 	}
 	
 	// Add images
-	var images = this.prop.images;
+	var images = this.props.images;
 	for(var i=0; i<images.length; i++){
 	    this.elements.push(new mpld3.Image(this, images[i]));
 	}
@@ -546,13 +545,13 @@
 	this.elements.sort(function(a,b){return a.prop.zorder-b.prop.zorder});
     }
     
-    mpld3.Axes.prototype.draw = function(){
-	for(var i=0; i<this.prop.sharex.length; i++){
-	    this.sharex.push(mpld3.get_element(this.prop.sharex[i]));
+    mpld3_Axes.prototype.draw = function(){
+	for(var i=0; i<this.props.sharex.length; i++){
+	    this.sharex.push(mpld3.get_element(this.props.sharex[i]));
 	}
 	
-	for(var i=0; i<this.prop.sharey.length; i++){
-	    this.sharey.push(mpld3.get_element(this.prop.sharey[i]));
+	for(var i=0; i<this.props.sharey.length; i++){
+	    this.sharey.push(mpld3.get_element(this.props.sharey[i]));
 	}
 	
 	this.zoom = d3.behavior.zoom();
@@ -587,31 +586,31 @@
             .attr("width", this.width)
             .attr("height", this.height)
             .attr("class", "mpld3-axesbg")
-	    .style("fill", this.prop.axesbg)
-            .style("fill-opacity", this.prop.axesbgalpha);
+	    .style("fill", this.props.axesbg)
+            .style("fill-opacity", this.props.axesbgalpha);
 	
 	for(var i=0; i<this.elements.length; i++){
 	    this.elements[i].draw();
 	}
     };
     
-    mpld3.Axes.prototype.enable_zoom = function(){
-	if(this.prop.zoomable){
+    mpld3_Axes.prototype.enable_zoom = function(){
+	if(this.props.zoomable){
 	    this.zoom.on("zoom", this.zoomed.bind(this, true));
 	    this.axes.call(this.zoom);
 	    this.axes.style("cursor", 'move');
 	}
     };
     
-    mpld3.Axes.prototype.disable_zoom = function(){
-	if(this.prop.zoomable){
+    mpld3_Axes.prototype.disable_zoom = function(){
+	if(this.props.zoomable){
 	    this.zoom.on("zoom", null);
 	    this.axes.on('.zoom', null)
 	    this.axes.style('cursor', null);
 	}
     };
     
-    mpld3.Axes.prototype.zoomed = function(propagate){
+    mpld3_Axes.prototype.zoomed = function(propagate){
 	// propagate is a boolean specifying whether to propagate movements
 	// to shared axes, specified by sharex and sharey.  Default is true.
 	propagate = (typeof propagate == 'undefined') ? true : propagate;
@@ -651,12 +650,12 @@
 	}
     };
 
-    mpld3.Axes.prototype.reset = function(duration, propagate){
-	this.set_axlim(this.prop.xdomain, this.prop.ydomain,
+    mpld3_Axes.prototype.reset = function(duration, propagate){
+	this.set_axlim(this.props.xdomain, this.props.ydomain,
 		       duration, propagate);
     };
 
-    mpld3.Axes.prototype.set_axlim = function(xlim, ylim,
+    mpld3_Axes.prototype.set_axlim = function(xlim, ylim,
 					      duration, propagate){
 	xlim = isUndefinedOrNull(xlim) ? this.xdom.domain() : xlim;
 	ylim = isUndefinedOrNull(ylim) ? this.ydom.domain() : ylim;
@@ -665,11 +664,11 @@
 
 	// Create a transition function which will interpolate
 	// from the current axes limits to the final limits
-	var interpX = (this.prop.xscale === 'date') ?
+	var interpX = (this.props.xscale === 'date') ?
 	    mpld3.interpolateDates(this.xdom.domain(), xlim) :
 	    d3.interpolate(this.xdom.domain(), xlim);
 
-	var interpY = (this.prop.yscale === 'date') ?
+	var interpY = (this.props.yscale === 'date') ?
 	    mpld3.interpolateDates(this.ydom.domain(), ylim) :
 	    d3.interpolate(this.ydom.domain(), ylim);
 
@@ -854,7 +853,7 @@
 	
 	this.prop = mpld3.process_props(this, prop, defaults, required);
 	this.data = ax.fig.get_data(this.prop.data);
-	this.coords = new mpld3.Coordinates(this.prop.coordinates, this.ax);
+	this.coords = new mpld3_Coordinates(this.prop.coordinates, this.ax);
     };
     
     mpld3.Line.prototype.filter = function(d){
@@ -916,9 +915,9 @@
 	this.data = ax.fig.get_data(this.prop.data);
 	this.pathcodes = this.prop.pathcodes;
 	
-	this.pathcoords = new mpld3.Coordinates(this.prop.coordinates,
+	this.pathcoords = new mpld3_Coordinates(this.prop.coordinates,
 						this.ax);
-	this.offsetcoords = new mpld3.Coordinates(this.prop.offsetcoordinates,
+	this.offsetcoords = new mpld3_Coordinates(this.prop.offsetcoordinates,
 						  this.ax);
     };
     
@@ -997,7 +996,7 @@
 		this.marker = null;
 	    }
 	}
-	this.coords = new mpld3.Coordinates(this.prop.coordinates, this.ax);
+	this.coords = new mpld3_Coordinates(this.prop.coordinates, this.ax);
     };
     
     mpld3.Markers.prototype.translate = function(d){
@@ -1084,9 +1083,9 @@
 	    }
 	}
 
-	this.pathcoords = new mpld3.Coordinates(this.prop.pathcoordinates,
+	this.pathcoords = new mpld3_Coordinates(this.prop.pathcoordinates,
 						this.ax);
-	this.offsetcoords = new mpld3.Coordinates(this.prop.offsetcoordinates,
+	this.offsetcoords = new mpld3_Coordinates(this.prop.offsetcoordinates,
 						  this.ax);
     };
     
@@ -1181,7 +1180,7 @@
 					["text", "position"]);
 	this.text = this.prop.text;
 	this.position = this.prop.position;
-	this.coords = new mpld3.Coordinates(this.prop.coordinates,
+	this.coords = new mpld3_Coordinates(this.prop.coordinates,
 						 this.ax);
     };
     
@@ -1244,7 +1243,7 @@
 	 		zorder: 1,
 			id: mpld3.generate_id()};
 	this.prop = mpld3.process_props(this, prop, defaults, required);
-	this.coords = new mpld3.Coordinates(this.prop.coordinates, this.ax);
+	this.coords = new mpld3_Coordinates(this.prop.coordinates, this.ax);
     };
     
     mpld3.Image.prototype.draw = function(){
@@ -1397,7 +1396,7 @@
 	    }
 	    for(var j=0; j<fig.axes.length; j++){
 		ax = fig.axes[j];
-		if(ax.prop.id === id){
+		if(ax.props.id === id){
 		    return ax;
 		}
 		for(var k=0; k<ax.elements.length; k++){
