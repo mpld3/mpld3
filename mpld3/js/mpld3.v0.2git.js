@@ -57,11 +57,11 @@
 	}
 
 	// Assign ID, generating one if necessary
-	if("id" in props){
+	if( "id" in props ){
 	    finalProps.id = props.id;
 	    delete props.id;
-	}else{
-	    this.generateId();
+	}else if( !("id" in finalProps) ){
+	    finalProps.id = mpld3.generateId();
 	}
 
 	// Warn if there are any unrecognized properties
@@ -79,17 +79,6 @@
 	var results = (funcNameRegex).exec(this.constructor.toString());
 	return (results && results.length > 1) ? results[1] : "";
     };
-
-    // Method to generate a unique identifier for the element
-    mpld3_PlotElement.prototype.generateId = function(N, chars){
-	N = (typeof(N) !== "undefined") ? N : 10;
-	chars = (typeof(chars) !== "undefined") ? chars : 
-	    "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890";
-	var id = "";
-	for(var i=0; i<N; i++)
-            id += chars.charAt(Math.round(Math.random() * (chars.length - 1)));
-	return id;
-    }
     
     /**********************************************************************/
     /* Figure object: */
@@ -1190,7 +1179,7 @@
 	this.coords = new mpld3_Coordinates(this.props.coordinates, this.ax);
     };
     
-    mpld3.Text.prototype.draw = function(){
+    mpld3_Text.prototype.draw = function(){
 	if(this.props.coordinates == "data"){
 	    this.obj = this.ax.axes.append("text");
 	}else{
@@ -1219,11 +1208,11 @@
 	}
     };
     
-    mpld3.Text.prototype.elements = function(d){
+    mpld3_Text.prototype.elements = function(d){
 	return d3.select(this.obj);
     };
     
-    mpld3.Text.prototype.zoomed = function(){
+    mpld3_Text.prototype.zoomed = function(){
 	if(this.coords.zoomable){
 	    pos_x = this.coords.x(this.position[0]);
 	    pos_y = this.coords.y(this.position[1]);
@@ -1255,7 +1244,7 @@
 	this.coords = new mpld3_Coordinates(this.props.coordinates, this.ax);
     }
     
-    mpld3.Image.prototype.draw = function(){
+    mpld3_Image.prototype.draw = function(){
 	this.image = this.ax.axes.append("svg:image")
 	    .attr('class', 'mpld3-image')
             .attr('xlink:href', "data:image/png;base64," + this.props.data)
@@ -1264,11 +1253,11 @@
 	this.zoomed();
     };
     
-    mpld3.Image.prototype.elements = function(d){
+    mpld3_Image.prototype.elements = function(d){
 	return d3.select(this.image);
     };
     
-    mpld3.Image.prototype.zoomed = function(){
+    mpld3_Image.prototype.zoomed = function(){
 	var extent = this.props.extent;
 	this.image
 	    .attr("x", this.coords.x(extent[0]))
@@ -1383,11 +1372,16 @@
     }
     
     mpld3.generate_id = function(N, chars){
-	if(typeof(N) === "undefined"){N=10;}
-	if(typeof(chars) === "undefined"){
-	    chars = ("abcdefghijklmnopqrstuvwxyz" +
-		     "ABCDEFGHIJKLMNOPQRSTUVWXYZ" +
-		     "0123456789");}
+	console.warn("mpld3.generate_id is deprecated. " +
+		     "Use mpld3.generateId instead.")
+	return mpld3_generateId(N, chars);
+    }
+
+    mpld3.generateId = mpld3_generateId;
+    function mpld3_generateId(N, chars){
+	N = (typeof(N) !== "undefined") ? N : 10;
+	chars = (typeof(chars) !== "undefined") ? chars : 
+	    "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
 	var id = "";
 	for(var i=0; i<N; i++)
             id += chars.charAt(Math.round(Math.random() * (chars.length - 1)));
@@ -1470,13 +1464,6 @@
 	    return [new Date(i[0]), new Date(i[1])];
 	}
     }
-    
-    
-    function mpld3_functor(v) {
-	return typeof v === "function" ? v : function() {
-	    return v;
-	};
-    }
 
     function isUndefined(x){return (typeof(x) === "undefined");}
 
@@ -1492,7 +1479,6 @@
 	
 	function path(vertices, pathcodes){
 	    // If pathcodes is not defined, we assume straight line segments
-	    var fx = mpld3_functor(x), fy = mpld3_functor(y);
 	    if((pathcodes === null) || (typeof(pathcodes) === "undefined")){
 		pathcodes = ["M"];
 		for(var i=0; i<vertices.length - 1; i++){
@@ -1505,8 +1491,8 @@
 	    for (var i=0;i<pathcodes.length;i++){
 		data += pathcodes[i]
 		for(var jj=j; jj<j+n_vertices[pathcodes[i]]; jj++){
-		    data += fx.call(this, vertices[jj]) + " ";
-		    data += fy.call(this, vertices[jj]) + " ";
+		    data += x.call(this, vertices[jj]) + " ";
+		    data += y.call(this, vertices[jj]) + " ";
 		}
 		j += n_vertices[pathcodes[i]];
 	    }
