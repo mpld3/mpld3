@@ -500,7 +500,7 @@
 	for(var i=0; i<axes.length; i++){
 	    var axis = new mpld3.Axis(this, axes[i])
 	    this.elements.push(axis);
-	    if(this.props.gridOn || axis.prop.grid.gridOn){
+	    if(this.props.gridOn || axis.props.grid.gridOn){
 		this.elements.push(axis.getGrid());
 	    }
 	}
@@ -700,70 +700,73 @@
     };
     
     
-    /* Axis object */
-    mpld3.Axis = function(axes, prop){
-	this.name = mpld3.Axis;
-	this.axes = axes;
+    /**********************************************************************/
+    /* Axis Object: */
+    mpld3.Axis = mpld3_Axis;
+    mpld3_Axis.prototype = Object.create(mpld3_PlotElement.prototype);
+    mpld3_Axis.prototype.constructor = mpld3_Axis;
+    mpld3_Axis.prototype.requiredProps = ["position"];
+    mpld3_Axis.prototype.defaultProps = {nticks : 10,
+					 tickvalues : null,
+					 tickformat : null,
+					 fontsize : "11px",
+					 fontcolor : "black",
+					 axiscolor : "black",
+					 scale : "linear",
+					 grid : {},
+					 zorder: 0};
+    
+    function mpld3_Axis(ax, props){
+	mpld3_PlotElement.call(this, ax, props);
+	this.prop = this.props;  // XXX: temporary!!
 	
-	var required = ["position"]
-	var defaults = {nticks : 10,
-			tickvalues : null,
-			tickformat : null,
-			fontsize : "11px",
-			fontcolor : "black",
-			axiscolor : "black",
-			grid : {},
-			zorder: 0,
-			id: mpld3.generate_id()}
-	this.prop = mpld3.process_props(this, prop, defaults, required);
-
-	var trans = {bottom: [0, this.axes.height], top: [0, 0],
-		     left: [0, 0], right: [this.axes.width, 0]};
+	var trans = {bottom: [0, this.ax.height], top: [0, 0],
+		     left: [0, 0], right: [this.ax.width, 0]};
 	var xy = {bottom: 'x', top: 'x', left: 'y', right: 'y'}
 
-	this.transform = "translate(" + trans[this.prop.position] + ")";
-	this.prop.xy = xy[this.prop.position];
-	this.cssclass = "mpld3-" + this.prop.xy + "axis";
-	this.scale = this.axes[this.prop.xy + "dom"];
+	this.transform = "translate(" + trans[this.props.position] + ")";
+	this.props.xy = xy[this.props.position];
+	this.cssclass = "mpld3-" + this.props.xy + "axis";
+	this.scale = this.ax[this.props.xy + "dom"];
     };
 
     mpld3.Axis.prototype.getGrid = function(){
-	var gridprop = {nticks: this.prop.nticks, zorder: this.prop.zorder,
-			tickvalues: this.prop.tickvalues, xy: this.prop.xy}
-	if(this.prop.grid){
-	    for(var key in this.prop.grid){
-		gridprop[key] = this.prop.grid[key];
+	var gridprop = {nticks: this.props.nticks, zorder: this.props.zorder,
+			tickvalues: this.props.tickvalues, xy: this.props.xy}
+	if(this.props.grid){
+	    for(var key in this.props.grid){
+		gridprop[key] = this.props.grid[key];
 	    }
 	}
-	return new mpld3.Grid(this.axes, gridprop);
+	return new mpld3.Grid(this.ax, gridprop);
     };
     
     mpld3.Axis.prototype.draw = function(){
 	this.axis = d3.svg.axis()
             .scale(this.scale)
-            .orient(this.prop.position)
-            .ticks(this.prop.nticks)
-            .tickValues(this.prop.tickvalues)
-            .tickFormat(this.prop.tickformat);
+            .orient(this.props.position)
+            .ticks(this.props.nticks)
+            .tickValues(this.props.tickvalues)
+            .tickFormat(this.props.tickformat);
 	
-	this.elem = this.axes.baseaxes.append('g')
+	this.elem = this.ax.baseaxes.append('g')
             .attr("transform", this.transform)
             .attr("class", this.cssclass)
             .call(this.axis);
 	
 	// We create header-level CSS to style these elements, because
 	// zooming/panning creates new elements with these classes.
-	mpld3.insert_css("div#" + this.axes.fig.figid
+	mpld3.insert_css("div#" + this.ax.fig.figid
 			 + " ." + this.cssclass + " line, "
 			 + " ." + this.cssclass + " path",
 			 {"shape-rendering":"crispEdges",
-			  "stroke":this.prop.axiscolor,
+			  "stroke":this.props.axiscolor,
 			  "fill":"none"});
-	mpld3.insert_css("div#" + this.axes.fig.figid
+	mpld3.insert_css("div#" + this.ax.fig.figid
 			 + " ." + this.cssclass + " text",
 			 {"font-family": "sans-serif",
-			  "font-size": this.prop.fontsize,
-			  "fill": this.prop.fontcolor,
+			  "font-size": this.props.fontsize,
+			  "fill": this.props.fontcolor,
 			  "stroke": "none"});
     };
     
