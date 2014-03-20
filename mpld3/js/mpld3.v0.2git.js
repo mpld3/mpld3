@@ -1168,28 +1168,31 @@
 	}
     };
     
+    
+    /**********************************************************************/
     /* Text Element */
-    mpld3.Text = function(ax, prop){
-	this.ax = ax;
-	this.prop = mpld3.process_props(this, prop,
-					{coordinates: "data",
+    mpld3.Text = mpld3_Text;
+    mpld3_Text.prototype = Object.create(mpld3_PlotElement.prototype);
+    mpld3_Text.prototype.constructor = mpld3_Text;
+    mpld3_Text.prototype.requiredProps = ["text", "position"];
+    mpld3_Text.prototype.defaultProps = {coordinates: "data",
 					 h_anchor: "start",
 					 v_baseline: "auto",
 					 rotation: 0,
 					 fontsize: 11,
 					 color: "black",
 					 alpha: 1.0,
-					 zorder: 3,
-					 id: mpld3.generate_id()},
-					["text", "position"]);
-	this.text = this.prop.text;
-	this.position = this.prop.position;
-	this.coords = new mpld3_Coordinates(this.prop.coordinates,
-						 this.ax);
+					 zorder: 3};
+
+    function mpld3_Text(ax, props){
+	mpld3_PlotElement.call(this, ax, props);
+	this.text = this.props.text;
+	this.position = this.props.position;
+	this.coords = new mpld3_Coordinates(this.props.coordinates, this.ax);
     };
     
     mpld3.Text.prototype.draw = function(){
-	if(this.prop.coordinates == "data"){
+	if(this.props.coordinates == "data"){
 	    this.obj = this.ax.axes.append("text");
 	}else{
 	    this.obj = this.ax.baseaxes.append("text");
@@ -1197,11 +1200,11 @@
 	
 	this.obj.attr("class", "mpld3-text")
             .text(this.text)
-            .style("text-anchor", this.prop.h_anchor)
-	    .style("dominant-baseline", this.prop.v_baseline)
-	    .style("font-size", this.prop.fontsize)
-	    .style("fill", this.prop.color)
-	    .style("opacity", this.prop.alpha);
+            .style("text-anchor", this.props.h_anchor)
+	    .style("dominant-baseline", this.props.v_baseline)
+	    .style("font-size", this.props.fontsize)
+	    .style("fill", this.props.color)
+	    .style("opacity", this.props.alpha);
 	
 	var pos_x = this.coords.x(this.position[0]);
 	var pos_y = this.coords.y(this.position[1]);
@@ -1210,9 +1213,9 @@
 	    .attr("x", pos_x)
 	    .attr("y", pos_y);
 	
-	if(this.prop.rotation){
+	if(this.props.rotation){
 	    this.obj.attr("transform", "rotate("
-			  + this.prop.rotation + ","
+			  + this.props.rotation + ","
 			  + pos_x + "," + pos_y + ")");
 	}
     };
@@ -1230,31 +1233,34 @@
 		.attr("x", pos_x)
 		.attr("y", pos_y);
 	    
-	    if(this.prop.rotation){
+	    if(this.props.rotation){
 		this.obj.attr("transform", "rotate("
-			      + this.prop.rotation + ","
+			      + this.props.rotation + ","
 			      + pos_x + "," + pos_y + ")");
 	    }
 	}
     };
     
+
+    /**********************************************************************/
     /* Image Object */
-    mpld3.Image = function(ax, prop){
-	this.ax = ax;
-	var required = ["data", "extent"];
-	var defaults = {alpha: 1.0,
-	 		coordinates: "data",
-	 		zorder: 1,
-			id: mpld3.generate_id()};
-	this.prop = mpld3.process_props(this, prop, defaults, required);
-	this.coords = new mpld3_Coordinates(this.prop.coordinates, this.ax);
-    };
+    mpld3.Image = mpld3_Image;
+    mpld3_Image.prototype = Object.create(mpld3_PlotElement.prototype);
+    mpld3_Image.prototype.constructor = mpld3_Image;
+    mpld3_Image.prototype.requiredProps = ["data", "extent"];
+    mpld3_Image.prototype.defaultProps = {alpha: 1.0,
+	 				  coordinates: "data",
+	 				  zorder: 1};
+    function mpld3_Image(ax, props){
+	mpld3_PlotElement.call(this, ax, props);
+	this.coords = new mpld3_Coordinates(this.props.coordinates, this.ax);
+    }
     
     mpld3.Image.prototype.draw = function(){
 	this.image = this.ax.axes.append("svg:image")
 	    .attr('class', 'mpld3-image')
-            .attr('xlink:href', "data:image/png;base64," + this.prop.data)
-	    .style({'opacity': this.prop.alpha})
+            .attr('xlink:href', "data:image/png;base64," + this.props.data)
+	    .style({'opacity': this.props.alpha})
             .attr("preserveAspectRatio", "none");
 	this.zoomed();
     };
@@ -1264,7 +1270,7 @@
     };
     
     mpld3.Image.prototype.zoomed = function(){
-	var extent = this.prop.extent;
+	var extent = this.props.extent;
 	this.image
 	    .attr("x", this.coords.x(extent[0]))
             .attr("y", this.coords.y(extent[3]))
