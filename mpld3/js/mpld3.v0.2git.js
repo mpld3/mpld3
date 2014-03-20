@@ -29,6 +29,8 @@
 	    (parent && "fig" in parent) ? parent.fig : null;
 	this.ax = (parent instanceof mpld3_Axes) ? parent :
 	    (parent && "ax" in parent) ? parent.ax : null;
+	// XXX temporary! remove this!
+	this.prop = this.props;
     }
     mpld3_PlotElement.prototype.requiredProps = [];
     mpld3_PlotElement.prototype.defaultProps = {};
@@ -508,19 +510,19 @@
 	// Add paths
 	var paths = this.props.paths;
 	for(var i=0; i<paths.length;i++){
-	    this.elements.push(new mpld3.Path(this, paths[i]));
+	    this.elements.push(new mpld3_Path(this, paths[i]));
 	}
 	
 	// Add lines
 	var lines = this.props.lines;
 	for(var i=0; i<lines.length;i++){
-	    this.elements.push(new mpld3.Line(this, lines[i]));
+	    this.elements.push(new mpld3_Line(this, lines[i]));
 	}
 	
 	// Add markers
 	var markers = this.props.markers;
 	for(var i=0; i<markers.length;i++){
-	    this.elements.push(new mpld3.Markers(this, markers[i]));
+	    this.elements.push(new mpld3_Markers(this, markers[i]));
 	}
 	
 	// Add texts
@@ -718,7 +720,6 @@
     
     function mpld3_Axis(ax, props){
 	mpld3_PlotElement.call(this, ax, props);
-	this.prop = this.props;  // XXX: temporary!!
 	
 	var trans = {bottom: [0, this.ax.height], top: [0, 0],
 		     left: [0, 0], right: [this.ax.width, 0]};
@@ -728,7 +729,7 @@
 	this.props.xy = xy[this.props.position];
 	this.cssclass = "mpld3-" + this.props.xy + "axis";
 	this.scale = this.ax[this.props.xy + "dom"];
-    };
+    }
 
     mpld3_Axis.prototype.getGrid = function(){
 	var gridprop = {nticks: this.props.nticks, zorder: this.props.zorder,
@@ -791,7 +792,6 @@
     function mpld3_Grid(ax, prop){
 	mpld3_PlotElement.call(this, ax, prop);
 	this.cssclass = "mpld3-" + this.props.xy + "grid";
-	this.prop = this.props; // XXX temporary: remove this!
 	
 	if(this.props.xy == "x"){
 	    this.transform = "translate(0," + this.ax.height + ")";
@@ -838,182 +838,181 @@
     };
     
     
+    /**********************************************************************/
     /* Line Element */
-    mpld3.Line = function(ax, prop){
-	this.name = "mpld3.Line";
-	this.ax = ax;
-	
-	var required = ["data"]
-	var defaults = {xindex: 0,
-			yindex: 1,
-			coordinates: "data",
-			color: "salmon",
-			linewidth: 2,
-			dasharray: "10,0",
-			alpha: 1.0,
-			zorder: 2,
-			id: mpld3.generate_id()};
-	
-	this.prop = mpld3.process_props(this, prop, defaults, required);
-	this.data = ax.fig.get_data(this.prop.data);
-	this.coords = new mpld3_Coordinates(this.prop.coordinates, this.ax);
+    mpld3_Line.prototype = Object.create(mpld3_PlotElement.prototype);
+    mpld3_Line.prototype.constructor = mpld3_Line;
+    mpld3_Line.prototype.requiredProps = ["data"];
+    mpld3_Line.prototype.defaultProps = {xindex: 0,
+					 yindex: 1,
+					 coordinates: "data",
+					 color: "salmon",
+					 linewidth: 2,
+					 dasharray: "10,0",
+					 alpha: 1.0,
+					 zorder: 2};
+
+    function mpld3_Line(ax, props){
+	mpld3_PlotElement.call(this, ax, props);
+	this.data = this.fig.get_data(this.props.data);
+	this.coords = new mpld3_Coordinates(this.props.coordinates, this.ax);
+    }
+    
+    mpld3_Line.prototype.filter = function(d){
+	return (!isNaN(d[this.props.xindex])
+		&& !isNaN(d[this.props.yindex]));
     };
     
-    mpld3.Line.prototype.filter = function(d){
-	return (!isNaN(d[this.prop.xindex])
-		&& !isNaN(d[this.prop.yindex]));
-    };
-    
-    mpld3.Line.prototype.draw = function(){
+    mpld3_Line.prototype.draw = function(){
 	this.datafunc = d3.svg.line()
             .interpolate("linear")
             .defined(this.filter.bind(this))
-	    .x(function(d){return this.coords.x(d[this.prop.xindex]);})
-	    .y(function(d){return this.coords.y(d[this.prop.yindex]);});
+	    .x(function(d){return this.coords.x(d[this.props.xindex]);})
+	    .y(function(d){return this.coords.y(d[this.props.yindex]);});
 	
 	this.line = this.ax.axes.append("svg:path")
 	    .data(this.data)
             .attr('class', 'mpld3-line')
-	    .style("stroke", this.prop.color)
-	    .style("stroke-width", this.prop.linewidth)
-	    .style("stroke-dasharray", this.prop.dasharray)
-	    .style("stroke-opacity", this.prop.alpha)
+	    .style("stroke", this.props.color)
+	    .style("stroke-width", this.props.linewidth)
+	    .style("stroke-dasharray", this.props.dasharray)
+	    .style("stroke-opacity", this.props.alpha)
 	    .style("fill", "none");
 
 	this.line.attr("d", this.datafunc(this.data));
     }
     
-    mpld3.Line.prototype.elements = function(d){
+    mpld3_Line.prototype.elements = function(d){
 	return this.line;
     };
     
-    mpld3.Line.prototype.zoomed = function(){
+    mpld3_Line.prototype.zoomed = function(){
 	if(this.coords.zoomable){
 	    this.line.attr("d", this.datafunc(this.data));
 	}
     }
     
     
+    /**********************************************************************/
     /* Path Element */
-    mpld3.Path = function(ax, prop){
-	this.name = "mpld3.Path";
-	this.ax = ax;
+    mpld3_Path.prototype = Object.create(mpld3_PlotElement.prototype);
+    mpld3_Path.prototype.constructor = mpld3_Path;
+    mpld3_Path.prototype.requiredProps = ["data"];
+    mpld3_Path.prototype.defaultProps = {xindex: 0,
+					 yindex: 1,
+					 coordinates: "data",
+					 facecolor: "green",
+					 edgecolor: "black",
+					 edgewidth: 1,
+					 dasharray: "10,0",
+					 pathcodes: null,
+					 offset: null,
+					 offsetcoordinates: "data",
+					 alpha: 1.0,
+					 zorder: 1};
+
+    function mpld3_Path(ax, props){
+	mpld3_PlotElement.call(this, ax, props);
+	this.data = ax.fig.get_data(this.props.data);
+	this.pathcodes = this.props.pathcodes;
 	
-	var required = ["data"]
-	var defaults = {xindex: 0,
-			yindex: 1,
-			coordinates: "data",
-			facecolor: "green",
-			edgecolor: "black",
-			edgewidth: 1,
-			dasharray: "10,0",
-			pathcodes: null,
-			offset: null,
-			offsetcoordinates: "data",
-			alpha: 1.0,
-			zorder: 1,
-			id: mpld3.generate_id()};
-	
-	this.prop = mpld3.process_props(this, prop, defaults, required);
-	this.data = ax.fig.get_data(this.prop.data);
-	this.pathcodes = this.prop.pathcodes;
-	
-	this.pathcoords = new mpld3_Coordinates(this.prop.coordinates,
+	this.pathcoords = new mpld3_Coordinates(this.props.coordinates,
 						this.ax);
-	this.offsetcoords = new mpld3_Coordinates(this.prop.offsetcoordinates,
+	this.offsetcoords = new mpld3_Coordinates(this.props.offsetcoordinates,
 						  this.ax);
-    };
+    }
     
-    mpld3.Path.prototype.draw = function(){
+    mpld3_Path.prototype.draw = function(){
 	this.datafunc = mpld3.path()
-	    .x(function(d){return this.pathcoords.x(d[this.prop.xindex]);})
-	    .y(function(d){return this.pathcoords.y(d[this.prop.yindex]);});
+	    .x(function(d){return this.pathcoords.x(d[this.props.xindex]);})
+	    .y(function(d){return this.pathcoords.y(d[this.props.yindex]);});
 
 	this.path = this.ax.axes.append("svg:path")
             .attr("d", this.datafunc(this.data, this.pathcodes))
             .attr('class', "mpld3-path")
-	    .style("stroke", this.prop.edgecolor)
-	    .style("stroke-width", this.prop.edgewidth)
-	    .style("stroke-dasharray", this.prop.dasharray)
-	    .style("stroke-opacity", this.prop.alpha)
-	    .style("fill", this.prop.facecolor)
-	    .style("fill-opacity", this.prop.alpha)
+	    .style("stroke", this.props.edgecolor)
+	    .style("stroke-width", this.props.edgewidth)
+	    .style("stroke-dasharray", this.props.dasharray)
+	    .style("stroke-opacity", this.props.alpha)
+	    .style("fill", this.props.facecolor)
+	    .style("fill-opacity", this.props.alpha)
             .attr("vector-effect", "non-scaling-stroke");
 	
-	if(this.prop.offset !== null){
-	    var offset = [this.offsetcoords.x(this.prop.offset[0]),
-			  this.offsetcoords.y(this.prop.offset[1])];    
+	if(this.props.offset !== null){
+	    var offset = [this.offsetcoords.x(this.props.offset[0]),
+			  this.offsetcoords.y(this.props.offset[1])];    
 	    this.path.attr("transform", "translate(" + offset + ")");
 	}
     };
     
-    mpld3.Path.prototype.elements = function(d){
+    mpld3_Path.prototype.elements = function(d){
 	return this.path;
     };
     
-    mpld3.Path.prototype.zoomed = function(){
-	if(this.prop.coordinates === "data"){
+    mpld3_Path.prototype.zoomed = function(){
+	if(this.props.coordinates === "data"){
 	    this.path.attr("d", this.datafunc(this.data, this.pathcodes));
 	}
-	if(this.prop.offset !== null && this.prop.offsetcoordinates === "data"){
-	    var offset = [this.ax.x(this.prop.offset[0]),
-			  this.ax.y(this.prop.offset[1])];
+	if(this.props.offset !== null
+	   && this.props.offsetcoordinates === "data"){
+	    var offset = [this.ax.x(this.props.offset[0]),
+			  this.ax.y(this.props.offset[1])];
 	    this.path.attr("transform", "translate(" + offset + ")");
 	}
     };
     
     
+    /**********************************************************************/
     /* Markers Element */
-    mpld3.Markers = function(ax, prop){
-	this.name = "mpld3.Markers";
-	this.ax = ax;
+    mpld3_Markers.prototype = Object.create(mpld3_PlotElement.prototype);
+    mpld3_Markers.prototype.constructor = mpld3_Markers;
+    mpld3_Markers.prototype.requiredProps = ["data"];
+    mpld3_Markers.prototype.defaultProps = {xindex: 0,
+					    yindex: 1,
+					    coordinates: "data",
+					    facecolor: "salmon",
+					    edgecolor: "black",
+					    edgewidth: 1,
+					    alpha: 1.0,
+					    markersize: 6,
+					    markername: "circle",
+					    markerpath: null,
+					    zorder: 3};
+
+    function mpld3_Markers(ax, props){
+	mpld3_PlotElement.call(this, ax, props);
+	this.data = ax.fig.get_data(this.props.data);
 	
-	var required = ["data"];
-	var defaults = {xindex: 0,
-			yindex: 1,
-			coordinates: "data",
-			facecolor: "salmon",
-			edgecolor: "black",
-			edgewidth: 1,
-			alpha: 1.0,
-			markersize: 6,
-			markername: "circle",
-			markerpath: null,
-			zorder: 3,
-			id: mpld3.generate_id()};
-	this.prop = mpld3.process_props(this, prop, defaults, required);
-	this.data = ax.fig.get_data(this.prop.data);
-	
-	if(this.prop.markerpath !== null){
-	    if(this.prop.markerpath[0].length > 0){
-		this.marker = mpld3.path().call(this.prop.markerpath[0],
-						this.prop.markerpath[1]);
+	if(this.props.markerpath !== null){
+	    if(this.props.markerpath[0].length > 0){
+		this.marker = mpld3.path().call(this.props.markerpath[0],
+						this.props.markerpath[1]);
 	    }else{
 		this.marker = null;
 	    }
 	}else{
-	    if(this.prop.markername !== null){
-		this.marker = d3.svg.symbol(this.prop.markername)
-	            .size(Math.pow(this.prop.markersize, 2));
+	    if(this.props.markername !== null){
+		this.marker = d3.svg.symbol(this.props.markername)
+	            .size(Math.pow(this.props.markersize, 2));
 	    }else{
 		this.marker = null;
 	    }
 	}
-	this.coords = new mpld3_Coordinates(this.prop.coordinates, this.ax);
+	this.coords = new mpld3_Coordinates(this.props.coordinates, this.ax);
     };
     
-    mpld3.Markers.prototype.translate = function(d){
+    mpld3_Markers.prototype.translate = function(d){
 	return "translate("
-	    + this.coords.x(d[this.prop.xindex]) + ","
-	    + this.coords.y(d[this.prop.yindex]) + ")";
+	    + this.coords.x(d[this.props.xindex]) + ","
+	    + this.coords.y(d[this.props.yindex]) + ")";
     };
     
-    mpld3.Markers.prototype.filter = function(d){
-	return (!isNaN(d[this.prop.xindex])
-		&& !isNaN(d[this.prop.yindex]));
+    mpld3_Markers.prototype.filter = function(d){
+	return (!isNaN(d[this.props.xindex])
+		&& !isNaN(d[this.props.yindex]));
     };
     
-    mpld3.Markers.prototype.draw = function(){
+    mpld3_Markers.prototype.draw = function(){
 	this.group = this.ax.axes.append("svg:g")
 	this.pointsobj = this.group.selectAll("paths")
             .data(this.data.filter(this.filter.bind(this)))
@@ -1021,19 +1020,19 @@
             .attr('class', 'mpld3-marker')
             .attr("d", this.marker)
             .attr("transform", this.translate.bind(this))
-            .style("stroke-width", this.prop.edgewidth)
-            .style("stroke", this.prop.edgecolor)
-            .style("fill", this.prop.facecolor)
-            .style("fill-opacity", this.prop.alpha)
-            .style("stroke-opacity", this.prop.alpha)
+            .style("stroke-width", this.props.edgewidth)
+            .style("stroke", this.props.edgecolor)
+            .style("fill", this.props.facecolor)
+            .style("fill-opacity", this.props.alpha)
+            .style("stroke-opacity", this.props.alpha)
             .attr("vector-effect", "non-scaling-stroke");
     };
     
-    mpld3.Markers.prototype.elements = function(d){
+    mpld3_Markers.prototype.elements = function(d){
 	return this.group.selectAll("path");
     };
     
-    mpld3.Markers.prototype.zoomed = function(){
+    mpld3_Markers.prototype.zoomed = function(){
 	if(this.coords.zoomable){
 	    this.pointsobj.attr("transform", this.translate.bind(this));
 	}
