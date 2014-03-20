@@ -29,8 +29,6 @@
 	    (parent && "fig" in parent) ? parent.fig : null;
 	this.ax = (parent instanceof mpld3_Axes) ? parent :
 	    (parent && "ax" in parent) ? parent.ax : null;
-	// XXX temporary! remove this!
-	this.prop = this.props;
     }
     mpld3_PlotElement.prototype.requiredProps = [];
     mpld3_PlotElement.prototype.defaultProps = {};
@@ -69,7 +67,8 @@
 	// Warn if there are any unrecognized properties
 	for(var p in props){
 	    console.warn("Unrecognized property '" + p + "' " +
-			 "for object " + this.name());
+			 "for object " + this.name() + " (value = " + props[p] +
+			 ").");
 	}
 	return finalProps;
     }
@@ -544,7 +543,7 @@
 	}
 	
 	// Sort all elements by zorder
-	this.elements.sort(function(a,b){return a.prop.zorder-b.prop.zorder});
+	this.elements.sort(function(a,b){return a.props.zorder-b.props.zorder});
     }
     
     mpld3_Axes.prototype.draw = function(){
@@ -1278,19 +1277,26 @@
             .attr("height", this.coords.y(extent[2])-this.coords.y(extent[3]));
     };
     
-    
-    /* Plugins */
-    mpld3.TooltipPlugin = function(fig, prop){
-	this.fig = fig;
-	var required = ["id"];
-	var defaults = {labels:null, hoffset:0, voffset:10, location:'mouse'};
-	this.prop = mpld3.process_props(this, prop, defaults, required);
+    /**********************************************************************/
+    /* Tooltip Plugin */
+    mpld3.TooltipPlugin = mpld3_TooltipPlugin;
+    mpld3_TooltipPlugin.prototype = Object.create(mpld3_PlotElement.prototype);
+    mpld3_TooltipPlugin.prototype.constructor = mpld3_TooltipPlugin;
+    mpld3_TooltipPlugin.prototype.requiredProps = ["id"];
+    mpld3_TooltipPlugin.prototype.defaultProps = {type:"tooltip",
+						  labels:null,
+						  hoffset:0,
+						  voffset:10,
+						  location:'mouse'};
+
+    function mpld3_TooltipPlugin(fig, props){
+	mpld3_PlotElement.call(this, fig, props);
     }
     
-    mpld3.TooltipPlugin.prototype.draw = function(){
-	var obj = mpld3.get_element(this.prop.id, this.fig);
-	var labels = this.prop.labels;
-	var loc = this.prop.location;
+    mpld3_TooltipPlugin.prototype.draw = function(){
+	var obj = mpld3.get_element(this.props.id, this.fig);
+	var labels = this.props.labels;
+	var loc = this.props.location;
 	
 	this.tooltip = this.fig.canvas.append("text")
             .attr("class", "mpld3-tooltip-text")
@@ -1300,19 +1306,19 @@
 	    .style("visibility", "hidden");
 	
 	if(loc == "bottom left" || loc == "top left"){
-	    this.x = obj.ax.position[0] + 5 + this.prop.hoffset;
+	    this.x = obj.ax.position[0]+5 + this.props.hoffset;
 	    this.tooltip.style("text-anchor", "beginning")
 	}else if(loc == "bottom right" || loc == "top right"){
-	    this.x = obj.ax.position[0] + obj.ax.width - 5 + this.prop.hoffset;
+	    this.x = obj.ax.position[0] + obj.ax.width-5 + this.props.hoffset;
 	    this.tooltip.style("text-anchor", "end");
 	}else{
             this.tooltip.style("text-anchor", "middle");
 	}
 	
 	if(loc == "bottom left" || loc == "bottom right"){
-	    this.y = obj.ax.position[1] + obj.ax.height - 5 + this.prop.voffset;
+	    this.y = obj.ax.position[1] + obj.ax.height-5 + this.props.voffset;
 	}else if(loc == "top left" || loc == "top right"){
-	    this.y = obj.ax.position[1] + 5 + this.prop.voffset;
+	    this.y = obj.ax.position[1]+5 + this.props.voffset;
 	}
 	
 	function mouseover(d, i){
@@ -1325,8 +1331,8 @@
 	function mousemove(d, i){
 	    if(loc === "mouse"){
 		var pos = d3.mouse(this.fig.canvas.node())
-		this.x = pos[0] + this.prop.hoffset;
-		this.y = pos[1] - this.prop.voffset;
+		this.x = pos[0] + this.props.hoffset;
+		this.y = pos[1] - this.props.voffset;
 	    }
 	    
             this.tooltip
@@ -1411,31 +1417,13 @@
 		}
 		for(var k=0; k<ax.elements.length; k++){
 		    el = ax.elements[k];
-		    if(el.prop.id === id){
+		    if(el.props.id === id){
 			return el;
 		    }
 		}
 	    }
 	}
 	return null;
-    }
-    
-    mpld3.process_props = function(obj, properties, defaults, required){
-	if(typeof(defaults) === "undefined"){defaults = {};}
-	if(typeof(required) === "undefined"){required = [];}
-	
-	for(i=0; i<required.length; i++){
-	    if(!(required[i] in properties)){
-		throw ("property '" + required[i] + "' " +
-		       "must be specified for " + obj.name);
-	    }
-	}
-	for(var property in defaults){
-	    if(!(property in properties)){
-		properties[property] = defaults[property];
-	    }
-	}
-	return properties;
     }
     
     // Function to insert some CSS into the header
@@ -1456,6 +1444,21 @@
 	    style.appendChild(document.createTextNode(css));
 	}
 	head.appendChild(style);
+    };
+
+    // needed for backward compatibility
+    mpld3.process_props = function(obj, properties, defaults, required){
+	console.warn("mpld3.process_props is deprecated. " +
+		     "Plot elements should derive from mpld3.PlotElement");
+	Element.prototype = Object.create(mpld3_PlotElement.prototype);
+	Element.prototype.constructor = Element
+	Element.prototype.requiredProps = required;
+	Element.prototype.defaultProps = defaults;
+	function Element(props){
+	    mpld3_PlotElement.call(this, null, props);
+	}
+	var el = new Element(properties);
+	return el.props;
     };
 
     mpld3.interpolateDates = mpld3_interpolateDates;
