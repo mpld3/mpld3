@@ -17,68 +17,146 @@
 	plugin_map: {},
 	register_plugin: function(name, obj){mpld3.plugin_map[name] = obj;}
     };
+
+    /**********************************************************************/
+    /* Base Object for Plot Elements */
+    mpld3.PlotElement = mpld3_PlotElement;
+    function mpld3_PlotElement(parent, props, id){
+	this.parent = parent;
+	this.props = this.processProps(props, id);
+	this.fig = (parent instanceof mpld3_Figure) ? parent :
+	    (parent && "fig" in parent) ? parent.fig : null;
+	this.ax = (parent instanceof mpld3.Axes) ? parent :
+	    (parent && "ax" in parent) ? parent.ax : null;
+    }
+    mpld3_PlotElement.prototype.requiredProps = [];
+    mpld3_PlotElement.prototype.defaultProps = {};
+
+    mpld3_PlotElement.prototype.processProps = function(props){
+	finalProps = {};
+
+	// Check that all required properties are specified
+	this.requiredProps.forEach(function(p){
+	    if(!(p in props)){
+		throw ("property '" + p + "' " +
+		       "must be specified for " + this.name());
+	    }
+	    finalProps[p] = props[p];
+	    delete props[p];
+	});
+
+	// Use defaults where necessary
+	for(var p in this.defaultProps){
+	    if(p in props){
+		finalProps[p] = props[p];
+		delete props[p];
+	    }else{
+		finalProps[p] = this.defaultProps[p];
+	    }
+	}
+
+	// Assign ID, generating one if necessary
+	if("id" in props){
+	    finalProps.id = props.id;
+	    delete props.id;
+	}else{
+	    this.generateId();
+	}
+
+	// Warn if there are any unrecognized properties
+	for(var p in props){
+	    console.warn("Unrecognized property '" + p + "' " +
+			 "for object " + this.name());
+	}
+	return finalProps;
+    }
+
+    // Method to get the class name for console messages
+    mpld3_PlotElement.prototype.name = function() { 
+	var funcNameRegex = /function (.{1,})\(/;
+	var results = (funcNameRegex).exec(this.constructor.toString());
+	return (results && results.length > 1) ? results[1] : "";
+    };
+
+    // Method to generate a unique identifier for the element
+    mpld3_PlotElement.prototype.generateId = function(N, chars){
+	N = (typeof(N) !== "undefined") ? N : 10;
+	chars = (typeof(chars) !== "undefined") ? chars : 
+	    "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890";
+	var id = "";
+	for(var i=0; i<N; i++)
+            id += chars.charAt(Math.round(Math.random() * (chars.length - 1)));
+	return id;
+    }
     
+    /**********************************************************************/
     /* Figure object: */
-    mpld3.Figure = function(figid, prop){
-	this.name = "mpld3.Figure";
+    mpld3.Figure = mpld3_Figure;
+    mpld3_Figure.prototype = Object.create(mpld3_PlotElement.prototype);
+    mpld3_Figure.prototype.constructor = mpld3_Figure;
+    mpld3_Figure.prototype.requiredProps = ["width", "height"];
+    mpld3_Figure.prototype.defaultProps = {data:{},
+					   axes:[],
+					   plugins:[],
+					   toolbar:["reset", "move"]};
+    function mpld3_Figure(figid, props){
+	mpld3_PlotElement.call(this, null, props);
 	this.figid = figid;
+	this.width = this.props.width;
+	this.height = this.props.height;
+	this.data = this.props.data;
 
 	// Make a root div with relative positioning,
 	// so we can position elements absolutely within it.
 	this.root = d3.select('#' + figid)
 	               .append("div").style("position","relative");
 	
-	var required = ["width", "height"];
-	var defaults = {data:{},
-			axes:[],
-			plugins:[],
-			toolbar:["reset", "move"],
-			id: mpld3.generate_id(),
-		       };
-	this.prop = mpld3.process_props(this, prop, defaults, required);
-	
-	this.width = this.prop.width;
-	this.height = this.prop.height;
-	this.data = this.prop.data;
-	
+	// Create all the axes elements in the figure
 	this.axes = [];
-	for(var i=0; i<prop.axes.length; i++){
-	    this.axes.push(new mpld3.Axes(this, this.prop.axes[i]));
-	}
-
+	for(var i=0; i<this.props.axes.length; i++)
+	    this.axes.push(new mpld3.Axes(this, this.props.axes[i]));
+	
+	// Connect the plugins to the figure
 	this.plugins = [];
-	for(var i=0; i<prop.plugins.length; i++){
-	    this.add_plugin(this.prop.plugins[i]["type"],
-			    this.prop.plugins[i]);
-	}
+	for(var i=0; i<this.props.plugins.length; i++)
+	    this.add_plugin(this.props.plugins[i]);
 
-	this.toolbar = new mpld3.Toolbar(this, this.prop.toolbar);
+	// Create the figure toolbar
+	this.toolbar = new mpld3.Toolbar(this, this.props.toolbar);
     };
+
+    mpld3_Figure.prototype.requiredProps = ["width", "height"];
+    mpld3_Figure.prototype.defaultProps = {data:{},
+					   axes:[],
+					   plugins:[],
+					   toolbar:["reset", "move"]};
     
-    mpld3.Figure.prototype.add_plugin = function(plug, props){
+    mpld3_Figure.prototype.add_plugin = function(props){
+	var plug = props.type;
+
 	if(plug in mpld3.plugin_map)
           plug = mpld3.plugin_map[plug];
-	if(typeof(plug) === "string"){
+	if(typeof(plug) !== "function"){
           console.warn("Skipping unrecognized plugin: " + plug);
           return;
         }
 
 	if(props.clear_toolbar){
-	    this.prop.toolbar = [];
+	    this.props.toolbar = [];
 	}
 	if("buttons" in props){
 	    if(typeof(props.buttons) === "string"){
-		this.prop.toolbar.push(props.buttons);
+		this.props.toolbar.push(props.buttons);
 	    }else{
 		for(var i=0; i<props.buttons.length; i++){
-		    this.prop.toolbar.push(props.buttons[i]);
+		    this.props.toolbar.push(props.buttons[i]);
 		}
 	    }
 	}
 	this.plugins.push(new plug(this, props));
     };
     
-    mpld3.Figure.prototype.draw = function(){
+    mpld3_Figure.prototype.draw = function(){
 	this.canvas = this.root.append('svg:svg')
             .attr('class', 'mpld3-figure')
             .attr('width', this.width)
@@ -98,25 +176,25 @@
 	this.toolbar.draw();
     };
     
-    mpld3.Figure.prototype.reset = function(duration){
+    mpld3_Figure.prototype.reset = function(duration){
 	this.axes.forEach(function(ax){ax.reset(duration, false);});
     };
     
-    mpld3.Figure.prototype.enable_zoom = function(){
+    mpld3_Figure.prototype.enable_zoom = function(){
 	for(var i=0; i<this.axes.length; i++){
 	    this.axes[i].enable_zoom();
 	}
 	this.zoom_on = true;
     };
     
-    mpld3.Figure.prototype.disable_zoom = function(){
+    mpld3_Figure.prototype.disable_zoom = function(){
 	for(var i=0; i<this.axes.length; i++){
 	    this.axes[i].disable_zoom();
 	}
 	this.zoom_on = false;
     };
     
-    mpld3.Figure.prototype.toggle_zoom = function(){
+    mpld3_Figure.prototype.toggle_zoom = function(){
 	if(this.zoom_on){
 	    this.disable_zoom();
 	}else{
@@ -124,7 +202,7 @@
 	}
     };
     
-    mpld3.Figure.prototype.get_data = function(data){
+    mpld3_Figure.prototype.get_data = function(data){
 	if(data === null || typeof(data) === "undefined"){
 	    return null;
 	}else if(typeof(data) === "string"){
@@ -1314,7 +1392,7 @@
 	}
 	for(var i=0; i<figs_to_search.length; i++){
 	    fig = figs_to_search[i];
-	    if(fig.prop.id === id){
+	    if(fig.props.id === id){
 		return fig;
 	    }
 	    for(var j=0; j<fig.axes.length; j++){
