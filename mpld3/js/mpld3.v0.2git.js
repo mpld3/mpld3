@@ -510,19 +510,19 @@
 	// Add paths
 	var paths = this.props.paths;
 	for(var i=0; i<paths.length;i++){
-	    this.elements.push(new mpld3_Path(this, paths[i]));
+	    this.elements.push(new mpld3.Path(this, paths[i]));
 	}
 	
 	// Add lines
 	var lines = this.props.lines;
 	for(var i=0; i<lines.length;i++){
-	    this.elements.push(new mpld3_Line(this, lines[i]));
+	    this.elements.push(new mpld3.Line(this, lines[i]));
 	}
 	
 	// Add markers
 	var markers = this.props.markers;
 	for(var i=0; i<markers.length;i++){
-	    this.elements.push(new mpld3_Markers(this, markers[i]));
+	    this.elements.push(new mpld3.Markers(this, markers[i]));
 	}
 	
 	// Add texts
@@ -778,6 +778,7 @@
     
     /**********************************************************************/
     /* Grid Object */
+    mpld3.Grid = mpld3_Grid;
     mpld3_Grid.prototype = Object.create(mpld3_PlotElement.prototype);
     mpld3_Grid.prototype.constructor = mpld3_Grid;
     mpld3_Grid.prototype.requiredProps = ["xy"];
@@ -840,6 +841,7 @@
     
     /**********************************************************************/
     /* Line Element */
+    mpld3.Line = mpld3_Line;
     mpld3_Line.prototype = Object.create(mpld3_PlotElement.prototype);
     mpld3_Line.prototype.constructor = mpld3_Line;
     mpld3_Line.prototype.requiredProps = ["data"];
@@ -895,6 +897,7 @@
     
     /**********************************************************************/
     /* Path Element */
+    mpld3.Path = mpld3_Path;
     mpld3_Path.prototype = Object.create(mpld3_PlotElement.prototype);
     mpld3_Path.prototype.constructor = mpld3_Path;
     mpld3_Path.prototype.requiredProps = ["data"];
@@ -964,6 +967,7 @@
     
     /**********************************************************************/
     /* Markers Element */
+    mpld3.Markers = mpld3_Markers;
     mpld3_Markers.prototype = Object.create(mpld3_PlotElement.prototype);
     mpld3_Markers.prototype.constructor = mpld3_Markers;
     mpld3_Markers.prototype.requiredProps = ["data"];
@@ -1038,43 +1042,41 @@
 	}
     };
     
+    /**********************************************************************/
     /* Path Collection Element */
-    mpld3.PathCollection = function(ax, prop){
-	window.prop = prop;
-	this.ax = ax;
-	var required = ["paths", "offsets"]
-	var defaults = {xindex: 0,
-			yindex: 1,
-			pathtransforms: [],
-			pathcoordinates: "points",
-			offsetcoordinates: "data",
-			offsetorder: "before",
-			edgecolors: ["#000000"],
-			edgewidths: [1.0],
-			facecolors: ["#0000FF"],
-			alphas: [1.0],
-			zorder: 2,
-			id: mpld3.generate_id()};
-	this.prop = mpld3.process_props(this, prop, defaults, required);
-	this.paths = prop.paths;
-	this.get = function(L, i, dflt){
-	    return L.length ? L[i % L.length] : dflt;
+    mpld3.PathCollection = mpld3_PathCollection;
+    mpld3_PathCollection.prototype = Object.create(mpld3_PlotElement.prototype);
+    mpld3_PathCollection.prototype.constructor = mpld3_PathCollection;
+    mpld3_PathCollection.prototype.requiredProps = ["paths", "offsets"];
+    mpld3_PathCollection.prototype.defaultProps = {xindex: 0,
+						   yindex: 1,
+						   pathtransforms: [],
+						   pathcoordinates: "points",
+						   offsetcoordinates: "data",
+						   offsetorder: "before",
+						   edgecolors: ["#000000"],
+						   edgewidths: [1.0],
+						   facecolors: ["#0000FF"],
+						   alphas: [1.0],
+						   zorder: 2};
+    
+    function mpld3_PathCollection(ax, props){
+	mpld3_PlotElement.call(this, ax, props);
+	this.paths = this.props.paths;
+	
+	if(this.props.facecolors == null || this.props.facecolors.length == 0){
+	    this.props.facecolors = ["none"];
+	}
+	if(this.props.edgecolors == null || this.props.edgecolors.length == 0){
+	    this.props.edgecolors = ["none"];
 	}
 	
-	if(this.prop.facecolors === null || this.prop.facecolors.length === 0){
-	    this.prop.facecolors = ["none"];
-	}
-	if(this.prop.edgecolors === null || this.prop.edgecolors.length === 0){
-	    this.prop.edgecolors = ["none"];
-	}
-	
-	var offsets = this.ax.fig.get_data(this.prop.offsets);
-	if(offsets === null || offsets.length === 0){
+	var offsets = this.ax.fig.get_data(this.props.offsets);
+	if(offsets === null || offsets.length === 0)
 	    offsets = [null];
-	}
 	
 	// For use in the draw() command, expand offsets to size N
-	var N = Math.max(this.prop.paths.length, offsets.length);
+	var N = Math.max(this.props.paths.length, offsets.length);
 	
 	if(offsets.length === N){
             this.offsets = offsets;
@@ -1085,16 +1087,16 @@
 	    }
 	}
 
-	this.pathcoords = new mpld3_Coordinates(this.prop.pathcoordinates,
+	this.pathcoords = new mpld3_Coordinates(this.props.pathcoordinates,
 						this.ax);
-	this.offsetcoords = new mpld3_Coordinates(this.prop.offsetcoordinates,
+	this.offsetcoords = new mpld3_Coordinates(this.props.offsetcoordinates,
 						  this.ax);
-    };
+    }
     
-    mpld3.PathCollection.prototype.transform_func = function(d, i){
+    mpld3_PathCollection.prototype.transform_func = function(d, i){
 	// here we apply the offset and the individual path transform
 	var transform;
-	var t = this.prop.pathtransforms;
+	var t = this.props.pathtransforms;
 	if(t.length > 0){
 	    t = t[i % t.length];
 	    transform = d3.transform("matrix(" + t + ")").toString();
@@ -1106,19 +1108,19 @@
 	if(d === null || typeof(d) === "undefined"){
 	    offset = "translate(0, 0)";
 	}else{
-	    offset = ("translate(" + [this.offsetcoords.x(d[this.prop.xindex]),
-				      this.offsetcoords.y(d[this.prop.yindex])]
+	    offset = ("translate(" + [this.offsetcoords.x(d[this.props.xindex]),
+				      this.offsetcoords.y(d[this.props.yindex])]
                       +")");
 	}
 	
-	if(this.prop.offsetorder === "after"){
+	if(this.props.offsetorder === "after"){
 	    return transform + offset;
 	}else{
 	    return offset + transform;
 	}
     };
     
-    mpld3.PathCollection.prototype.path_func = function(d, i){
+    mpld3_PathCollection.prototype.path_func = function(d, i){
 	var path = this.paths[i % this.paths.length]
 	var ret = mpld3.path()
             .x(function(d){return this.pathcoords.x(d[0]);}.bind(this))
@@ -1127,8 +1129,8 @@
 	return ret;
     };
     
-    mpld3.PathCollection.prototype.style_func = function(d, i){
-	var prop = this.prop;
+    mpld3_PathCollection.prototype.style_func = function(d, i){
+	var prop = this.props;
 	var styles = {"stroke": prop.edgecolors[i % prop.edgecolors.length],
 		      "fill": prop.facecolors[i % prop.facecolors.length],
 		      "stroke-width": prop.edgewidths[i%prop.edgewidths.length],
@@ -1141,7 +1143,7 @@
 	return ret
     };
     
-    mpld3.PathCollection.prototype.draw = function(){
+    mpld3_PathCollection.prototype.draw = function(){
 	this.group = this.ax.axes.append("svg:g");
 	this.pathsobj = this.group.selectAll("paths")
             .data(this.offsets)
@@ -1153,15 +1155,15 @@
             .attr("transform", this.transform_func.bind(this));
     };
     
-    mpld3.PathCollection.prototype.elements = function(d){
+    mpld3_PathCollection.prototype.elements = function(d){
 	return this.group.selectAll("path");
     };
     
-    mpld3.PathCollection.prototype.zoomed = function(){
-	if(this.prop.pathcoordinates === "data"){
+    mpld3_PathCollection.prototype.zoomed = function(){
+	if(this.props.pathcoordinates === "data"){
 	    this.pathsobj.attr("d", this.path_func.bind(this));
 	}
-	if(this.prop.offsetcoordinates === "data"){
+	if(this.props.offsetcoordinates === "data"){
 	    this.pathsobj.attr("transform", this.transform_func.bind(this));
 	}
     };
