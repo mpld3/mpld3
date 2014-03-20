@@ -730,7 +730,7 @@
 	this.scale = this.ax[this.props.xy + "dom"];
     };
 
-    mpld3.Axis.prototype.getGrid = function(){
+    mpld3_Axis.prototype.getGrid = function(){
 	var gridprop = {nticks: this.props.nticks, zorder: this.props.zorder,
 			tickvalues: this.props.tickvalues, xy: this.props.xy}
 	if(this.props.grid){
@@ -738,10 +738,10 @@
 		gridprop[key] = this.props.grid[key];
 	    }
 	}
-	return new mpld3.Grid(this.ax, gridprop);
+	return new mpld3_Grid(this.ax, gridprop);
     };
     
-    mpld3.Axis.prototype.draw = function(){
+    mpld3_Axis.prototype.draw = function(){
 	this.axis = d3.svg.axis()
             .scale(this.scale)
             .orient(this.props.position)
@@ -770,75 +770,75 @@
 			  "stroke": "none"});
     };
     
-    mpld3.Axis.prototype.zoomed = function(){
+    mpld3_Axis.prototype.zoomed = function(){
 	this.elem.call(this.axis);
     };
     
     
+    /**********************************************************************/
     /* Grid Object */
-    mpld3.Grid = function(axes, prop){
-	this.name = "mpld3.Grid";
-	this.axes = axes;
+    mpld3_Grid.prototype = Object.create(mpld3_PlotElement.prototype);
+    mpld3_Grid.prototype.constructor = mpld3_Grid;
+    mpld3_Grid.prototype.requiredProps = ["xy"];
+    mpld3_Grid.prototype.defaultProps = {color : "gray",
+					 dasharray : "2,2",
+					 alpha : "0.5",
+					 nticks : 10,
+					 gridOn : true,
+					 tickvalues : null,
+					 zorder: 0};
+
+    function mpld3_Grid(ax, prop){
+	mpld3_PlotElement.call(this, ax, prop);
+	this.cssclass = "mpld3-" + this.props.xy + "grid";
+	this.prop = this.props; // XXX temporary: remove this!
 	
-	var required = ["xy"];
-	var defaults = {color : "gray",
-			dasharray : "2,2",
-			alpha : "0.5",
-			nticks : 10,
-			tickvalues : null,
-			zorder: 0,
-			id: mpld3.generate_id()};
-	this.prop = mpld3.process_props(this, prop, defaults, required);
-	this.cssclass = "mpld3-" + this.prop.xy + "grid";
-	
-	if(this.prop.xy == "x"){
-	    this.transform = "translate(0," + this.axes.height + ")";
+	if(this.props.xy == "x"){
+	    this.transform = "translate(0," + this.ax.height + ")";
 	    this.position = "bottom";
-	    this.scale = this.axes.xdom;
-	    this.tickSize = -this.axes.height;
-	}else if(this.prop.xy == "y"){
+	    this.scale = this.ax.xdom;
+	    this.tickSize = -this.ax.height;
+	}else if(this.props.xy == "y"){
 	    this.transform = "translate(0,0)";
 	    this.position = "left";
-	    this.scale = this.axes.ydom;
-	    this.tickSize = -this.axes.width;
+	    this.scale = this.ax.ydom;
+	    this.tickSize = -this.ax.width;
 	}else{
 	    throw "unrecognized grid xy specifier: should be 'x' or 'y'";
 	}
     }
     
-    mpld3.Grid.prototype.draw = function(){
+    mpld3_Grid.prototype.draw = function(){
 	this.grid = d3.svg.axis()
             .scale(this.scale)
             .orient(this.position)
-            .ticks(this.prop.nticks)
-            .tickValues(this.prop.tickvalues)
+            .ticks(this.props.nticks)
+            .tickValues(this.props.tickvalues)
             .tickSize(this.tickSize, 0, 0)
             .tickFormat("");
-	this.elem = this.axes.axes.append("g")
+	this.elem = this.ax.axes.append("g")
             .attr("class", this.cssclass)
             .attr("transform", this.transform)
             .call(this.grid);
 	
 	// We create header-level CSS to style these elements, because
 	// zooming/panning creates new elements with these classes.
-	mpld3.insert_css("div#" + this.axes.fig.figid +
+	mpld3.insert_css("div#" + this.ax.fig.figid +
 			 " ." + this.cssclass + " .tick",
-			 {"stroke": this.prop.color,
-			  "stroke-dasharray": this.prop.dasharray,
-			  "stroke-opacity": this.prop.alpha});
-	mpld3.insert_css("div#" + this.axes.fig.figid +
+			 {"stroke": this.props.color,
+			  "stroke-dasharray": this.props.dasharray,
+			  "stroke-opacity": this.props.alpha});
+	mpld3.insert_css("div#" + this.ax.fig.figid +
 			 " ." + this.cssclass + " path",
 			 {"stroke-width": 0});
     };
     
-    mpld3.Grid.prototype.zoomed = function(){
+    mpld3_Grid.prototype.zoomed = function(){
 	this.elem.call(this.grid);
     };
     
     
     /* Line Element */
-    // TODO: should this be removed?
-    //       Everything Line can do, Path can do (better)
     mpld3.Line = function(ax, prop){
 	this.name = "mpld3.Line";
 	this.ax = ax;
