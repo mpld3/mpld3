@@ -931,7 +931,7 @@
 	mpld3_Path.call(this, ax, pathProps);
 
 	// This is optional, but is more efficient than relying on path
-	this.datafunc = d3.svg.line().interpolate("linear");
+	//this.datafunc = d3.svg.line().interpolate("linear");
     }
         
     
@@ -1461,41 +1461,41 @@
 			  S:2, s:2, C:3, c:3, Z:0, z:0};
 	
 	function path(vertices, pathcodes){
-	    var segments = [], i_v = 0, i_c = -1, halt;
 	    var fx = d3.functor(x), fy = d3.functor(y);
+	    var points=[], segments=[], i_v=0, i_c=-1, halt=0, nullpath=false;
 
-	    // If pathcodes is not defined, we assume straight line segments
+	    // If pathcodes is not defined, use straight line segments
 	    if(!pathcodes){
 		pathcodes = ["M"];
 		for(var i=1; i<vertices.length; i++) pathcodes.push("L");
 	    }
 
-	    var nullpath = false;
 	    while(++i_c < pathcodes.length){
-		if(i_v >= vertices.length ||
-		   defined.call(this, vertices[i_v], i_v)){
-		    if(!nullpath){
-			segments.push(pathcodes[i_c]);
-			halt = i_v + n_vertices[pathcodes[i_c]];
-			while(i_v < halt){
-			    segments.push(fx.call(this, vertices[i_v], i_v),
-					  fy.call(this, vertices[i_v], i_v));
-			    i_v++;
-			}
+		halt = i_v + n_vertices[pathcodes[i_c]];
+		points = [];
+		while(i_v < halt){
+		    if(defined.call(this, vertices[i_v], i_v)){
+			points.push(fx.call(this, vertices[i_v], i_v),
+				    fy.call(this, vertices[i_v], i_v));
+			i_v++;
 		    }else{
-			segments.push("M", fx.call(this, vertices[i_v], i_v),
-				      fy.call(this, vertices[i_v], i_v));
-			i_v += n_vertices[pathcodes[i_c]];
-			nullpath = false;
+			points = null;
+			i_v = halt;
 		    }
-		}else{
+		}
+
+		if(!points){
 		    nullpath = true;
-		    i_v += n_vertices[pathcodes[i_c]];
+		}else if(nullpath && points.length > 0){
+		    segments.push("M", points[0], points[1]);
+		    nullpath = false;
+		}else{
+		    segments.push(pathcodes[i_c]);
+		    segments = segments.concat(points);
 		}
 	    }
-	    if(i_v != vertices.length){
+	    if(i_v != vertices.length)
 		console.warn("Warning: not all vertices used in Path");
-	    }
 	    return segments.join(" ");
 	}
 	
