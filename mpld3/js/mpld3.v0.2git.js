@@ -369,9 +369,15 @@
 	this.zoomable = (trans === "data");
 	this.x = this["x_" + trans];
 	this.y = this["y_" + trans];
-	if(typeof(this.x) === "undefined" || typeof(this.y) === "undefined")
+	if(typeof(this.x)==="undefined" || typeof(this.y)==="undefined")
 	    throw "unrecognized coordinate code: " + trans;
     }
+
+    mpld3_Coordinates.prototype.xy = function(d, ix, iy){
+	ix = (typeof(ix) === "undefined") ? 0 : ix;
+	iy = (typeof(iy) === "undefined") ? 1 : iy;
+	return [this.x(d[ix]), this.y(d[iy])];
+    };
 
     mpld3_Coordinates.prototype.x_data = function(x){return this.ax.x(x);}
     mpld3_Coordinates.prototype.y_data = function(y){return this.ax.y(y);}
@@ -881,8 +887,7 @@
             .attr("vector-effect", "non-scaling-stroke");
 	
 	if(this.props.offset !== null){
-	    var offset = [this.offsetcoords.x(this.props.offset[0]),
-			  this.offsetcoords.y(this.props.offset[1])];    
+	    var offset = this.offsetcoords.xy(this.props.offset);
 	    this.path.attr("transform", "translate(" + offset + ")");
 	}
     };
@@ -896,8 +901,7 @@
 	    this.path.attr("d", this.datafunc(this.data, this.pathcodes));
 	}
 	if(this.props.offset !== null && this.offsetcoords.zoomable){
-	    var offset = [this.ax.x(this.props.offset[0]),
-			  this.ax.y(this.props.offset[1])];
+	    var offset = this.offsetcoords.xy(this.props.offset);
 	    this.path.attr("transform", "translate(" + offset + ")");
 	}
     };
@@ -931,7 +935,7 @@
 	mpld3_Path.call(this, ax, pathProps);
 
 	// This is optional, but is more efficient than relying on path
-	//this.datafunc = d3.svg.line().interpolate("linear");
+	this.datafunc = d3.svg.line().interpolate("linear");
     }
         
     
@@ -972,13 +976,13 @@
 		this.marker = null;
 	    }
 	}
-	this.coords = new mpld3_Coordinates(this.props.coordinates, this.ax);
+	this.coords =
+	    new mpld3_Coordinates(this.props.coordinates, this.ax);
     };
     
     mpld3_Markers.prototype.translate = function(d){
-	return "translate("
-	    + this.coords.x(d[this.props.xindex]) + ","
-	    + this.coords.y(d[this.props.yindex]) + ")";
+	return "translate(" +
+	    this.coords.xy(d, this.props.xindex, this.props.yindex) + ")";
     };
     
     mpld3_Markers.prototype.filter = function(d){
@@ -991,8 +995,8 @@
 	this.pointsobj = this.group.selectAll("paths")
             .data(this.data.filter(this.filter.bind(this)))
             .enter().append("svg:path")
-            .attr('class', 'mpld3-marker')
             .attr("d", this.marker)
+            .attr('class', 'mpld3-marker')
             .attr("transform", this.translate.bind(this))
             .style("stroke-width", this.props.edgewidth)
             .style("stroke", this.props.edgecolor)
@@ -1015,29 +1019,33 @@
     /**********************************************************************/
     /* Path Collection Element */
     mpld3.PathCollection = mpld3_PathCollection;
-    mpld3_PathCollection.prototype = Object.create(mpld3_PlotElement.prototype);
+    mpld3_PathCollection.prototype =
+	Object.create(mpld3_PlotElement.prototype);
     mpld3_PathCollection.prototype.constructor = mpld3_PathCollection;
     mpld3_PathCollection.prototype.requiredProps = ["paths", "offsets"];
-    mpld3_PathCollection.prototype.defaultProps = {xindex: 0,
-						   yindex: 1,
-						   pathtransforms: [],
-						   pathcoordinates: "points",
-						   offsetcoordinates: "data",
-						   offsetorder: "before",
-						   edgecolors: ["#000000"],
-						   edgewidths: [1.0],
-						   facecolors: ["#0000FF"],
-						   alphas: [1.0],
-						   zorder: 2};
+    mpld3_PathCollection.prototype.defaultProps =
+	{xindex: 0,
+	 yindex: 1,
+	 pathtransforms: [],
+	 pathcoordinates: "points",
+	 offsetcoordinates: "data",
+	 offsetorder: "before",
+	 edgecolors: ["#000000"],
+	 edgewidths: [1.0],
+	 facecolors: ["#0000FF"],
+	 alphas: [1.0],
+	 zorder: 2};
     
     function mpld3_PathCollection(ax, props){
 	mpld3_PlotElement.call(this, ax, props);
 	this.paths = this.props.paths;
 	
-	if(this.props.facecolors == null || this.props.facecolors.length == 0){
+	if(this.props.facecolors == null ||
+	   this.props.facecolors.length == 0){
 	    this.props.facecolors = ["none"];
 	}
-	if(this.props.edgecolors == null || this.props.edgecolors.length == 0){
+	if(this.props.edgecolors == null ||
+	   this.props.edgecolors.length == 0){
 	    this.props.edgecolors = ["none"];
 	}
 	
@@ -1052,60 +1060,47 @@
             this.offsets = offsets;
         }else{
             this.offsets = [];
-	    for(var i=0; i<N; i++){
-		this.offsets.push(offsets[i % offsets.length]);
-	    }
+	    for(var i=0; i<N; i++)
+		this.offsets.push(getMod(offsets, i));
 	}
 
-	this.pathcoords = new mpld3_Coordinates(this.props.pathcoordinates,
-						this.ax);
-	this.offsetcoords = new mpld3_Coordinates(this.props.offsetcoordinates,
-						  this.ax);
+	this.pathcoords =
+	    new mpld3_Coordinates(this.props.pathcoordinates, this.ax);
+	this.offsetcoords =
+	    new mpld3_Coordinates(this.props.offsetcoordinates, this.ax);
     }
     
     mpld3_PathCollection.prototype.transform_func = function(d, i){
 	// here we apply the offset and the individual path transform
-	var transform;
 	var t = this.props.pathtransforms;
-	if(t.length > 0){
-	    t = t[i % t.length];
-	    transform = d3.transform("matrix(" + t + ")").toString();
-	}else{
-	    transform = "";
-	}
+	var transform = (t.length == 0) ? "" :
+	    d3.transform("matrix(" + getMod(t, i) + ")").toString();
 	
-	var offset;
-	if(d === null || typeof(d) === "undefined"){
-	    offset = "translate(0, 0)";
-	}else{
-	    offset = ("translate(" + [this.offsetcoords.x(d[this.props.xindex]),
-				      this.offsetcoords.y(d[this.props.yindex])]
-                      +")");
-	}
+	var offset = (d === null || typeof(d) === "undefined") ?
+	    "translate(0, 0)" :
+	    ("translate("
+	     + this.offsetcoords.xy(d, this.props.xindex, 
+				    this.props.yindex) +")");
 	
-	if(this.props.offsetorder === "after"){
-	    return transform + offset;
-	}else{
-	    return offset + transform;
-	}
+	return (this.props.offsetorder === "after")
+	    ? transform + offset : offset + transform;
     };
     
     mpld3_PathCollection.prototype.path_func = function(d, i){
-	var path = this.paths[i % this.paths.length]
-	var ret = mpld3_path()
+	return mpld3_path()
             .x(function(d){return this.pathcoords.x(d[0]);}.bind(this))
             .y(function(d){return this.pathcoords.y(d[1]);}.bind(this))
-            .call(path[0], path[1]);
-	return ret;
+	    .apply(this, getMod(this.paths, i));
     };
     
     mpld3_PathCollection.prototype.style_func = function(d, i){
 	var prop = this.props;
-	var styles = {"stroke": prop.edgecolors[i % prop.edgecolors.length],
-		      "fill": prop.facecolors[i % prop.facecolors.length],
-		      "stroke-width": prop.edgewidths[i%prop.edgewidths.length],
-		      "stroke-opacity": prop.alphas[i % prop.alphas.length],
-		      "fill-opacity": prop.alphas[i % prop.alphas.length]};
+	var styles = {"stroke": getMod(prop.edgecolors, i),
+		      "stroke-width": getMod(prop.edgewidths, i),
+		      "stroke-opacity": getMod(prop.alphas, i),
+		      "fill": getMod(prop.facecolors, i),
+		      "fill-opacity": getMod(prop.alphas, i),
+		     }
 	var ret = ""
 	for(key in styles){
 	    ret += key + ":" + styles[key] + ";"
@@ -1118,11 +1113,11 @@
 	this.pathsobj = this.group.selectAll("paths")
             .data(this.offsets)
             .enter().append("svg:path")
-            .attr("vector-effect", "non-scaling-stroke")
-            .attr("class", "mpld3-path")
             .attr("d", this.path_func.bind(this))
+            .attr("class", "mpld3-path")
+            .attr("transform", this.transform_func.bind(this))
             .attr("style", this.style_func.bind(this))
-            .attr("transform", this.transform_func.bind(this));
+            .attr("vector-effect", "non-scaling-stroke");
     };
     
     mpld3_PathCollection.prototype.elements = function(d){
@@ -1175,40 +1170,25 @@
 	    .style("font-size", this.props.fontsize)
 	    .style("fill", this.props.color)
 	    .style("opacity", this.props.alpha);
-	
-	var pos_x = this.coords.x(this.position[0]);
-	var pos_y = this.coords.y(this.position[1]);
-
-	this.obj
-	    .attr("x", pos_x)
-	    .attr("y", pos_y);
-	
-	if(this.props.rotation){
-	    this.obj.attr("transform", "rotate("
-			  + this.props.rotation + ","
-			  + pos_x + "," + pos_y + ")");
-	}
+	this.applyTransform();
     };
     
     mpld3_Text.prototype.elements = function(d){
 	return d3.select(this.obj);
     };
+
+    mpld3_Text.prototype.applyTransform = function(){
+	var pos = this.coords.xy(this.position);
+	this.obj.attr("x", pos[0]).attr("y", pos[1]);
+	
+	if(this.props.rotation)
+	    this.obj.attr("transform", "rotate("
+			  + this.props.rotation + "," + pos + ")");
+    }
     
     mpld3_Text.prototype.zoomed = function(){
-	if(this.coords.zoomable){
-	    pos_x = this.coords.x(this.position[0]);
-	    pos_y = this.coords.y(this.position[1]);
-	    
-	    this.obj
-		.attr("x", pos_x)
-		.attr("y", pos_y);
-	    
-	    if(this.props.rotation){
-		this.obj.attr("transform", "rotate("
-			      + this.props.rotation + ","
-			      + pos_x + "," + pos_y + ")");
-	    }
-	}
+	if(this.coords.zoomable)
+	    this.applyTransform();
     };
     
 
@@ -1295,8 +1275,9 @@
 	function mouseover(d, i){
 	    this.tooltip
 		.style("visibility", "visible")
-		.text((labels === null) ? "(" + d[0] + ", " + d[1] + ")"
-		      : labels[i % labels.length]);
+		.text((labels === null)
+		      ? "(" + d[0] + ", " + d[1] + ")"
+		      : getMod(labels, i));
 	}
 	
 	function mousemove(d, i){
@@ -1450,6 +1431,8 @@
     function isUndefined(x){return (typeof(x) === "undefined");}
 
     function isUndefinedOrNull(x){return (x == null || isUndefined(x));}
+
+    function getMod(L, i){return (L.length > 0) ? L[i % L.length] : null;}
     
     function mpld3_path(_){
 	var x = function(d, i){return d[0];};
