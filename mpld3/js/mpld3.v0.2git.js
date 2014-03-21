@@ -828,62 +828,6 @@
     
     
     /**********************************************************************/
-    /* Line Element */
-    mpld3.Line = mpld3_Line;
-    mpld3_Line.prototype = Object.create(mpld3_PlotElement.prototype);
-    mpld3_Line.prototype.constructor = mpld3_Line;
-    mpld3_Line.prototype.requiredProps = ["data"];
-    mpld3_Line.prototype.defaultProps = {xindex: 0,
-					 yindex: 1,
-					 coordinates: "data",
-					 color: "salmon",
-					 linewidth: 2,
-					 dasharray: "10,0",
-					 alpha: 1.0,
-					 zorder: 2};
-
-    function mpld3_Line(ax, props){
-	mpld3_PlotElement.call(this, ax, props);
-	this.data = this.fig.get_data(this.props.data);
-	this.coords = new mpld3_Coordinates(this.props.coordinates, this.ax);
-    }
-    
-    mpld3_Line.prototype.filter = function(d){
-	return (!isNaN(d[this.props.xindex])
-		&& !isNaN(d[this.props.yindex]));
-    };
-    
-    mpld3_Line.prototype.draw = function(){
-	this.datafunc = d3.svg.line()
-            .interpolate("linear")
-            .defined(this.filter.bind(this))
-	    .x(function(d){return this.coords.x(d[this.props.xindex]);})
-	    .y(function(d){return this.coords.y(d[this.props.yindex]);});
-	
-	this.line = this.ax.axes.append("svg:path")
-	    .data(this.data)
-            .attr('class', 'mpld3-line')
-	    .style("stroke", this.props.color)
-	    .style("stroke-width", this.props.linewidth)
-	    .style("stroke-dasharray", this.props.dasharray)
-	    .style("stroke-opacity", this.props.alpha)
-	    .style("fill", "none");
-
-	this.line.attr("d", this.datafunc(this.data));
-    }
-    
-    mpld3_Line.prototype.elements = function(d){
-	return this.line;
-    };
-    
-    mpld3_Line.prototype.zoomed = function(){
-	if(this.coords.zoomable){
-	    this.line.attr("d", this.datafunc(this.data));
-	}
-    }
-    
-    
-    /**********************************************************************/
     /* Path Element */
     mpld3.Path = mpld3_Path;
     mpld3_Path.prototype = Object.create(mpld3_PlotElement.prototype);
@@ -911,10 +855,17 @@
 						this.ax);
 	this.offsetcoords = new mpld3_Coordinates(this.props.offsetcoordinates,
 						  this.ax);
+	this.datafunc = mpld3_path();
     }
     
+    mpld3_Path.prototype.nanFilter = function(d, i){
+	return (!isNaN(d[this.props.xindex])
+		&& !isNaN(d[this.props.yindex]));
+    };
+
     mpld3_Path.prototype.draw = function(){
-	this.datafunc = mpld3.path()
+	this.datafunc
+            .defined(this.nanFilter.bind(this))
 	    .x(function(d){return this.pathcoords.x(d[this.props.xindex]);})
 	    .y(function(d){return this.pathcoords.y(d[this.props.yindex]);});
 
@@ -941,17 +892,48 @@
     };
     
     mpld3_Path.prototype.zoomed = function(){
-	if(this.props.coordinates === "data"){
+	if(this.pathcoords.zoomable){
 	    this.path.attr("d", this.datafunc(this.data, this.pathcodes));
 	}
-	if(this.props.offset !== null
-	   && this.props.offsetcoordinates === "data"){
+	if(this.props.offset !== null && this.offsetcoords.zoomable){
 	    var offset = [this.ax.x(this.props.offset[0]),
 			  this.ax.y(this.props.offset[1])];
 	    this.path.attr("transform", "translate(" + offset + ")");
 	}
     };
     
+    
+    /**********************************************************************/
+    /* Line Element: inherits from mpld3.Path */
+    mpld3.Line = mpld3_Line;
+    mpld3_Line.prototype = Object.create(mpld3_Path.prototype);
+    mpld3_Line.prototype.constructor = mpld3_Line;
+    mpld3_Line.prototype.requiredProps = ["data"];
+    mpld3_Line.prototype.defaultProps = {xindex: 0,
+					 yindex: 1,
+					 coordinates: "data",
+					 color: "salmon",
+					 linewidth: 2,
+					 dasharray: "10,0",
+					 alpha: 1.0,
+					 zorder: 2};
+    function mpld3_Line(ax, props){
+	mpld3_PlotElement.call(this, ax, props);
+
+	// Map line properties to path properties
+	pathProps = this.props;
+	pathProps.facecolor = "none";
+	pathProps.edgecolor = pathProps.color; delete pathProps.color;
+	pathProps.edgewidth = pathProps.linewidth; delete pathProps.linewidth;
+	
+	// Process path properties
+	this.defaultProps = mpld3_Path.prototype.defaultProps;
+	mpld3_Path.call(this, ax, pathProps);
+
+	// This is optional, but is more efficient than relying on path
+	this.datafunc = d3.svg.line().interpolate("linear");
+    }
+        
     
     /**********************************************************************/
     /* Markers Element */
@@ -1110,7 +1092,7 @@
     
     mpld3_PathCollection.prototype.path_func = function(d, i){
 	var path = this.paths[i % this.paths.length]
-	var ret = mpld3.path()
+	var ret = mpld3_path()
             .x(function(d){return this.pathcoords.x(d[0]);}.bind(this))
             .y(function(d){return this.pathcoords.y(d[1]);}.bind(this))
             .call(path[0], path[1]);
@@ -1470,36 +1452,51 @@
     function isUndefinedOrNull(x){return (x == null || isUndefined(x));}
     
     function mpld3_path(_){
-	var x = function(d){return d[0];}
-	var y = function(d){return d[1];}
+	var x = function(d, i){return d[0];};
+	var y = function(d, i){return d[1];};
+	var defined = function(d, i){return true;};
 	
 	// number of vertices for each SVG code
 	var n_vertices = {M:1, m:1, L:1, l:1, Q:2, q:2, T:1, t:1,
 			  S:2, s:2, C:3, c:3, Z:0, z:0};
 	
 	function path(vertices, pathcodes){
+	    var segments = [], i_v = 0, i_c = -1, halt;
+	    var fx = d3.functor(x), fy = d3.functor(y);
+
 	    // If pathcodes is not defined, we assume straight line segments
-	    if((pathcodes === null) || (typeof(pathcodes) === "undefined")){
+	    if(!pathcodes){
 		pathcodes = ["M"];
-		for(var i=0; i<vertices.length - 1; i++){
-		    pathcodes.push("L");
+		for(var i=1; i<vertices.length; i++) pathcodes.push("L");
+	    }
+
+	    var nullpath = false;
+	    while(++i_c < pathcodes.length){
+		if(i_v >= vertices.length ||
+		   defined.call(this, vertices[i_v], i_v)){
+		    if(!nullpath){
+			segments.push(pathcodes[i_c]);
+			halt = i_v + n_vertices[pathcodes[i_c]];
+			while(i_v < halt){
+			    segments.push(fx.call(this, vertices[i_v], i_v),
+					  fy.call(this, vertices[i_v], i_v));
+			    i_v++;
+			}
+		    }else{
+			segments.push("M", fx.call(this, vertices[i_v], i_v),
+				      fy.call(this, vertices[i_v], i_v));
+			i_v += n_vertices[pathcodes[i_c]];
+			nullpath = false;
+		    }
+		}else{
+		    nullpath = true;
+		    i_v += n_vertices[pathcodes[i_c]];
 		}
 	    }
-	    
-	    var data = "";
-	    var j = 0;  // counter for vertices
-	    for (var i=0;i<pathcodes.length;i++){
-		data += pathcodes[i]
-		for(var jj=j; jj<j+n_vertices[pathcodes[i]]; jj++){
-		    data += x.call(this, vertices[jj]) + " ";
-		    data += y.call(this, vertices[jj]) + " ";
-		}
-		j += n_vertices[pathcodes[i]];
-	    }
-	    if(j != vertices.length){
+	    if(i_v != vertices.length){
 		console.warn("Warning: not all vertices used in Path");
 	    }
-	    return data;
+	    return segments.join(" ");
 	}
 	
 	path.x = function(_) {
@@ -1511,6 +1508,12 @@
 	path.y = function(_) {
 	    if (!arguments.length) return y;
 	    y = _;
+	    return path;
+	};
+
+	path.defined = function(_) {
+	    if (!arguments.length) return defined;
+	    defined = _;
 	    return path;
 	};
 	
