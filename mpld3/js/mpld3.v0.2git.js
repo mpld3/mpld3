@@ -937,84 +937,7 @@
 	// This is optional, but is more efficient than relying on path
 	this.datafunc = d3.svg.line().interpolate("linear");
     }
-        
-    
-    /**********************************************************************/
-    /* Markers Element */
-    mpld3.Markers = mpld3_Markers;
-    mpld3_Markers.prototype = Object.create(mpld3_PlotElement.prototype);
-    mpld3_Markers.prototype.constructor = mpld3_Markers;
-    mpld3_Markers.prototype.requiredProps = ["data"];
-    mpld3_Markers.prototype.defaultProps = {xindex: 0,
-					    yindex: 1,
-					    coordinates: "data",
-					    facecolor: "salmon",
-					    edgecolor: "black",
-					    edgewidth: 1,
-					    alpha: 1.0,
-					    markersize: 6,
-					    markername: "circle",
-					    markerpath: null,
-					    zorder: 3};
 
-    function mpld3_Markers(ax, props){
-	mpld3_PlotElement.call(this, ax, props);
-	this.data = ax.fig.get_data(this.props.data);
-	
-	if(this.props.markerpath !== null){
-	    if(this.props.markerpath[0].length > 0){
-		this.marker = mpld3.path().call(this.props.markerpath[0],
-						this.props.markerpath[1]);
-	    }else{
-		this.marker = null;
-	    }
-	}else{
-	    if(this.props.markername !== null){
-		this.marker = d3.svg.symbol(this.props.markername)
-	            .size(Math.pow(this.props.markersize, 2));
-	    }else{
-		this.marker = null;
-	    }
-	}
-	this.coords =
-	    new mpld3_Coordinates(this.props.coordinates, this.ax);
-    };
-    
-    mpld3_Markers.prototype.translate = function(d){
-	return "translate(" +
-	    this.coords.xy(d, this.props.xindex, this.props.yindex) + ")";
-    };
-    
-    mpld3_Markers.prototype.filter = function(d){
-	return (!isNaN(d[this.props.xindex])
-		&& !isNaN(d[this.props.yindex]));
-    };
-    
-    mpld3_Markers.prototype.draw = function(){
-	this.group = this.ax.axes.append("svg:g")
-	this.pointsobj = this.group.selectAll("paths")
-            .data(this.data.filter(this.filter.bind(this)))
-            .enter().append("svg:path")
-            .attr("d", this.marker)
-            .attr('class', 'mpld3-marker')
-            .attr("transform", this.translate.bind(this))
-            .style("stroke-width", this.props.edgewidth)
-            .style("stroke", this.props.edgecolor)
-            .style("fill", this.props.facecolor)
-            .style("fill-opacity", this.props.alpha)
-            .style("stroke-opacity", this.props.alpha)
-            .attr("vector-effect", "non-scaling-stroke");
-    };
-    
-    mpld3_Markers.prototype.elements = function(d){
-	return this.group.selectAll("path");
-    };
-    
-    mpld3_Markers.prototype.zoomed = function(){
-	if(this.coords.zoomable){
-	    this.pointsobj.attr("transform", this.translate.bind(this));
-	}
-    };
     
     /**********************************************************************/
     /* Path Collection Element */
@@ -1027,7 +950,7 @@
 	{xindex: 0,
 	 yindex: 1,
 	 pathtransforms: [],
-	 pathcoordinates: "points",
+	 pathcoordinates: "display",
 	 offsetcoordinates: "data",
 	 offsetorder: "before",
 	 edgecolors: ["#000000"],
@@ -1055,7 +978,6 @@
 	
 	// For use in the draw() command, expand offsets to size N
 	var N = Math.max(this.props.paths.length, offsets.length);
-	
 	if(offsets.length === N){
             this.offsets = offsets;
         }else{
@@ -1070,8 +992,7 @@
 	    new mpld3_Coordinates(this.props.offsetcoordinates, this.ax);
     }
     
-    mpld3_PathCollection.prototype.transform_func = function(d, i){
-	// here we apply the offset and the individual path transform
+    mpld3_PathCollection.prototype.transformFunc = function(d, i){
 	var t = this.props.pathtransforms;
 	var transform = (t.length == 0) ? "" :
 	    d3.transform("matrix(" + getMod(t, i) + ")").toString();
@@ -1086,20 +1007,19 @@
 	    ? transform + offset : offset + transform;
     };
     
-    mpld3_PathCollection.prototype.path_func = function(d, i){
+    mpld3_PathCollection.prototype.pathFunc = function(d, i){
 	return mpld3_path()
             .x(function(d){return this.pathcoords.x(d[0]);}.bind(this))
             .y(function(d){return this.pathcoords.y(d[1]);}.bind(this))
 	    .apply(this, getMod(this.paths, i));
     };
     
-    mpld3_PathCollection.prototype.style_func = function(d, i){
-	var prop = this.props;
-	var styles = {"stroke": getMod(prop.edgecolors, i),
-		      "stroke-width": getMod(prop.edgewidths, i),
-		      "stroke-opacity": getMod(prop.alphas, i),
-		      "fill": getMod(prop.facecolors, i),
-		      "fill-opacity": getMod(prop.alphas, i),
+    mpld3_PathCollection.prototype.styleFunc = function(d, i){
+	var styles = {"stroke": getMod(this.props.edgecolors, i),
+		      "stroke-width": getMod(this.props.edgewidths, i),
+		      "stroke-opacity": getMod(this.props.alphas, i),
+		      "fill": getMod(this.props.facecolors, i),
+		      "fill-opacity": getMod(this.props.alphas, i),
 		     }
 	var ret = ""
 	for(key in styles){
@@ -1113,10 +1033,10 @@
 	this.pathsobj = this.group.selectAll("paths")
             .data(this.offsets)
             .enter().append("svg:path")
-            .attr("d", this.path_func.bind(this))
+            .attr("d", this.pathFunc.bind(this))
             .attr("class", "mpld3-path")
-            .attr("transform", this.transform_func.bind(this))
-            .attr("style", this.style_func.bind(this))
+            .attr("transform", this.transformFunc.bind(this))
+            .attr("style", this.styleFunc.bind(this))
             .attr("vector-effect", "non-scaling-stroke");
     };
     
@@ -1126,11 +1046,65 @@
     
     mpld3_PathCollection.prototype.zoomed = function(){
 	if(this.props.pathcoordinates === "data"){
-	    this.pathsobj.attr("d", this.path_func.bind(this));
+	    this.pathsobj.attr("d", this.pathFunc.bind(this));
 	}
 	if(this.props.offsetcoordinates === "data"){
-	    this.pathsobj.attr("transform", this.transform_func.bind(this));
+	    this.pathsobj.attr("transform", this.transformFunc.bind(this));
 	}
+    };
+        
+    
+    /**********************************************************************/
+    /* Markers Element */
+    mpld3.Markers = mpld3_Markers;
+    mpld3_Markers.prototype = Object.create(mpld3_PathCollection.prototype);
+    mpld3_Markers.prototype.constructor = mpld3_Markers;
+    mpld3_Markers.prototype.requiredProps = ["data"];
+    mpld3_Markers.prototype.defaultProps = {xindex: 0,
+					    yindex: 1,
+					    coordinates: "data",
+					    facecolor: "salmon",
+					    edgecolor: "black",
+					    edgewidth: 1,
+					    alpha: 1.0,
+					    markersize: 6,
+					    markername: "circle",
+					    markerpath: null,
+					    zorder: 3};
+
+    function mpld3_Markers(ax, props){
+	mpld3_PlotElement.call(this, ax, props);
+	
+	// Construct the marker path
+	if(this.props.markerpath !== null){
+	    this.marker = (this.props.markerpath[0].length == 0) ? null :
+		mpld3.path().call(this.props.markerpath[0],
+				  this.props.markerpath[1]);
+	}else{
+	    this.marker = (this.props.markername === null) ? null :
+		d3.svg.symbol(this.props.markername)
+		.size(Math.pow(this.props.markersize, 2));
+	}
+
+	// Call the PathCollection constructor
+	PCprops = {paths: [this.markerpath],
+		   offsets: ax.fig.get_data(this.props.data),
+		   xindex: this.props.xindex,
+		   yindex: this.props.yindex,
+		   offsetcoordinates: this.props.coordinates,
+		   edgecolors: [this.props.edgecolor],
+		   edgewidths: [this.props.edgewidth],
+		   facecolors: [this.props.facecolor],
+		   alphas: [this.props.alpha],
+		   zorder: this.props.zorder,
+		   id: this.props.id}
+	this.requiredProps = mpld3_PathCollection.prototype.requiredProps;
+	this.defaultProps = mpld3_PathCollection.prototype.defaultProps;
+	mpld3_PathCollection.call(this, ax, PCprops);
+    };
+
+    mpld3_Markers.prototype.pathFunc = function(d, i){
+	return this.marker;
     };
     
     
