@@ -11,6 +11,8 @@ def main():
     y2 = np.sin(x)
     y3 = np.cos(x)
 
+    y1[450:550] = np.nan
+
     ax.fill(x, y1, alpha=0.3, facecolor='green')
     ax.fill_between(x, y2, y3, alpha=0.3, facecolor='red')
     ax.fill_between(x, -y2, -y3, alpha=0.3, facecolor='blue')
