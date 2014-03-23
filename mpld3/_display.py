@@ -182,8 +182,8 @@ def fig_to_html(fig, d3_url=None, mpld3_url=None, no_extras=False,
         ``"general"``
              more complicated, but works both in and out of the
              notebook, whether or not require.js and jquery are available
-    figure_id : string (optional: valid javascript element ID [a-zA-Z_0-9] characters only)
-        This will allow you to set JavaScript figure id instead of
+    figure_id : string (optional: valid html element ID [a-zA-Z_0-9] characters only)
+        This will allow you to set select figure id instead of
         generating a random one.
 
     **kwargs :
