@@ -150,7 +150,7 @@ def fig_to_dict(fig, d3_url=None, mpld3_url=None,
 
 
 def fig_to_html(fig, d3_url=None, mpld3_url=None, no_extras=False,
-                template_type="general",javascript_id=None, ret_list_jsid=False, **kwargs):
+                template_type="general", figure_id=None, **kwargs):
     """Output html representation of the figure
 
     Parameters
@@ -178,19 +178,16 @@ def fig_to_html(fig, d3_url=None, mpld3_url=None, no_extras=False,
         ``"general"``
              more complicated, but works both in and out of the
              notebook, whether or not require.js and jquery are available
-    javascript_id : string (optional: [0-9a-zA-Z_$] characters only)
-        This will allow you to set the javascript figure id instead of
-        generating a random one.
-    ret_with_jsid : boolean
-        If true, the return will be a dictionary with a template object, and
-        the javascript id that was used to render the template. This is useful
-        if you are planning to use this library within a web-app framework.
-        Moreover, If you want to select your figure in the browser.
-        You MUST add javascript_id to 'fig' string in order to make it work.
-        For instance, fig{{ figid }} is used as an ID in a div element. If you want to
-        select it, you MUST add whatever in javascript_id to 'fig' in order to select it
-        by using getElementById or $("fig{{ figid }}"). Where {{ figid }} is the string
-        of figid
+    figure_id : string (optional: [0-9a-zA-Z_$] characters only)
+        This will allow you to set JavaScript figure and function ids
+        instead of generating a random one. This is useful if you are planning
+        to use this library within a web application. Moreover, If you want to
+        select your figure within the browser. You MUST add figure_id to 'fig'
+        string in order to make it work. For example, if you take a look at
+        GENERAL_HTML variable, you will see fig{{ figid }} is used as an ID
+        in a div element. If you want to select it, you MUST add whatever in
+        figure_id to 'fig' in order to select it by using getElementById
+        or $("fig{{ figid }}").
 
     **kwargs :
         Additional keyword arguments passed to mplexporter.Exporter
@@ -215,10 +212,10 @@ def fig_to_html(fig, d3_url=None, mpld3_url=None, no_extras=False,
     d3_url = d3_url or urls.D3_URL
     mpld3_url = mpld3_url or urls.MPLD3_URL
 
-    if javascript_id is None:
+    if figure_id is None:
         figid = get_id(fig) + str(int(random.random() * 1E10))
     else:
-        figid = javascript_id
+        figid = figure_id
 
     renderer = MPLD3Renderer()
     Exporter(renderer, close_mpl=False, **kwargs).run(fig)
@@ -228,21 +225,14 @@ def fig_to_html(fig, d3_url=None, mpld3_url=None, no_extras=False,
     if no_extras:
         extra_css = ""
         extra_js = ""
-    if not ret_list_jsid:
-        return template.render(figid=figid,
+
+    return template.render(figid=figid,
                            d3_url=d3_url,
                            mpld3_url=mpld3_url,
                            figure_json=json.dumps(figure_json),
                            extra_css=extra_css,
                            extra_js=extra_js)
-    else:
-        template_object = template.render(figid=figid,
-                           d3_url=d3_url,
-                           mpld3_url=mpld3_url,
-                           figure_json=json.dumps(figure_json),
-                           extra_css=extra_css,
-                           extra_js=extra_js)
-        return {'template': template_object, 'javascript_id': figid}
+
 
 
 def display(fig=None, closefig=True, **kwargs):
