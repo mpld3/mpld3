@@ -184,8 +184,13 @@ def fig_to_html(fig, d3_url=None, mpld3_url=None, no_extras=False,
     ret_with_jsid : boolean
         If true, the return will be a dictionary with a template object, and
         the javascript id that was used to render the template. This is useful
-        if you are planning to use this library within a web-app
-        framework.
+        if you are planning to use this library within a web-app framework.
+        Moreover, If you want to select your figure in the browser.
+        You MUST add javascript_id to 'fig' string in order to make it work.
+        For instance, fig{{ figid }} is used as an ID in a div element. If you want to
+        select it, you MUST add whatever in javascript_id to 'fig' in order to select it
+        by using getElementById or $("fig{{ figid }}"). Where {{ figid }} is the string
+        of figid
 
     **kwargs :
         Additional keyword arguments passed to mplexporter.Exporter
