@@ -26,11 +26,10 @@ SIMPLE_HTML = jinja2.Template("""
 {{ extra_css }}
 </style>
 
-<div id="fig{{ figid }}"></div>
+<div id="{{ figid }}"></div>
 <script type="text/javascript">
   {{ extra_js }}
-  var spec{{ figid }} = {{ figure_json }};
-  var fig{{ figid }} = mpld3.draw_figure("fig{{ figid }}", spec{{ figid }});
+  mpld3.draw_figure("{{ figid }}", {{ figure_json }});
 </script>
 """)
 
@@ -42,21 +41,21 @@ REQUIREJS_HTML = jinja2.Template("""
 {{ extra_css }}
 </style>
 
-<div id="fig{{ figid }}"></div>
+<div id="{{ figid }}"></div>
 <script type="text/javascript">
-function create_{{ figid }}(){
-  {{ extra_js }}
-  mpld3.draw_figure("fig{{ figid }}", {{ figure_json }});
-}
 
 if(typeof(window.mpld3) === "undefined"){
   require.config({paths: {d3: "{{ d3_url[:-3] }}"}});
   require(["d3"], function(d3){
     window.d3 = d3;
-    $.getScript("{{ mpld3_url }}", create_{{ figid }});
+    $.getScript("{{ mpld3_url }}", function(){
+       {{ extra_js }}
+       mpld3.draw_figure("{{ figid }}", {{ figure_json }});
+    });
   });
 }else{
-  create_{{ figid }}();
+    {{ extra_js }}
+    mpld3.draw_figure("{{ figid }}", {{ figure_json }});
 }
 </script>
 """)
@@ -70,7 +69,7 @@ GENERAL_HTML = jinja2.Template("""
 {{ extra_css }}
 </style>
 
-<div id="fig{{ figid }}"></div>
+<div id="{{ figid }}"></div>
 <script>
 function mpld3_load_lib(url, callback){
   var s = document.createElement('script');
@@ -81,25 +80,29 @@ function mpld3_load_lib(url, callback){
   document.getElementsByTagName("head")[0].appendChild(s);
 }
 
-function create_fig{{ figid }}(){
-  {{ extra_js }}
-  mpld3.draw_figure("fig{{ figid }}", {{ figure_json }});
-}
 
 if(typeof(mpld3) !== "undefined"){
    // already loaded: just create the figure
-   create_fig{{ figid }}();
+   {{ extra_js }}
+   mpld3.draw_figure("{{ figid }}", {{ figure_json }});
 }else if(typeof define === "function" && define.amd){
    // require.js is available: use it to load d3/mpld3
    require.config({paths: {d3: "{{ d3_url[:-3] }}"}});
    require(["d3"], function(d3){
       window.d3 = d3;
-      mpld3_load_lib("{{ mpld3_url }}", create_fig{{ figid }});
+      mpld3_load_lib("{{ mpld3_url }}", function(){
+          {{ extra_js }}
+          mpld3.draw_figure("{{ figid }}", {{ figure_json }});
+      });
     });
 }else{
     // require.js not available: dynamically load d3 & mpld3
     mpld3_load_lib("{{ d3_url }}", function(){
-        mpld3_load_lib("{{ mpld3_url }}", create_fig{{ figid }});})
+    mpld3_load_lib("{{ mpld3_url }}", function(){
+            {{ extra_js }}
+            mpld3.draw_figure("{{ figid }}", {{ figure_json }});
+        });
+    })
 }
 </script>
 """)
@@ -141,6 +144,7 @@ def fig_to_dict(fig, d3_url=None, mpld3_url=None,
     :func:`display` : embed figure within the IPython notebook
     :func:`enable_notebook` : automatically embed figures in IPython notebook
     """
+
     d3_url = d3_url or urls.D3_URL
     mpld3_url = mpld3_url or urls.MPLD3_URL
     renderer = MPLD3Renderer()
@@ -178,16 +182,9 @@ def fig_to_html(fig, d3_url=None, mpld3_url=None, no_extras=False,
         ``"general"``
              more complicated, but works both in and out of the
              notebook, whether or not require.js and jquery are available
-    figure_id : string (optional: [0-9a-zA-Z_$] characters only)
-        This will allow you to set JavaScript figure and function ids
-        instead of generating a random one. This is useful if you are planning
-        to use this library within a web application. Moreover, If you want to
-        select your figure within the browser. You MUST add figure_id to 'fig'
-        string in order to make it work. For example, if you take a look at
-        GENERAL_HTML variable, you will see fig{{ figid }} is used as an ID
-        in a div element. If you want to select it, you MUST add whatever in
-        figure_id to 'fig' in order to select it by using getElementById
-        or $("fig{{ figid }}").
+    figure_id : string (optional: valid javascript element ID [a-zA-Z_0-9] characters only)
+        This will allow you to set JavaScript figure id instead of
+        generating a random one.
 
     **kwargs :
         Additional keyword arguments passed to mplexporter.Exporter
@@ -213,7 +210,7 @@ def fig_to_html(fig, d3_url=None, mpld3_url=None, no_extras=False,
     mpld3_url = mpld3_url or urls.MPLD3_URL
 
     if figure_id is None:
-        figid = get_id(fig) + str(int(random.random() * 1E10))
+        figid = 'fig_' + get_id(fig) + str(int(random.random() * 1E10))
     else:
         figid = figure_id
 
