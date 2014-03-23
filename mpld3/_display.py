@@ -150,7 +150,7 @@ def fig_to_dict(fig, d3_url=None, mpld3_url=None,
 
 
 def fig_to_html(fig, d3_url=None, mpld3_url=None, no_extras=False,
-                template_type="general", **kwargs):
+                template_type="general",javascript_id=None, ret_list_jsid=False, **kwargs):
     """Output html representation of the figure
 
     Parameters
@@ -178,6 +178,14 @@ def fig_to_html(fig, d3_url=None, mpld3_url=None, no_extras=False,
         ``"general"``
              more complicated, but works both in and out of the
              notebook, whether or not require.js and jquery are available
+    javascript_id : string (optional: [0-9a-zA-Z_$] characters only)
+        This will allow you to set the javascript figure id instead of
+        generating a random one.
+    ret_with_jsid : boolean
+        If true, the return will be a dictionary with a template object, and
+        the javascript id that was used to render the template. This is useful
+        if you are planning to use this library within a web-app
+        framework.
 
     **kwargs :
         Additional keyword arguments passed to mplexporter.Exporter
@@ -201,7 +209,12 @@ def fig_to_html(fig, d3_url=None, mpld3_url=None, no_extras=False,
     # TODO: allow fig to be a list of figures?
     d3_url = d3_url or urls.D3_URL
     mpld3_url = mpld3_url or urls.MPLD3_URL
-    figid = get_id(fig) + str(int(random.random() * 1E10))
+
+    if javascript_id is None:
+        figid = get_id(fig) + str(int(random.random() * 1E10))
+    else:
+        figid = javascript_id
+
     renderer = MPLD3Renderer()
     Exporter(renderer, close_mpl=False, **kwargs).run(fig)
 
@@ -210,13 +223,21 @@ def fig_to_html(fig, d3_url=None, mpld3_url=None, no_extras=False,
     if no_extras:
         extra_css = ""
         extra_js = ""
-
-    return template.render(figid=figid,
+    if not ret_list_jsid:
+        return template.render(figid=figid,
                            d3_url=d3_url,
                            mpld3_url=mpld3_url,
                            figure_json=json.dumps(figure_json),
                            extra_css=extra_css,
                            extra_js=extra_js)
+    else:
+        template_object = template.render(figid=figid,
+                           d3_url=d3_url,
+                           mpld3_url=mpld3_url,
+                           figure_json=json.dumps(figure_json),
+                           extra_css=extra_css,
+                           extra_js=extra_js)
+        return {'template': template_object, 'javascript_id': figid}
 
 
 def display(fig=None, closefig=True, **kwargs):
