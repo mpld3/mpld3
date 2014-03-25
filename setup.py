@@ -40,7 +40,7 @@ setup(name=NAME,
       packages=['mpld3',
                 'mpld3/mplexporter',
                 'mpld3/mplexporter/renderers'],
-      package_data={'mpld3': ['js/*.js']},
+      package_data={'mpld3': ['mpld3.js', 'mpld3.min.js']},
       classifiers=[
         'Development Status :: 4 - Beta',
         'Environment :: Console',

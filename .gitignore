@@ -54,3 +54,6 @@ doc/_static
 
 # submodules
 mpld3/mplexporter
+
+# npm
+node_modules
