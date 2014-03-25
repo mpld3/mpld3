@@ -38,3 +38,12 @@ Javascript
   You can also specify the location of the library to use with the ``mpld3_url`` and ``d3_url`` keyword arguments to most functions. These specify where generated html should point to find the mpld3 and d3 libraries, respecively. There are some variables defined in the submodule ``mpld3.urls`` which contain default paths for each of these.
 
   Using these locally in the IPython notebook is a bit more tricky, because you need to make both the mpld3 and d3 libraries visible to the notebook server. If you copy the mpld3 and d3 libraries to the same directory as your notebook, they will be visible to the server at the urls ``/files/mpld3.js`` and ``/files/d3.js``. Pass these urls to ``mpld3_url`` and ``d3_url`` when calling :func:`mpld3.enable_notebook`, and you should be up and running locally.
+
+General
+-------
+
+- **What matplotlib features are not supported?**
+
+  matplotlib is a complicated system, and there are lots of small corner cases that are difficult to render correctly in d3. mpld3 correctly handles a large majority of matplotlib plots, but some pieces remain unsupported either because they have not yet been implemented, or because there are fundamental difficulties preventing their inclusion.
+
+  We keep a list of unsupported features at https://github.com/jakevdp/mpld3/wiki#mpld3-missing-features.  If you find something missing that's not on that list, please feel free to add it.
