@@ -83,6 +83,9 @@ def serve_and_open(html, ip='127.0.0.1', port=8888, n_retries=50, files=None):
 
     # Start the server
     print("Serving to http://{0}:{1}/    [Ctrl-C to exit]".format(ip, port))
+    print(" NOTE: if you're in the IPython notebook, mpld3.show() is the \n"
+          "       wrong command! Use mpld3.display() instead. You must\n"
+          "       interrupt the kernel to exit this command.")
     try:
         srvr.serve_forever()
     except (KeyboardInterrupt, SystemExit):
