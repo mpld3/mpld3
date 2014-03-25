@@ -1,0 +1,19 @@
+#!/usr/bin/env node
+
+var fs = require("fs"),
+    package = require("../package.json");
+
+console.log(JSON.stringify({
+  "name": "mpld3",
+  "repo": "jakevdp / mpld3",
+  "description": package.description,
+  "keywords": package.keywords,
+  "version": package.version,
+  "main": "mpld3.js",
+  "scripts": [
+    "mpld3.js"
+  ],
+  "dependencies": {},
+  "development": {},
+  "license": package.license
+}, null, 2));
