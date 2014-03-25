@@ -23,6 +23,13 @@ IPython Notebook
 
   You now have a clean notebook, and can try running an mpld3 script again.
 
+- **I'm using SSL to have a secure connection and/or make a remote IPython notebook play nice with Windows 8. How do I get mpld3 to work?**
+
+  Default browser security settings do not allow secure web pages to load javascript libraries from an insecure server. To work around this, simply specify alternative urls for d3 and mpld3 when you call :func:`mpld3.enable_notebook`. For example::
+
+    mpld3.enable_notebook(d3_url='//mpld3.github.io/js/d3.v3.min.js',
+                          mpld3_url='//mpld3.github.io/js/mpld3.v0.1.js')
+
 
 Javascript
 ----------
@@ -37,7 +44,11 @@ Javascript
 
   You can also specify the location of the library to use with the ``mpld3_url`` and ``d3_url`` keyword arguments to most functions. These specify where generated html should point to find the mpld3 and d3 libraries, respecively. There are some variables defined in the submodule ``mpld3.urls`` which contain default paths for each of these.
 
-  Using these locally in the IPython notebook is a bit more tricky, because you need to make both the mpld3 and d3 libraries visible to the notebook server. If you copy the mpld3 and d3 libraries to the same directory as your notebook, they will be visible to the server at the urls ``/files/mpld3.js`` and ``/files/d3.js``. Pass these urls to ``mpld3_url`` and ``d3_url`` when calling :func:`mpld3.enable_notebook`, and you should be up and running locally.
+  Using these locally in the IPython notebook is a bit more tricky, because you need to make both the mpld3 and d3 libraries visible to the notebook server. If you copy the mpld3 and d3 libraries to the same directory as your notebook, they will be visible to the server at the urls ``/files/mpld3.js`` and ``/files/d3.js``. You can then specify these urls when calling :func:`mpld3.enable_notebook`::
+
+    mpld3.enable_notebook(d3_url='/files/d3.v3.min.js',
+                          mpld3_url='/files/mpld3.v0.1.js')
+
 
 General
 -------
