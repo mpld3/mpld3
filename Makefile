@@ -1,8 +1,8 @@
-VERSION=0.2
+VERSION=0.2git
 
 GENERATED_FILES = \
-	mpld3/js/mpld3.v$(VERSION)git.js \
-	mpld3/js/mpld3.v$(VERSION)git.min.js \
+	mpld3/js/mpld3.v$(VERSION).js \
+	mpld3/js/mpld3.v$(VERSION).min.js \
 	component.json
 
 
@@ -11,12 +11,12 @@ javascript: npm $(GENERATED_FILES)
 npm:
 	@npm install
 
-mpld3/js/mpld3.v$(VERSION)git.js: $(shell node_modules/.bin/smash --ignore-missing --list src/mpld3.js) package.json
+mpld3/js/mpld3.v$(VERSION).js: $(shell node_modules/.bin/smash --ignore-missing --list src/mpld3.js) package.json
 	@rm -f $@
 	node_modules/.bin/smash src/mpld3.js | node_modules/.bin/uglifyjs - -b indent-level=2 -o $@
 	@chmod a-w $@
 
-mpld3/js/mpld3.v$(VERSION)git.min.js: mpld3/js/mpld3.v$(VERSION)git.js bin/uglify
+mpld3/js/mpld3.v$(VERSION).min.js: mpld3/js/mpld3.v$(VERSION).js bin/uglify
 	@rm -f $@
 	bin/uglify $< > $@
 
