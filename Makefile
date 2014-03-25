@@ -1,20 +1,22 @@
+VERSION=0.2
+
 GENERATED_FILES = \
-	build/lib/mpld3/js/mpld3.js \
-	build/lib/mpld3/js/mpld3.min.js \
+	mpld3/js/mpld3.v$(VERSION)git.js \
+	mpld3/js/mpld3.v$(VERSION)git.min.js \
 	component.json
 
 
-all: npm build
+javascript: npm $(GENERATED_FILES)
 
 npm:
 	@npm install
 
-build/lib/mpld3/js/mpld3.js: $(shell node_modules/.bin/smash --ignore-missing --list src/mpld3.js) package.json
+mpld3/js/mpld3.v$(VERSION)git.js: $(shell node_modules/.bin/smash --ignore-missing --list src/mpld3.js) package.json
 	@rm -f $@
 	node_modules/.bin/smash src/mpld3.js | node_modules/.bin/uglifyjs - -b indent-level=2 -o $@
 	@chmod a-w $@
 
-build/lib/mpld3/js/mpld3.min.js: build/lib/mpld3/js/mpld3.js bin/uglify
+mpld3/js/mpld3.v$(VERSION)git.min.js: mpld3/js/mpld3.v$(VERSION)git.js bin/uglify
 	@rm -f $@
 	bin/uglify $< > $@
 
@@ -32,7 +34,7 @@ sync_current : mplexporter
 submodule : mplexporter
 	python setup.py submodule
 
-build : $(GENERATED_FILES) submodule
+build : javascript submodule
 	python setup.py build
 
 inplace : build
