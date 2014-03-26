@@ -1,4 +1,3 @@
-
 /***********************************************************************/
 /* Coordinates Object: Converts from given units to screen/pixel units */
 /*   `trans` is one of ["data", "figure", "axes", "display"]           */

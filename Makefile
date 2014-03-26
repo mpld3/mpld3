@@ -1,4 +1,4 @@
-VERSION=0.2git
+VERSION = $(shell python -c "import mpld3; print(mpld3.__version__)")
 
 GENERATED_FILES = \
 	mpld3/js/mpld3.v$(VERSION).js \

@@ -2,7 +2,6 @@ import "start";
 import "core";
 import "figure";
 import "toolbar";
-import "button";
 import "coordinates";
 import "axes";
 import "axis";

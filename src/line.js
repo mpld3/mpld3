@@ -1,4 +1,5 @@
 import "core";
+import "path";
 
 /**********************************************************************/
 /* Line Element: inherits from mpld3.Path */

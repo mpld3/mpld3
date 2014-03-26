@@ -1,3 +1,5 @@
+import "core";
+import "figure";
 
 /**********************************************************************/
 /* Data Parsing Functions */

@@ -1,4 +1,6 @@
 import "core";
+import "axes";
+import "toolbar";
 
 /**********************************************************************/
 /* Figure object: */

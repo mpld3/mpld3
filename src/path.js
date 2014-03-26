@@ -1,4 +1,6 @@
 import "core";
+import "util";
+import "coordinates";
 
 /**********************************************************************/
 /* Path Element */

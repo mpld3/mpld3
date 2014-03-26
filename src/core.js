@@ -1,3 +1,4 @@
+import "util";
 
 /**********************************************************************/
 /* Base Object for Plot Elements */
@@ -61,6 +62,5 @@ mpld3_PlotElement.prototype.name = function() {
     var results = (funcNameRegex).exec(this.constructor.toString());
     return (results && results.length > 1) ? results[1] : "";
 };
-
 
 
