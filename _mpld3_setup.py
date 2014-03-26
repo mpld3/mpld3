@@ -84,7 +84,7 @@ def sync_submodules(repo_dir):
     for source, dest in SUBMODULE_SYNC_PATHS:
         source = os.path.join(repo_dir, source)
         dest = os.path.join(repo_dir, dest)
-        print "rsync -r {0} {1}".format(source, dest)
+        print("rsync -r {0} {1}".format(source, dest))
         subprocess.check_call(["rsync", "-r", source, dest])
 
 
