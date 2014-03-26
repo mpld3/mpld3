@@ -1,4 +1,12 @@
 import "core";
+import "util";
+import "axis";
+import "path";
+import "line";
+import "markers";
+import "text";
+import "path_collection";
+import "image";
 
 /**********************************************************************/
 /* Axes Object: */
