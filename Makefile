@@ -5,6 +5,8 @@ GENERATED_FILES = \
 	mpld3/js/mpld3.v$(VERSION).js \
 	mpld3/js/mpld3.v$(VERSION).min.js
 
+.PHONY: test
+
 javascript: $(GENERATED_FILES)
 
 test:
