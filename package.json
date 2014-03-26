@@ -8,7 +8,7 @@
     "example": "examples"
   },
   "scripts": {
-    "test": "./node_modules/vows/bin/vows"
+    "test": "./node_modules/.bin/vows"
   },
   "repository": {
     "type": "git",
