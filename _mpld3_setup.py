@@ -6,7 +6,6 @@ http://github.com/ipython/ipython
 """
 
 import os
-import stat
 import subprocess
 import sys
 import shutil

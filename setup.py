@@ -19,7 +19,10 @@ MAINTAINER_EMAIL = "jakevdp@cs.washington.edu"
 URL = 'http://mpld3.github.com'
 DOWNLOAD_URL = 'http://github.com/jakevdp/mpld3'
 LICENSE = 'BSD 3-clause'
-VERSION = '0.2git'
+
+# import mpld3 for version
+import mpld3
+VERSION = mpld3.__version__
 
 # Make sure submodules are updated and synced
 root_dir = os.path.abspath(os.path.dirname(__file__))
