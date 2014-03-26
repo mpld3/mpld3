@@ -1,3 +1,34 @@
 #!/usr/bin/env node
 
-console.log("!function(){\n  var mpld3 = {version: " + JSON.stringify(require("../package.json").version) + "}; // semver");
+process.argv.forEach(function (val, index, array) {
+	if (index==2) {
+		var string = "/* mpld3.js: javascript backend for displaying interactive matplotlib plots */\n"
+		+ "/*   Author: Jake Vanderplas                                                */\n"
+		+ "/*   License: 3-clause BSD (see http://github.com/jakevdp/mpld3)            */\n"
+		+ "/*                                                                          */\n"
+		+ "/* Notes:                                                                   */\n"
+		+ "/* - the objects here use prototype-based definitions rather than           */\n"
+		+ "/*   closure-based definitions for the sake of memory efficiency.           */\n"
+		+ "/*                                                                          */\n"
+		+ "/* - this assumes that d3 is defined in the global namespace, and the       */\n"
+		+ "/*   result is that mpld3 is defined in the global namespace.               */\n"
+		+ "/*                                                                          */\n"
+		+ "\n"
+		+ "!function(d3) {\n"
+		+ "    var mpld3 = {\n"
+		+ "        version: '" 
+		+ val
+		+ "',\n"
+		+ "        figures: [],\n"
+		+ "        plugin_map: {},\n"
+		+ "        register_plugin: function(name, obj) {\n"
+		+ "            mpld3.plugin_map[name] = obj;\n"
+		+ "        }\n"
+		+ "    };\n"
+
+		console.log(string);
+	}
+});
+
+
+
