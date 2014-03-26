@@ -10,12 +10,13 @@
 /*   result is that mpld3 is defined in the global namespace.               */
 /*                                                                          */
 
-! function(d3) {
+!function(d3) {
     var mpld3 = {
-        version: "0.2",
+        version: '0.2git',
         figures: [],
         plugin_map: {},
         register_plugin: function(name, obj) {
             mpld3.plugin_map[name] = obj;
         }
     };
+
