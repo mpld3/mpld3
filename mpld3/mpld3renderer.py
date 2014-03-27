@@ -147,7 +147,7 @@ class MPLD3Renderer(Renderer):
 
     # If draw_line() is not implemented, it will be delegated to draw_path
     # Should we get rid of this? There's not really any advantage here
-    def draw_line(self, data, coordinates, style, mplobj=None):
+    def draw_line(self, data, coordinates, style, label, mplobj=None):
         line = self.add_data(data)
         line['coordinates'] = coordinates
         line['id'] = get_id(mplobj)
@@ -171,7 +171,7 @@ class MPLD3Renderer(Renderer):
         self.axes_json['paths'].append(path)
 
     # If draw_markers is not implemented, it will be delegated to draw_path
-    def draw_markers(self, data, coordinates, style, mplobj=None):
+    def draw_markers(self, data, coordinates, style, label, mplobj=None):
         markers = self.add_data(data)
         markers["coordinates"] = coordinates
         markers['id'] = get_id(mplobj, 'pts')
