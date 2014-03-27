@@ -31,6 +31,7 @@ Contents
    :maxdepth: 2
 
    quickstart
+   faq
    examples/index
    notebooks/index
    modules/API
