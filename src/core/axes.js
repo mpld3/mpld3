@@ -174,7 +174,7 @@ mpld3_Axes.prototype.draw = function() {
         this.sharey.push(mpld3.get_element(this.props.sharey[i]));
     }
 
-    this.zoom = d3.behavior.zoom();
+    this.zoom = d3.behavior.zoom().x(this.xdom).y(this.ydom);
 
     this.zoom.last_t = this.zoom.translate()
     this.zoom.last_s = this.zoom.scale()
@@ -183,7 +183,7 @@ mpld3_Axes.prototype.draw = function() {
     this.zoom_y = d3.behavior.zoom().y(this.ydom);
 
     this.baseaxes = this.fig.canvas.append("g")
-        .attr('transform', 'translate(' + this.position[0] + ',' + this.position[1] + ')')
+        .attr('transform', 'translate(' + this.position + ')')
         .attr('width', this.width)
         .attr('height', this.height)
         .attr('class', "mpld3-baseaxes");
@@ -210,21 +210,55 @@ mpld3_Axes.prototype.draw = function() {
     for (var i = 0; i < this.elements.length; i++) {
         this.elements[i].draw();
     }
+
+    // draw zoom-boxes over the axes
+    // TODO: should these be tied to the axis elements themselves?
+    this.zoombox_x = this.baseaxes.append("svg:rect")
+	.attr("width", this.width)
+	.attr("height", 20)
+	.attr("class", "mpld3-zoom x")
+        .attr("transform", "translate(" + [0, this.height - 10] + ")")
+        .style("visibility", "hidden")
+        .attr("pointer-events", "all");
+
+    this.zoombox_y = this.baseaxes.append("svg:rect")
+	.attr("width", 20)
+	.attr("height", this.height)
+	.attr("class", "mpld3-zoom y")
+        .attr("transform", "translate(" + [-10, 0] + ")")
+        .style("visibility", "hidden")
+        .attr("pointer-events", "all");
 };
 
 mpld3_Axes.prototype.enable_zoom = function() {
     if (this.props.zoomable) {
         this.zoom.on("zoom", this.zoomed.bind(this, true));
+	this.zoom_x.on("zoom", this.zoomed.bind(this, true));
+	this.zoom_y.on("zoom", this.zoomed.bind(this, true));
+
         this.axes.call(this.zoom);
+        this.zoombox_x.call(this.zoom_x);
+        this.zoombox_y.call(this.zoom_y);
+
         this.axes.style("cursor", 'move');
+	this.zoombox_x.style("cursor", 'ew-resize');
+	this.zoombox_y.style("cursor", 'ns-resize');
     }
 };
 
 mpld3_Axes.prototype.disable_zoom = function() {
     if (this.props.zoomable) {
         this.zoom.on("zoom", null);
-        this.axes.on('.zoom', null)
+	this.zoom_x.on("zoom", null);
+	this.zoom_y.on("zoom", null);
+
+        this.axes.on('.zoom', null);
+	this.zoombox_x.on(".zoom", null);
+	this.zoombox_y.on(".zoom", null);
+
         this.axes.style('cursor', null);
+	this.zoombox_x.style("cursor", null);
+	this.zoombox_y.style("cursor", null);
     }
 };
 
