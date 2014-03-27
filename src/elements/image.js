@@ -1,6 +1,3 @@
-import "core";
-import "coordinates";
-
 /**********************************************************************/
 /* Image Object */
 mpld3.Image = mpld3_Image;

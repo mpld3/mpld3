@@ -1,7 +1,7 @@
 VERSION = $(shell python -c "import mpld3; print(mpld3.__version__)")
 
 GENERATED_FILES = \
-	src/start.js \
+	src/version.js \
 	mpld3/js/mpld3.v$(VERSION).js \
 	mpld3/js/mpld3.v$(VERSION).min.js
 
@@ -12,8 +12,8 @@ javascript: $(GENERATED_FILES)
 test:
 	@npm test
 
-src/start.js: 
-	@node bin/start $(VERSION) > $@
+src/version.js: 
+	@node bin/version $(VERSION) > $@
 
 mpld3/js/mpld3.v$(VERSION).js: $(shell node_modules/.bin/smash --ignore-missing --list src/mpld3.js) package.json
 	@rm -f $@

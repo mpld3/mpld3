@@ -12,7 +12,6 @@
 
 !function(d3) {
     var mpld3 = {
-        version: '0.2git',
         figures: [],
         plugin_map: {},
         register_plugin: function(name, obj) {

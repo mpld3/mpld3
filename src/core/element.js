@@ -1,4 +1,5 @@
-import "util";
+import "figure";
+import "../utils/";
 
 /**********************************************************************/
 /* Base Object for Plot Elements */

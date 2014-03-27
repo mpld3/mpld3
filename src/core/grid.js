@@ -1,5 +1,5 @@
-import "core";
-import "util";
+import "element";
+import "../utils/";
 
 /**********************************************************************/
 /* Grid Object */

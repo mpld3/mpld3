@@ -1,6 +1,3 @@
-import "core";
-import "util";
-
 /**********************************************************************/
 /* Tooltip Plugin */
 mpld3.TooltipPlugin = mpld3_TooltipPlugin;

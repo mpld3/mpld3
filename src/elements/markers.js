@@ -1,5 +1,3 @@
-import "path_collection";
-
 /**********************************************************************/
 /* Markers Element */
 mpld3.Markers = mpld3_Markers;

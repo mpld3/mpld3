@@ -6,7 +6,7 @@ var suite = vows.describe("mpld3.Figure");
 
 suite.addBatch({
     "Figure": {
-        topic: load("figure").document(),
+        topic: load("core/figure").document(),
         "simple figure": {
             topic: function(mpld3) {
                 var props = {

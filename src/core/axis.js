@@ -1,6 +1,6 @@
-import "core";
-import "util";
+import "element";
 import "grid";
+import "../utils/";
 
 /**********************************************************************/
 /* Axis Object: */

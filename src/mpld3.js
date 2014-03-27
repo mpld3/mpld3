@@ -1,17 +1,10 @@
 import "start";
-import "core";
-import "figure";
-import "toolbar";
-import "coordinates";
-import "axes";
-import "axis";
-import "grid";
-import "path";
-import "line";
-import "path_collection";
-import "markers";
-import "text";
-import "image";
-import "tooltip";
-import "util";
+import "version";
+
+import "core/";
+import "elements/";
+import "toolbar/";
+import "plugins/";
+import "utils/";
+
 import "end";

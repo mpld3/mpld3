@@ -1,6 +1,6 @@
-import "core";
-import "util";
-import "coordinates";
+import "../core/element";
+import "../core/coordinates";
+import "../utils/";
 
 /**********************************************************************/
 /* Path Element */
