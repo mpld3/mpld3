@@ -18,3 +18,4 @@ developers
 - [Renaud Richardet](http://github.com/renaud): various bug fixes
 - [Jason Furtney](http://github.com/jkfurtney): time & log support for axes
 - [Brian Granger](http://github.com/ellisonbg): IPython notebook interaction
+- [Justin Goodwin](http://github.com/jgbos): Refactor to D3 node/smash style

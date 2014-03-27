@@ -1,6 +1,4 @@
-import "core";
-import "util";
-import "coordinates";
+import "../core/element";
 
 /**********************************************************************/
 /* Path Collection Element */

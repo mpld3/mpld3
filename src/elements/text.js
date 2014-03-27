@@ -1,6 +1,3 @@
-import "core";
-import "coordinates";
-
 /**********************************************************************/
 /* Text Element */
 mpld3.Text = mpld3_Text;

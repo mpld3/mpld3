@@ -1,12 +1,7 @@
-import "core";
-import "util";
+import "element";
 import "axis";
-import "path";
-import "line";
-import "markers";
-import "text";
-import "path_collection";
-import "image";
+import "../elements/";
+import "../utils/";
 
 /**********************************************************************/
 /* Axes Object: */

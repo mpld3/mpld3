@@ -6,7 +6,7 @@ var suite = vows.describe("mpld3.Line");
 
 suite.addBatch({
     "Line": {
-        topic: load("line").document(),
+        topic: load("elements/line").document(),
         "simple Line": {
             topic: function(mpld3) {
                 var fig_props = {

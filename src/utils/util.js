@@ -1,6 +1,3 @@
-import "core";
-import "figure";
-
 /**********************************************************************/
 /* Data Parsing Functions */
 mpld3.draw_figure = function(figid, spec) {
