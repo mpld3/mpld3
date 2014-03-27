@@ -1,11 +1,20 @@
 """
 A Simple server used to show mpld3 images.
 """
+import sys
 import threading
 import webbrowser
 import socket
 import itertools
 import random
+
+IPYTHON_WARNING = """
+Note: if you're in the IPython notebook, mpld3.show() is not the best command
+      to use. Consider using mpld3.display(), or mpld3.enable_notebook().
+      See more information at http://mpld3.github.io/quickstart.html.
+
+You must interrupt the kernel to end this command
+"""
 
 try:
     # Python 2.x
@@ -57,7 +66,8 @@ def find_open_port(ip, port, n=50):
     raise ValueError("no open ports found")
 
 
-def serve_and_open(html, ip='127.0.0.1', port=8888, n_retries=50, files=None):
+def serve_and_open(html, ip='127.0.0.1', port=8888, n_retries=50, files=None,
+                   ipython_warning=True):
     """Start a server serving the given HTML, and open a browser
 
     Parameters
@@ -72,20 +82,29 @@ def serve_and_open(html, ip='127.0.0.1', port=8888, n_retries=50, files=None):
         the number of nearby ports to search if the specified port is in use.
     files : dictionary (optional)
         dictionary of extra content to serve
+    ipython_warning : bool (optional)
+        if True (default), then print a warning if this is used within IPython
     """
     port = find_open_port(ip, port, n_retries)
     Handler = generate_handler(html, files)
     srvr = server.HTTPServer((ip, port), Handler)
 
+    if ipython_warning:
+        try:
+            __IPYTHON__
+        except:
+            pass
+        else:
+            print(IPYTHON_WARNING)
+
+    # Start the server
+    print("Serving to http://{0}:{1}/    [Ctrl-C to exit]".format(ip, port))
+    sys.stdout.flush()
+
     # Use a thread to open a web browser pointing to the server
     b = lambda: webbrowser.open('http://{0}:{1}'.format(ip, port))
     threading.Thread(target=b).start()
 
-    # Start the server
-    print("Serving to http://{0}:{1}/    [Ctrl-C to exit]".format(ip, port))
-    print(" NOTE: if you're in the IPython notebook, mpld3.show() is the \n"
-          "       wrong command! Use mpld3.display() instead. You must\n"
-          "       interrupt the kernel to exit this command.")
     try:
         srvr.serve_forever()
     except (KeyboardInterrupt, SystemExit):
