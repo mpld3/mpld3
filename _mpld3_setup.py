@@ -8,8 +8,6 @@ http://github.com/ipython/ipython
 import os
 import subprocess
 import sys
-import shutil
-import re
 import warnings
 
 
@@ -25,19 +23,18 @@ SUBMODULE_SYNC_PATHS = [('mplexporter/mplexporter', 'mpld3/')]
 
 def get_version():
     """Get the version info from the mpld3 package without importing it"""
-    major, minor1, minor2, release, serial = sys.version_info
-    if major >= 3:
-        def readf(filename):
-            with open(filename, encoding="utf-8") as f:
-                return f.read()
-    else:
-        def readf(filename):
-            with open(filename) as f:
-                return f.read()
-    initfile = os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                            "mpld3", "__init__.py")
-    R = re.compile("__version__(?:\s*)=(?:\s*)[\'\"](.*?)[\'\"]")
-    return R.findall(readf(initfile))[0]
+    import ast
+
+    with open(os.path.join("mpld3", "__init__.py"), "r") as init_file:
+        module = ast.parse(init_file.read())
+    
+    version = (ast.literal_eval(node.value) for node in ast.walk(module)
+               if isinstance(node, ast.Assign)
+               and node.targets[0].id == "__version__")
+    try:
+        return next(version)
+    except StopIteration:
+        raise ValueError("version could not be located")
 
 
 def is_repo(d):

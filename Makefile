@@ -23,6 +23,7 @@ mpld3/js/mpld3.v$(VERSION).js: $(shell node_modules/.bin/smash --ignore-missing 
 mpld3/js/mpld3.v$(VERSION).min.js: mpld3/js/mpld3.v$(VERSION).js bin/uglify
 	@rm -f $@
 	bin/uglify $< > $@
+	@chmod a-w $@
 
 clean:
 	rm -f -- $(GENERATED_FILES)
