@@ -1,4 +1,4 @@
-VERSION = $(shell python -c "import mpld3; print(mpld3.__version__)")
+VERSION = $(shell python version.py)
 
 GENERATED_FILES = \
 	src/version.js \
@@ -23,6 +23,7 @@ mpld3/js/mpld3.v$(VERSION).js: $(shell node_modules/.bin/smash --ignore-missing 
 mpld3/js/mpld3.v$(VERSION).min.js: mpld3/js/mpld3.v$(VERSION).js bin/uglify
 	@rm -f $@
 	bin/uglify $< > $@
+	@chmod a-w $@
 
 clean:
 	rm -f -- $(GENERATED_FILES)
