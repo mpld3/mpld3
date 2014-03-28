@@ -1,4 +1,4 @@
-VERSION = $(shell python -c "import mpld3; print(mpld3.__version__)")
+VERSION = $(shell python version.py)
 
 GENERATED_FILES = \
 	src/version.js \

@@ -9,6 +9,8 @@ import os
 import subprocess
 import sys
 import shutil
+import re
+import warnings
 
 
 try:
@@ -19,6 +21,23 @@ except:
 
 SUBMODULES = ['mplexporter']
 SUBMODULE_SYNC_PATHS = [('mplexporter/mplexporter', 'mpld3/')]
+
+
+def get_version():
+    """Get the version info from the mpld3 package without importing it"""
+    major, minor1, minor2, release, serial = sys.version_info
+    if major >= 3:
+        def readf(filename):
+            with open(filename, encoding="utf-8") as f:
+                return f.read()
+    else:
+        def readf(filename):
+            with open(filename) as f:
+                return f.read()
+    initfile = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                            "mpld3", "__init__.py")
+    R = re.compile("__version__(?:\s*)=(?:\s*)[\'\"](.*?)[\'\"]")
+    return R.findall(readf(initfile))[0]
 
 
 def is_repo(d):
@@ -149,123 +168,72 @@ class UpdateSubmodules(Command):
             sys.exit(1)
 
 
-def _get_js_libs(version, root=None):
-    if root is None:
-        root = os.path.dirname(os.path.abspath(__file__))
-    return [os.path.join(root, "mpld3", "js", lib.format(version))
-            for lib in ('mpld3.v{0}.js', 'mpld3.v{0}.min.js')]
+BUILD_INFO = """
+# Please run 
+#   python setup.py buildjs
+# or
+#   make javascript
+# to re-build the javascript libraries.
+# This requires npm to be installed: see CONTRIBUTING.md for details.
+"""
+
+BUILD_WARNING = """
+# It appears that the javascript sources may have been modified.
+# If this is the case, then the JS libraries should be rebuilt.
+#""" + BUILD_INFO
 
 
-def _get_js_sources(root=None, srcdir=None):
+VERSION_ERROR = """
+# JS libraries for version {0} are missing.
+#""" + BUILD_INFO
+
+
+def check_js_build_status(version, root=None, srcdir=None):
+    """Check the javascript build status.
+
+    Summary:
+    - if we're not in the git repo, or if the source directory doesn't exist,
+      then do nothing.
+    - if the JS libraries do not exist, return an error with a message about
+      building them.
+    - if the JS sources have been modified, return a warning with a message
+      about how to use them to build the libraries.
+    """
     if root is None:
         root = os.path.dirname(os.path.abspath(__file__))
 
     if srcdir is None:
         srcdir = os.path.join(root, 'src')
 
-    sources = [os.path.join(root, 'package.json')]
-    for (directory, subdirs, flist) in os.walk(srcdir):
-        sources.extend([os.path.join(directory, f)
-                        for f in flist if f.endswith('.js')])
-    return sources
-
-
-def check_js_build_status(root=None, srcdir=None):
-    """check status of javascript build
-
-    Has three return values:
-
-    'ok' - JS libraries are built and sources absent or not modified
-    'modified' - JS sources present and modified
-    'missing' - JS libraries not present and sources not available
-    """
-    # fix this: can this fail with strange python paths?
-    import mpld3
-    version = mpld3.__version__
-
-    if root is None:
-        root = os.path.dirname(os.path.abspath(__file__))
-
-    if srcdir is None:
-        srcdir = os.path.join(root, 'src')
-
-    if hasattr(sys, "frozen"):
-        # frozen via py2exe or similar, don't bother
-        return 'ok'
-
-    # Check existence of libraries and sources
-    if not os.path.exists(srcdir):
-        # no javascript sources
-        if not all(map(os.path.exists, _get_js_libs(version, root))):
-            return 'missing'
-        else:
-            return 'ok'
-
-    # sources and libs are present: check modification times
-    sources = _get_js_sources(root, srcdir)
-    libs = _get_js_libs(version, root)
-
-    last_modified_src = max([os.stat(f).st_mtime for f in sources])
-    first_modified_lib = min([os.stat(f).st_mtime for f in libs])
-
-    if last_modified_src > first_modified_lib:
-        return 'modified'
-    else:
-        return 'ok'
-
-
-def build_js_libs(root=None):
-    """Build the javascript libraries from sources using smash and uglify.
-
-    This requires npm, and requires that npm install has been run in the
-    package directory.
-    """
-    if root is None:
-        root = os.path.dirname(os.path.abspath(__file__))
-
-    if not os.path.exists(os.path.join(root, 'node_modules', '.bin')):
-        raise ValueError("In order to build javascript libraries, you must "
-                         "first run `npm install` in the root directory of "
-                         "the repository.")
-
-    subprocess.check_call('make javascript', cwd=root, shell=True)
-
-
-def require_js_libs(repo_dir, argv):
-    """Check on javascript libraries before distutils can do anything
-
-    Since distutils cannot be trusted to update the tree
-    after everything has been set in motion,
-    this is not a distutils command.
-    """
-    # Only do this if we are in the git source repository.
-    if not is_repo(repo_dir):
+    # If we're not in the git repo, then we perform no checks
+    if not is_repo(root):
         return
 
-    # don't do anything if nothing is actually supposed to happen
-    for do_nothing in ('-h', '--help', '--help-commands',
-                       'clean', 'submodule', 'buildjs'):
-        if do_nothing in argv:
-            return
+    # If the source directory doesn't exist, then perform no checks
+    if not os.path.exists(srcdir):
+        return
 
-    status = check_js_build_status(repo_dir)
+    # these are the built javascript libraries
+    js_libs = [os.path.join(root, "mpld3", "js", lib.format(version))
+               for lib in ('mpld3.v{0}.js', 'mpld3.v{0}.min.js')]
 
-    if status == "missing":
-        print("Fatal: Javascript libraries and sources are missing")
-        sys.exit(1)
-    if status == "modified":
-        print("mpld3 javascript sources have changed, and should be\n"
-              "updated before mpld3 can be built or installed.\n"
-              "Attempting to run\n"
-              "   make javascript\n")
-        try:
-            build_js_libs(repo_dir)
-        except ValueError as e:
-            import warnings, time
-            print("make javascript failed. Using existing .js files\n"
-                  + str(e))
-            time.sleep(10)
+    # if the js libraries don't exist, then throw an error
+    if not all(os.path.exists(lib) for lib in js_libs):
+        raise ValueError(VERSION_ERROR.format(version))
 
+    # these are the javascript sources
+    js_sources = [os.path.join(root, 'package.json')]
+    for (directory, subdirs, flist) in os.walk(srcdir):
+        js_sources.extend([os.path.join(directory, f)
+                           for f in flist if f.endswith('.js')])
+
+    # if it looks like the sources have been modified, then warn that
+    # they should be rebuilt
+    last_modified_src = max([os.stat(f).st_mtime for f in js_sources])
+    first_modified_lib = min([os.stat(f).st_mtime for f in js_libs])
+
+    if last_modified_src > first_modified_lib:
+        warnings.warn(BUILD_WARNING)
 
 
 class BuildJavascript(Command):
@@ -286,7 +254,3 @@ class BuildJavascript(Command):
         except Exception as e:
             failure = e
             print(e)
-
-        if not check_js_build_status() == 'ok':
-            print("javascript libraries could not be built")
-            sys.exit(1)
