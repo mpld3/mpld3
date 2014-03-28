@@ -7,7 +7,7 @@ except ImportError:
     from distutils.core import setup
 
 from _mpld3_setup import (require_clean_submodules, UpdateSubmodules,
-                          require_js_libs, BuildJavascript)
+                          check_js_build_status, BuildJavascript, get_version)
 
 DESCRIPTION = "D3 Viewer for Matplotlib"
 LONG_DESCRIPTION = open('README.md').read()
@@ -19,17 +19,15 @@ MAINTAINER_EMAIL = "jakevdp@cs.washington.edu"
 URL = 'http://mpld3.github.com'
 DOWNLOAD_URL = 'http://github.com/jakevdp/mpld3'
 LICENSE = 'BSD 3-clause'
-
-# import mpld3 for version
-import mpld3
-VERSION = mpld3.__version__
+VERSION = get_version()
 
 # Make sure submodules are updated and synced
 root_dir = os.path.abspath(os.path.dirname(__file__))
 require_clean_submodules(root_dir, sys.argv)
 
-# Make sure javascript libraries are built
-require_js_libs(root_dir, sys.argv)
+# Warn if it looks like JS libs need to be built
+if 'buildjs' not in sys.argv:
+    check_js_build_status(VERSION, root_dir)
 
 
 setup(name=NAME,
