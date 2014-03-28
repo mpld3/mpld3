@@ -14,7 +14,7 @@ Whether you are working on the Javascript side, the Python side, or both, we rec
 
 3. Create a new branch in which to write your feature: e.g.
 
-       [~]$ git checkout -b my-feature-name
+         [~]$ git checkout -b my-feature-name
 
 4. Modify the Python and/or Javascript code to implement your new feature
 
@@ -24,7 +24,7 @@ Whether you are working on the Javascript side, the Python side, or both, we rec
 
 7. Push your new branch to your fork on GitHub: e.g.
 
-       [~]$ git push origin my-feature-name
+         [~]$ git push origin my-feature-name
 
 8. Go to http://github.com/yourusername/mpld3 and open a pull request against the main mpld3 repository (if you followed the above steps, you should see a big green "Compare and Pull Request" button on your fork's webpage).
 
