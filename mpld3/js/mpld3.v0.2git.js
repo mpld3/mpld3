@@ -1154,9 +1154,7 @@
     obj.elements().on("mouseover", mouseover.bind(this)).on("mousemove", mousemove.bind(this)).on("mouseout", mouseout.bind(this));
   };
   mpld3.register_plugin("tooltip", mpld3.TooltipPlugin);
-  if (typeof define === "function" && define.amd) {
-    define(mpld3);
-  } else if (typeof module === "object" && module.exports) {
+  if (typeof module === "object" && module.exports) {
     module.exports = mpld3;
   } else {
     this.mpld3 = mpld3;
