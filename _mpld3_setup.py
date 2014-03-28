@@ -253,18 +253,19 @@ def require_js_libs(repo_dir, argv):
     if status == "missing":
         print("Fatal: Javascript libraries and sources are missing")
         sys.exit(1)
-    elif status == "modified":
-        print("mpld3 javascript sources must be updated before mpld3\n"
-              "can be built or installed.  Please run\n"
-              "   python setup.py buildjs\n"
-              "or\n"
-              "   make javascript\n"
-              "Note that this requires `npm install` to be run first.")
-        sys.exit(1)
-    elif not os.path.exists(os.path.join(repo_dir, 'node_modules', '.bin')):
-        print("In order to build javascript libraries, you must first run\n"
-              "`npm install` in the root directory of the repository.")
-        sys.exit(1)
+    if status == "modified":
+        print("mpld3 javascript sources have changed, and should be\n"
+              "updated before mpld3 can be built or installed.\n"
+              "Attempting to run\n"
+              "   make javascript\n")
+        try:
+            build_js_libs(repo_dir)
+        except ValueError as e:
+            import warnings, time
+            print("make javascript failed. Using existing .js files\n"
+                  + str(e))
+            time.sleep(10)
+
 
 
 class BuildJavascript(Command):
