@@ -131,6 +131,7 @@ def run_main():
     parser.add_argument("-o", "--output",
                         help="output filename",
                         type=str, default='test_plots.html')
+    parser.add_argument("-j", "--minjs", action="store_true")
     parser.add_argument("-l", "--local", action="store_true")
     args = parser.parse_args()
 
@@ -141,7 +142,16 @@ def run_main():
 
     if args.local:
         args.d3_url = urls.D3_LOCAL
-        args.mpld3_url = urls.MPLD3_LOCAL
+        if args.minjs:
+            args.mpld3_url = urls.MPLD3MIN_LOCAL
+        else:
+            args.mpld3_url = urls.MPLD3_LOCAL
+    else:
+        if args.minjs:
+            args.mpld3_url = urls.MPLD3MIN_URL
+
+    print("d3 url: {0}".format(args.d3_url))
+    print("mpld3 url: {0}".format(args.mpld3_url))
 
     combine_testplots(wildcard=wildcard,
                       outfile=args.output,

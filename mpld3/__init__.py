@@ -32,11 +32,12 @@ Functions: IPython Notebook
     disable automatic D3 display of figures in the IPython
 """
 
-__version__ = '0.2git'
-__all__ = ["fig_to_html", "fig_to_dict", "fig_to_d3", "display_d3",
+__all__ = ["__version__",
+           "fig_to_html", "fig_to_dict", "fig_to_d3", "display_d3",
            "display", "show_d3", "show", "save_html", "save_json",
            "enable_notebook", "disable_notebook", "plugins", "urls"]
 
+from .__about__ import __version__
 from . import plugins
 from . import urls
 from ._display import *
