@@ -125,8 +125,6 @@ def require_clean_submodules(repo_dir, argv):
             "Cannot build / install mpld3 with unclean submodules",
             "Please update submodules with",
             "    python setup.py submodule",
-            "or",
-            "    git submodule update",
             "or commit any submodule changes you have made."
         ]))
         sys.exit(1)
@@ -159,24 +157,24 @@ class UpdateSubmodules(Command):
             sys.exit(1)
 
 
-BUILD_INFO = """
-# Please run 
-#   python setup.py buildjs
-# or
-#   make javascript
-# to re-build the javascript libraries.
-# This requires npm to be installed: see CONTRIBUTING.md for details.
-"""
-
 BUILD_WARNING = """
 # It appears that the javascript sources may have been modified.
 # If this is the case, then the JS libraries should be rebuilt.
-#""" + BUILD_INFO
-
+# Please run 
+#   python setup.py buildjs
+# to re-build the javascript libraries.
+# This requires npm to be installed: see CONTRIBUTING.md for details.
+# If you have not modified the javascript sources, then you can safely
+# disregard this message.
+"""
 
 VERSION_ERROR = """
-# JS libraries for version {0} are missing.
-#""" + BUILD_INFO
+# Javascript libraries for mpld3 version {0} are missing.
+# Please run 
+#   python setup.py buildjs
+# to re-build the javascript libraries.
+# This requires npm to be installed: see CONTRIBUTING.md for details.
+"""
 
 
 def check_js_build_status(version, root=None, srcdir=None):
@@ -201,6 +199,7 @@ def check_js_build_status(version, root=None, srcdir=None):
         return
 
     # If the source directory doesn't exist, then perform no checks
+    # (this is the case in the packaged distribution)
     if not os.path.exists(srcdir):
         return
 
