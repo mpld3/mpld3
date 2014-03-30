@@ -22,7 +22,7 @@ function mpld3_Line(ax, props) {
     mpld3_PlotElement.call(this, ax, props);
 
     // Map line properties to path properties
-    pathProps = this.props;
+    var pathProps = this.props;
     pathProps.facecolor = "none";
     pathProps.edgecolor = pathProps.color;
     delete pathProps.color;

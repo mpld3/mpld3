@@ -1,12 +1,12 @@
 !function(d3) {
   var mpld3 = {
     figures: [],
-    plugin_map: {},
-    register_plugin: function(name, obj) {
-      mpld3.plugin_map[name] = obj;
-    }
+    plugin_map: {}
   };
   mpld3.version = "0.2git";
+  mpld3.register_plugin = function(name, obj) {
+    mpld3.plugin_map[name] = obj;
+  };
   mpld3.draw_figure = function(figid, spec) {
     var element = document.getElementById(figid);
     if (element === null) {
@@ -196,7 +196,9 @@
   };
   mpld3.icons = {
     reset: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABmJLR0QA/wD/AP+gvaeTAAAACXBI\nWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH3gIcACMoD/OzIwAAAJhJREFUOMtjYKAx4KDUgNsMDAx7\nyNV8i4GB4T8U76VEM8mGYNNMtCH4NBM0hBjNMIwSsMzQ0MamcDkDA8NmQi6xggpUoikwQbIkHk2u\nE0rLI7vCBknBSyxeRDZAE6qHgQkq+ZeBgYERSfFPAoHNDNUDN4BswIRmKgxwEasP2dlsDAwMYlA/\n/mVgYHiBpkkGKscIDaPfVMmuAGnOTaGsXF0MAAAAAElFTkSuQmCC\n",
-    move: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABmJLR0QA/wD/AP+gvaeTAAAACXBI\nWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH3gIcACQMfLHBNQAAANZJREFUOMud07FKA0EQBuAviaKB\nlFr7COJrpAyYRlKn8hECEkFEn8ROCCm0sBMRYgh5EgVFtEhsRjiO27vkBoZd/vn5d3b+XcrjFI9q\nxgXWkc8pUjOB93GMd3zgB9d1unjDSxmhWSHQqOJki+MtOuv/b3ZifUqctIrMxwhHuG1gim4Ma5kR\nWuEkXFgU4B0MW1Ho4TeyjX3s4TDq3zn8ALvZ7q5wX9DqLOHCDA95cFBAnOO1AL/ZdNopgY3fQcqF\nyriMe37hM9w521ZkkvlMo7o/8g7nZYQ/QDctp1nTCf0AAAAASUVORK5CYII=\n"
+    move: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABmJLR0QA/wD/AP+gvaeTAAAACXBI\nWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH3gIcACQMfLHBNQAAANZJREFUOMud07FKA0EQBuAviaKB\nlFr7COJrpAyYRlKn8hECEkFEn8ROCCm0sBMRYgh5EgVFtEhsRjiO27vkBoZd/vn5d3b+XcrjFI9q\nxgXWkc8pUjOB93GMd3zgB9d1unjDSxmhWSHQqOJki+MtOuv/b3ZifUqctIrMxwhHuG1gim4Ma5kR\nWuEkXFgU4B0MW1Ho4TeyjX3s4TDq3zn8ALvZ7q5wX9DqLOHCDA95cFBAnOO1AL/ZdNopgY3fQcqF\nyriMe37hM9w521ZkkvlMo7o/8g7nZYQ/QDctp1nTCf0AAAAASUVORK5CYII=\n",
+    zoom: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABmJLR0QA/wD/AP+gvaeTAAAACXBI\nWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH3gMPDiIRPL/2oQAAANBJREFUOMvF0b9KgzEcheHHVnCT\nKoI4uXbtLXgB3oJDJxevw1VwkoJ/NjepQ2/BrZRCx0ILFURQKV2kyOeSQpAmn7WDB0Lg955zEhLy\n2scdXlBggits+4WOQqjAJ3qYR7NGLrwXGU9+sGbEtlIF18FwmuBngZ+nCt6CIacC3Rx8LSl4xzgF\nn0tusBn4UyVhuA/7ZYIv5g+pE3ail25hN/qdmzCfpsJVjKKCZesDBwtzrAqGOMQj6vhCDRsY4ALH\nmOVObltR/xeG/jph6OD2r+Fv5lZBWEhMx58AAAAASUVORK5CYII=\n",
+    brush: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABmJLR0QA/wD/AP+gvaeTAAAACXBI\nWXMAAEQkAABEJAFAZ8RUAAAAB3RJTUUH3gMCEiQKB9YaAgAAAWtJREFUOMuN0r1qVVEQhuFn700k\nnfEvBq0iNiIiOKXgH4KCaBeIhWARK/EibLwFCwVLjyAWaQzRGG9grC3URkHUBKKgRuWohWvL5pjj\nyTSLxcz7rZlZHyMiItqzFxGTEVF18/UoODNFxDIO4x12dkXqTcBPsCUzD+AK3ndFqhHwEsYz82gn\nN4dbmMRK9R/4KY7jAvbiWmYeHBT5Z4QCP8J1rGAeN3GvU3Mbl/Gq3qCDcxjLzOV+v78fq/iFIxFx\nPyJ2lNJpfBy2g59YzMyzEbEVLzGBJjOriLiBq5gaJrCIU3hcRCbwAtuwjm/Yg/V6I9NgDA1OR8RC\nZq6Vcd7iUwtn5h8fdMBdETGPE+Xe4ExELDRNs4bX2NfCUHe+7UExyfkCP8MhzOA7PuAkvrbwXyNF\nxF3MDqxiqlhXC7SPdaOKiN14g0u4g3H0MvOiTUSNY3iemb0ywmfMdfYyUmAJ2yPiBx6Wr/oy2Oqw\n+A1SupBzAOuE/AAAAABJRU5ErkJggg==\n"
   };
   mpld3.Grid = mpld3_Grid;
   mpld3_Grid.prototype = Object.create(mpld3_PlotElement.prototype);
@@ -466,7 +468,7 @@
       "fill-opacity": getMod(this.props.alphas, i)
     };
     var ret = "";
-    for (key in styles) {
+    for (var key in styles) {
       ret += key + ":" + styles[key] + ";";
     }
     return ret;
@@ -502,7 +504,7 @@
   };
   function mpld3_Line(ax, props) {
     mpld3_PlotElement.call(this, ax, props);
-    pathProps = this.props;
+    var pathProps = this.props;
     pathProps.facecolor = "none";
     pathProps.edgecolor = pathProps.color;
     delete pathProps.color;
@@ -536,7 +538,7 @@
     } else {
       this.marker = this.props.markername === null ? null : d3.svg.symbol(this.props.markername).size(Math.pow(this.props.markersize, 2));
     }
-    PCprops = {
+    var PCprops = {
       paths: [ this.markerpath ],
       offsets: ax.fig.get_data(this.props.data),
       xindex: this.props.xindex,
@@ -905,6 +907,7 @@
   function mpld3_Button(toolbar, key) {
     mpld3_PlotElement.call(this, toolbar);
     this.toolbar = toolbar;
+    this.fig = this.toolbar.fig;
     this.cssclass = "mpld3-" + key + "button";
     this.active = false;
   }
@@ -941,37 +944,12 @@
     }
     B.prototype = Object.create(mpld3_Button.prototype);
     B.prototype.constructor = B;
-    for (key in members) B.prototype[key] = members[key];
+    for (var key in members) {
+      B.prototype[key] = members[key];
+    }
     mpld3.Toolbar.prototype.buttonDict[members.toolbarKey] = B;
     return B;
   };
-  mpld3.ResetButton = mpld3.ButtonFactory({
-    toolbarKey: "reset",
-    sticky: false,
-    onActivate: function() {
-      this.toolbar.fig.reset();
-    },
-    icon: function() {
-      return mpld3.icons["reset"];
-    }
-  });
-  mpld3.MoveButton = mpld3.ButtonFactory({
-    toolbarKey: "move",
-    sticky: true,
-    actions: [ "scroll", "drag" ],
-    onActivate: function() {
-      this.toolbar.fig.enable_zoom();
-    },
-    onDeactivate: function() {
-      this.toolbar.fig.disable_zoom();
-    },
-    onDraw: function() {
-      this.toolbar.fig.disable_zoom();
-    },
-    icon: function() {
-      return mpld3.icons["move"];
-    }
-  });
   mpld3.Figure = mpld3_Figure;
   mpld3_Figure.prototype = Object.create(mpld3_PlotElement.prototype);
   mpld3_Figure.prototype.constructor = mpld3_Figure;
@@ -979,8 +957,14 @@
   mpld3_Figure.prototype.defaultProps = {
     data: {},
     axes: [],
-    plugins: [],
-    toolbar: [ "reset", "move" ]
+    plugins: [ {
+      type: "reset"
+    }, {
+      type: "zoom"
+    }, {
+      type: "boxzoom"
+    } ],
+    buttons: []
   };
   function mpld3_Figure(figid, props) {
     mpld3_PlotElement.call(this, null, props);
@@ -994,11 +978,16 @@
     this.plugins = [];
     for (var i = 0; i < this.props.plugins.length; i++) this.add_plugin(this.props.plugins[i]);
     this.toolbar = new mpld3.Toolbar(this, {
-      buttons: this.props.toolbar
+      buttons: this.props.buttons
     });
   }
   mpld3_Figure.prototype.add_plugin = function(props) {
     var plug = props.type;
+    if (typeof plug === "undefined") {
+      console.warn("unspecified plugin type. Skipping this");
+      return;
+    }
+    delete props.type;
     if (plug in mpld3.plugin_map) plug = mpld3.plugin_map[plug];
     if (typeof plug !== "function") {
       console.warn("Skipping unrecognized plugin: " + plug);
@@ -1072,10 +1061,11 @@
   mpld3_PlotElement.prototype.requiredProps = [];
   mpld3_PlotElement.prototype.defaultProps = {};
   mpld3_PlotElement.prototype.processProps = function(props) {
-    finalProps = {};
+    var finalProps = {};
+    var this_name = this.name();
     this.requiredProps.forEach(function(p) {
       if (!(p in props)) {
-        throw "property '" + p + "' " + "must be specified for " + this.name();
+        throw "property '" + p + "' " + "must be specified for " + this_name;
       }
       finalProps[p] = props[p];
       delete props[p];
@@ -1104,19 +1094,161 @@
     var results = funcNameRegex.exec(this.constructor.toString());
     return results && results.length > 1 ? results[1] : "";
   };
+  mpld3.Plugin = mpld3_Plugin;
+  mpld3_Plugin.prototype = Object.create(mpld3_PlotElement.prototype);
+  mpld3_Plugin.prototype.constructor = mpld3_Plugin;
+  mpld3_Plugin.prototype.requiredProps = [];
+  mpld3_Plugin.prototype.defaultProps = {};
+  function mpld3_Plugin(fig, props) {
+    mpld3_PlotElement.call(this, fig, props);
+  }
+  mpld3_Plugin.prototype.draw = function() {};
+  mpld3.ResetPlugin = mpld3_ResetPlugin;
+  mpld3.register_plugin("reset", mpld3_ResetPlugin);
+  mpld3_ResetPlugin.prototype = Object.create(mpld3_Plugin.prototype);
+  mpld3_ResetPlugin.prototype.constructor = mpld3_ResetPlugin;
+  mpld3_ResetPlugin.prototype.requiredProps = [];
+  mpld3_ResetPlugin.prototype.defaultProps = {};
+  function mpld3_ResetPlugin(fig, props) {
+    mpld3_Plugin.call(this, fig, props);
+    mpld3.ResetButton = mpld3.ButtonFactory({
+      toolbarKey: "reset",
+      sticky: false,
+      onActivate: function() {
+        this.toolbar.fig.reset();
+      },
+      icon: function() {
+        return mpld3.icons["reset"];
+      }
+    });
+    this.fig.props.buttons.push("reset");
+  }
+  mpld3.ZoomPlugin = mpld3_ZoomPlugin;
+  mpld3.register_plugin("zoom", mpld3_ZoomPlugin);
+  mpld3_ZoomPlugin.prototype = Object.create(mpld3_Plugin.prototype);
+  mpld3_ZoomPlugin.prototype.constructor = mpld3_ZoomPlugin;
+  mpld3_ZoomPlugin.prototype.requiredProps = [];
+  mpld3_ZoomPlugin.prototype.defaultProps = {
+    type: "zoom",
+    button: true,
+    enabled: null
+  };
+  function mpld3_ZoomPlugin(fig, props) {
+    mpld3_Plugin.call(this, fig, props);
+    if (this.props.button) {
+      mpld3.ButtonFactory({
+        toolbarKey: "zoom",
+        sticky: true,
+        actions: [ "scroll", "drag" ],
+        onActivate: function() {
+          this.fig.enable_zoom();
+        },
+        onDeactivate: function() {
+          this.fig.disable_zoom();
+        },
+        icon: function() {
+          return mpld3.icons["move"];
+        }
+      });
+      this.fig.props.buttons.push("zoom");
+    }
+    if (this.props.enabled === null) {
+      this.props.enabled = !this.props.button;
+    }
+  }
+  mpld3_ZoomPlugin.prototype.draw = function() {
+    if (this.props.enabled) {
+      this.fig.enable_zoom();
+    } else {
+      this.fig.disable_zoom();
+    }
+  };
+  mpld3.BoxZoomPlugin = mpld3_BoxZoomPlugin;
+  mpld3.register_plugin("boxzoom", mpld3_BoxZoomPlugin);
+  mpld3_BoxZoomPlugin.prototype = Object.create(mpld3_Plugin.prototype);
+  mpld3_BoxZoomPlugin.prototype.constructor = mpld3_BoxZoomPlugin;
+  mpld3_BoxZoomPlugin.prototype.requiredProps = [];
+  mpld3_BoxZoomPlugin.prototype.defaultProps = {
+    button: true,
+    enabled: true
+  };
+  function mpld3_BoxZoomPlugin(fig, props) {
+    mpld3_Plugin.call(this, fig, props);
+    if (this.props.button) {
+      mpld3.ButtonFactory({
+        toolbarKey: "boxzoom",
+        sticky: true,
+        actions: [ "drag" ],
+        onActivate: this.activate.bind(this),
+        onDeactivate: this.deactivate.bind(this),
+        onDraw: this.deactivate.bind(this),
+        icon: function() {
+          return mpld3.icons["zoom"];
+        }
+      });
+      this.fig.props.buttons.push("boxzoom");
+    }
+  }
+  mpld3_BoxZoomPlugin.prototype.activate = function() {
+    if (this.enable) this.enable();
+  };
+  mpld3_BoxZoomPlugin.prototype.deactivate = function() {
+    if (this.disable) this.disable();
+  };
+  mpld3_BoxZoomPlugin.prototype.draw = function() {
+    mpld3.insert_css("#" + this.fig.figid + " rect.extent", {
+      fill: "#fff",
+      "fill-opacity": 0,
+      stroke: "#999"
+    });
+    var brush = d3.svg.brush().x(this.fig.axes[0].x).y(this.fig.axes[0].y).on("brushend", brushend.bind(this));
+    this.fig.root.selectAll(".mpld3-axes").data(this.fig.axes).call(brush);
+    this.enable = function() {
+      brush.on("brushstart", brushstart);
+      this.fig.canvas.selectAll("rect.background").style("cursor", "crosshair");
+      this.fig.canvas.selectAll("rect.extent, rect.resize").style("display", null);
+      this.enabled = true;
+    };
+    this.disable = function() {
+      brush.on("brushstart", null).clear();
+      this.fig.canvas.selectAll("rect.background").style("cursor", null);
+      this.fig.canvas.selectAll("rect.extent, rect.resize").style("display", "none");
+      this.enabled = false;
+    };
+    this.toggle = function() {
+      this.enabled ? this.disable() : this.enable();
+    };
+    function brushstart(d, i) {
+      brush.x(d.x).y(d.y);
+    }
+    function brushend(d, i) {
+      if (this.enabled) {
+        var extent = brush.extent();
+        if (extent[0][0] != extent[1][0] && extent[0][1] != extent[1][1]) {
+          d.set_axlim([ extent[0][0], extent[1][0] ], [ extent[0][1], extent[1][1] ]);
+        }
+      }
+      d.axes.call(brush.clear());
+    }
+    if (this.props.enabled) {
+      this.enable();
+    } else {
+      this.disable();
+    }
+  };
   mpld3.TooltipPlugin = mpld3_TooltipPlugin;
-  mpld3_TooltipPlugin.prototype = Object.create(mpld3_PlotElement.prototype);
+  mpld3.register_plugin("tooltip", mpld3_TooltipPlugin);
+  mpld3_TooltipPlugin.prototype = Object.create(mpld3_Plugin.prototype);
   mpld3_TooltipPlugin.prototype.constructor = mpld3_TooltipPlugin;
   mpld3_TooltipPlugin.prototype.requiredProps = [ "id" ];
   mpld3_TooltipPlugin.prototype.defaultProps = {
-    type: "tooltip",
     labels: null,
     hoffset: 0,
     voffset: 10,
     location: "mouse"
   };
   function mpld3_TooltipPlugin(fig, props) {
-    mpld3_PlotElement.call(this, fig, props);
+    mpld3_Plugin.call(this, fig, props);
   }
   mpld3_TooltipPlugin.prototype.draw = function() {
     var obj = mpld3.get_element(this.props.id, this.fig);
@@ -1138,7 +1270,7 @@
       this.y = obj.ax.position[1] + 5 + this.props.voffset;
     }
     function mouseover(d, i) {
-      this.tooltip.style("visibility", "visible").text(labels === null ? "(" + d[0] + ", " + d[1] + ")" : getMod(labels, i));
+      this.tooltip.style("visibility", "visible").text(labels === null ? "(" + d + ")" : getMod(labels, i));
     }
     function mousemove(d, i) {
       if (loc === "mouse") {
@@ -1153,7 +1285,6 @@
     }
     obj.elements().on("mouseover", mouseover.bind(this)).on("mousemove", mousemove.bind(this)).on("mouseout", mouseout.bind(this));
   };
-  mpld3.register_plugin("tooltip", mpld3.TooltipPlugin);
   if (typeof module === "object" && module.exports) {
     module.exports = mpld3;
   } else {

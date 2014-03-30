@@ -87,7 +87,7 @@ mpld3_PathCollection.prototype.styleFunc = function(d, i) {
         "fill-opacity": getMod(this.props.alphas, i),
     }
     var ret = ""
-    for (key in styles) {
+    for (var key in styles) {
         ret += key + ":" + styles[key] + ";"
     }
     return ret
