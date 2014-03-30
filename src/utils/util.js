@@ -10,7 +10,6 @@ mpld3.draw_figure = function(figid, spec) {
     var element = document.getElementById(figid);
     if (element === null) {
         throw (figid + " is not a valid id");
-        return null;
     }
     var fig = new mpld3.Figure(figid, spec);
     mpld3.figures.push(fig);
@@ -142,6 +141,10 @@ function getMod(L, i) {
     return (L.length > 0) ? L[i % L.length] : null;
 }
 
+mpld3.path = function() {
+    return mpld3_path();
+}
+
 function mpld3_path(_) {
     var x = function(d, i) {
         return d[0];
@@ -239,6 +242,29 @@ function mpld3_path(_) {
     return path;
 }
 
-mpld3.path = function() {
-    return mpld3_path();
+mpld3.multiscale = mpld3_multiscale;
+
+function mpld3_multiscale(_){
+    var args = Array.prototype.slice.call(arguments, 0);
+    var N = args.length;
+    function scale(x) {
+        args.forEach(function(mapping){
+            x = mapping(x);
+        });
+        return x;
+    }
+    scale.domain = function(x) {
+        if (!arguments.length) return args[0].domain();
+        args[0].domain(x);
+        return scale;
+    };
+    scale.range = function(x) {
+        if (!arguments.length) return args[N - 1].range();
+        args[N - 1].range(x);
+        return scale;
+    };
+    scale.step = function(i) {
+        return args[i];
+    };
+    return scale;
 }

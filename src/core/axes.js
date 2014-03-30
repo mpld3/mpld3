@@ -76,12 +76,11 @@ function mpld3_Axes(fig, props) {
            - data range
            - data domain
     The data range and domain are only different in the case of
-    date axes.  For log or linear axes, these are identical.
+    date axes.  For log or linear axes, the two are identical.
   
     To convert between these, we have the following mappings:
      - [x,y]dom     : map from domain to screen
      - [x,y]        : map from range to screen
-     - [x,y]datemap : map from domain to range (used only for dates)
     Here we'll construct these mappings.
   *****************************************************************/
 
@@ -98,19 +97,17 @@ function mpld3_Axes(fig, props) {
         this.props.ydomain, [this.height, 0]);
 
     if (this.props.xscale === "date") {
-        this.xdatemap = build_scale(this.props.xscale,
-            this.props.xdomain, this.props.xlim);
-        this.x = function(x) {
-            return this.xdom(this.xdatemap.invert(x));
-        }
+        this.x = mpld3.multiscale(d3.scale.linear()
+                                    .domain(this.props.xlim)
+                                    .range(this.props.xdomain.map(Number)),
+                                  this.xdom);
     }
 
     if (this.props.yscale === "date") {
-        this.ydatemap = build_scale(this.props.yscale,
-            this.props.ydomain, this.props.ylim);
-        this.y = function(y) {
-            return this.ydom(this.ydatemap.invert(y));
-        }
+        this.x = mpld3.multiscale(d3.scale.linear()
+                                    .domain(this.props.ylim)
+                                    .range(this.props.ydomain.map(Number)),
+                                  this.ydom);
     }
 
     // Add axes and grids
@@ -280,7 +277,7 @@ mpld3_Axes.prototype.reset = function(duration, propagate) {
 };
 
 mpld3_Axes.prototype.set_axlim = function(xlim, ylim,
-    duration, propagate) {
+                                          duration, propagate) {
     xlim = isUndefinedOrNull(xlim) ? this.xdom.domain() : xlim;
     ylim = isUndefinedOrNull(ylim) ? this.ydom.domain() : ylim;
     duration = isUndefinedOrNull(duration) ? 750 : duration;
