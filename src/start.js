@@ -14,8 +14,5 @@
     var mpld3 = {
         figures: [],
         plugin_map: {},
-        register_plugin: function(name, obj) {
-            mpld3.plugin_map[name] = obj;
-        }
     };
 

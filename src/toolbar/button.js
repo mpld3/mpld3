@@ -7,6 +7,7 @@ mpld3_Button.prototype.constructor = mpld3_Button;
 function mpld3_Button(toolbar, key) {
     mpld3_PlotElement.call(this, toolbar);
     this.toolbar = toolbar;
+    this.fig = this.toolbar.fig;
     this.cssclass = "mpld3-" + key + "button";
     this.active = false;
 }
@@ -48,10 +49,12 @@ mpld3_Button.prototype.onDraw = function() {};
 mpld3.ButtonFactory = function(members) {
     function B(toolbar, key) {
         mpld3_Button.call(this, toolbar, key);
-    };
+    }
     B.prototype = Object.create(mpld3_Button.prototype);
     B.prototype.constructor = B;
-    for (key in members) B.prototype[key] = members[key];
+    for (var key in members){
+	B.prototype[key] = members[key];
+    }
     mpld3.Toolbar.prototype.buttonDict[members.toolbarKey] = B;
     return B;
 }

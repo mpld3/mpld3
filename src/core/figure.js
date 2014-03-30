@@ -7,14 +7,12 @@ import "../toolbar/";
 mpld3.Figure = mpld3_Figure;
 mpld3_Figure.prototype = Object.create(mpld3_PlotElement.prototype);
 mpld3_Figure.prototype.constructor = mpld3_Figure;
-mpld3_Figure.prototype.requiredProps = ["width",
-    "height"
-];
+mpld3_Figure.prototype.requiredProps = ["width", "height"];
 mpld3_Figure.prototype.defaultProps = {
     data: {},
     axes: [],
-    plugins: [],
-    toolbar: ["reset", "move"]
+    plugins: [{type: "reset"}, {type: "zoom"}, {type: "boxzoom"}],
+    buttons: []
 };
 
 function mpld3_Figure(figid, props) {
@@ -40,13 +38,19 @@ function mpld3_Figure(figid, props) {
         this.add_plugin(this.props.plugins[i]);
 
     // Create the figure toolbar
+    //  do this last because plugins may modify the button list
     this.toolbar = new mpld3.Toolbar(this, {
-        buttons: this.props.toolbar
+        buttons: this.props.buttons
     });
 }
 
 mpld3_Figure.prototype.add_plugin = function(props) {
     var plug = props.type;
+    if (typeof plug === "undefined"){
+        console.warn("unspecified plugin type. Skipping this");
+        return;
+    }
+    delete props.type;
 
     if (plug in mpld3.plugin_map)
         plug = mpld3.plugin_map[plug];
