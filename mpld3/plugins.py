@@ -275,4 +275,4 @@ class PointHTMLTooltip(PluginBase):
                       "hoffset": hoffset,
                       "voffset": voffset}
 
-DEFAULT_PLUGINS = [Reset(), Zoom()]
+DEFAULT_PLUGINS = [Reset(), Zoom(), BoxZoom()]

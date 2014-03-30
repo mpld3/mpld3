@@ -11,7 +11,6 @@
     var element = document.getElementById(figid);
     if (element === null) {
       throw figid + " is not a valid id";
-      return null;
     }
     var fig = new mpld3.Figure(figid, spec);
     mpld3.figures.push(fig);
@@ -115,6 +114,9 @@
   function getMod(L, i) {
     return L.length > 0 ? L[i % L.length] : null;
   }
+  mpld3.path = function() {
+    return mpld3_path();
+  };
   function mpld3_path(_) {
     var x = function(d, i) {
       return d[0];
@@ -191,9 +193,31 @@
     path.call = path;
     return path;
   }
-  mpld3.path = function() {
-    return mpld3_path();
-  };
+  mpld3.multiscale = mpld3_multiscale;
+  function mpld3_multiscale(_) {
+    var args = Array.prototype.slice.call(arguments, 0);
+    var N = args.length;
+    function scale(x) {
+      args.forEach(function(mapping) {
+        x = mapping(x);
+      });
+      return x;
+    }
+    scale.domain = function(x) {
+      if (!arguments.length) return args[0].domain();
+      args[0].domain(x);
+      return scale;
+    };
+    scale.range = function(x) {
+      if (!arguments.length) return args[N - 1].range();
+      args[N - 1].range(x);
+      return scale;
+    };
+    scale.step = function(i) {
+      return args[i];
+    };
+    return scale;
+  }
   mpld3.icons = {
     reset: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABmJLR0QA/wD/AP+gvaeTAAAACXBI\nWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH3gIcACMoD/OzIwAAAJhJREFUOMtjYKAx4KDUgNsMDAx7\nyNV8i4GB4T8U76VEM8mGYNNMtCH4NBM0hBjNMIwSsMzQ0MamcDkDA8NmQi6xggpUoikwQbIkHk2u\nE0rLI7vCBknBSyxeRDZAE6qHgQkq+ZeBgYERSfFPAoHNDNUDN4BswIRmKgxwEasP2dlsDAwMYlA/\n/mVgYHiBpkkGKscIDaPfVMmuAGnOTaGsXF0MAAAAAElFTkSuQmCC\n",
     move: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABmJLR0QA/wD/AP+gvaeTAAAACXBI\nWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH3gIcACQMfLHBNQAAANZJREFUOMud07FKA0EQBuAviaKB\nlFr7COJrpAyYRlKn8hECEkFEn8ROCCm0sBMRYgh5EgVFtEhsRjiO27vkBoZd/vn5d3b+XcrjFI9q\nxgXWkc8pUjOB93GMd3zgB9d1unjDSxmhWSHQqOJki+MtOuv/b3ZifUqctIrMxwhHuG1gim4Ma5kR\nWuEkXFgU4B0MW1Ho4TeyjX3s4TDq3zn8ALvZ7q5wX9DqLOHCDA95cFBAnOO1AL/ZdNopgY3fQcqF\nyriMe37hM9w521ZkkvlMo7o/8g7nZYQ/QDctp1nTCf0AAAAASUVORK5CYII=\n",
@@ -684,16 +708,10 @@
     this.x = this.xdom = build_scale(this.props.xscale, this.props.xdomain, [ 0, this.width ]);
     this.y = this.ydom = build_scale(this.props.yscale, this.props.ydomain, [ this.height, 0 ]);
     if (this.props.xscale === "date") {
-      this.xdatemap = build_scale(this.props.xscale, this.props.xdomain, this.props.xlim);
-      this.x = function(x) {
-        return this.xdom(this.xdatemap.invert(x));
-      };
+      this.x = mpld3.multiscale(d3.scale.linear().domain(this.props.xlim).range(this.props.xdomain.map(Number)), this.xdom);
     }
     if (this.props.yscale === "date") {
-      this.ydatemap = build_scale(this.props.yscale, this.props.ydomain, this.props.ylim);
-      this.y = function(y) {
-        return this.ydom(this.ydatemap.invert(y));
-      };
+      this.x = mpld3.multiscale(d3.scale.linear().domain(this.props.ylim).range(this.props.ydomain.map(Number)), this.ydom);
     }
     var axes = this.props.axes;
     for (var i = 0; i < axes.length; i++) {
@@ -911,6 +929,9 @@
     this.cssclass = "mpld3-" + key + "button";
     this.active = false;
   }
+  mpld3_Button.prototype.setState = function(state) {
+    state ? this.activate() : this.deactivate();
+  };
   mpld3_Button.prototype.click = function() {
     this.active ? this.deactivate() : this.activate();
   };
@@ -1135,16 +1156,16 @@
   };
   function mpld3_ZoomPlugin(fig, props) {
     mpld3_Plugin.call(this, fig, props);
+    var enabled = this.props.enabled;
     if (this.props.button) {
       mpld3.ButtonFactory({
         toolbarKey: "zoom",
         sticky: true,
         actions: [ "scroll", "drag" ],
-        onActivate: function() {
-          this.fig.enable_zoom();
-        },
-        onDeactivate: function() {
-          this.fig.disable_zoom();
+        onActivate: this.activate.bind(this),
+        onDeactivate: this.deactivate.bind(this),
+        onDraw: function() {
+          this.setState(enabled);
         },
         icon: function() {
           return mpld3.icons["move"];
@@ -1156,12 +1177,14 @@
       this.props.enabled = !this.props.button;
     }
   }
+  mpld3_ZoomPlugin.prototype.activate = function() {
+    this.fig.enable_zoom();
+  };
+  mpld3_ZoomPlugin.prototype.deactivate = function() {
+    this.fig.disable_zoom();
+  };
   mpld3_ZoomPlugin.prototype.draw = function() {
-    if (this.props.enabled) {
-      this.fig.enable_zoom();
-    } else {
-      this.fig.disable_zoom();
-    }
+    this.fig.disable_zoom();
   };
   mpld3.BoxZoomPlugin = mpld3_BoxZoomPlugin;
   mpld3.register_plugin("boxzoom", mpld3_BoxZoomPlugin);
@@ -1174,6 +1197,7 @@
   };
   function mpld3_BoxZoomPlugin(fig, props) {
     mpld3_Plugin.call(this, fig, props);
+    var enabled = this.props.enabled;
     if (this.props.button) {
       mpld3.ButtonFactory({
         toolbarKey: "boxzoom",
@@ -1181,7 +1205,9 @@
         actions: [ "drag" ],
         onActivate: this.activate.bind(this),
         onDeactivate: this.deactivate.bind(this),
-        onDraw: this.deactivate.bind(this),
+        onDraw: function() {
+          this.setState(enabled);
+        },
         icon: function() {
           return mpld3.icons["zoom"];
         }
@@ -1201,17 +1227,17 @@
       "fill-opacity": 0,
       stroke: "#999"
     });
-    var brush = d3.svg.brush().x(this.fig.axes[0].x).y(this.fig.axes[0].y).on("brushend", brushend.bind(this));
+    var brush = d3.svg.brush().x(this.fig.axes[0].xdom).y(this.fig.axes[0].ydom).on("brushend", brushend.bind(this));
     this.fig.root.selectAll(".mpld3-axes").data(this.fig.axes).call(brush);
     this.enable = function() {
       brush.on("brushstart", brushstart);
-      this.fig.canvas.selectAll("rect.background").style("cursor", "crosshair");
+      this.fig.canvas.selectAll("rect.background").style("cursor", "crosshair").style("pointer-events", null);
       this.fig.canvas.selectAll("rect.extent, rect.resize").style("display", null);
       this.enabled = true;
     };
     this.disable = function() {
       brush.on("brushstart", null).clear();
-      this.fig.canvas.selectAll("rect.background").style("cursor", null);
+      this.fig.canvas.selectAll("rect.background").style("cursor", null).style("pointer-events", "visible");
       this.fig.canvas.selectAll("rect.extent, rect.resize").style("display", "none");
       this.enabled = false;
     };
@@ -1219,7 +1245,7 @@
       this.enabled ? this.disable() : this.enable();
     };
     function brushstart(d, i) {
-      brush.x(d.x).y(d.y);
+      brush.x(d.xdom).y(d.ydom);
     }
     function brushend(d, i) {
       if (this.enabled) {
@@ -1230,11 +1256,7 @@
       }
       d.axes.call(brush.clear());
     }
-    if (this.props.enabled) {
-      this.enable();
-    } else {
-      this.disable();
-    }
+    this.disable();
   };
   mpld3.TooltipPlugin = mpld3_TooltipPlugin;
   mpld3.register_plugin("tooltip", mpld3_TooltipPlugin);

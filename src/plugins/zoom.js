@@ -17,18 +17,16 @@ mpld3_ZoomPlugin.prototype.defaultProps = {
 
 function mpld3_ZoomPlugin(fig, props) {
     mpld3_Plugin.call(this, fig, props);
+    var enabled = this.props.enabled;
     
     if (this.props.button){
         mpld3.ButtonFactory({
             toolbarKey: "zoom",
             sticky: true,
             actions: ["scroll", "drag"],
-            onActivate: function() {
-                this.fig.enable_zoom();
-            },
-            onDeactivate: function() {
-                this.fig.disable_zoom();
-            },
+            onActivate: this.activate.bind(this),
+            onDeactivate: this.deactivate.bind(this),
+            onDraw: function(){this.setState(enabled);},
             icon: function() {
                 return mpld3.icons["move"];
             }
@@ -40,10 +38,14 @@ function mpld3_ZoomPlugin(fig, props) {
     }
 }
 
+mpld3_ZoomPlugin.prototype.activate = function(){
+    this.fig.enable_zoom();
+};
+
+mpld3_ZoomPlugin.prototype.deactivate = function(){
+    this.fig.disable_zoom()
+};
+
 mpld3_ZoomPlugin.prototype.draw = function(){
-    if(this.props.enabled){
-        this.fig.enable_zoom();
-    }else{
-	this.fig.disable_zoom();
-    }
+    this.fig.disable_zoom();
 }

@@ -16,6 +16,7 @@ mpld3_BoxZoomPlugin.prototype.defaultProps = {
 
 function mpld3_BoxZoomPlugin(fig, props) {
     mpld3_Plugin.call(this, fig, props);
+    var enabled = this.props.enabled;
     
     if (this.props.button){
 	// add a button to enable/disable box zoom
@@ -25,7 +26,7 @@ function mpld3_BoxZoomPlugin(fig, props) {
             actions: ["drag"],
 	    onActivate: this.activate.bind(this),
 	    onDeactivate: this.deactivate.bind(this),
-            onDraw: this.deactivate.bind(this),
+            onDraw: function(){this.setState(enabled);},
 	    icon: function(){return mpld3.icons["zoom"];},
 	});
 	this.fig.props.buttons.push("boxzoom");
@@ -47,8 +48,8 @@ mpld3_BoxZoomPlugin.prototype.draw = function(){
                       "stroke": "#999"});
     
     var brush = d3.svg.brush()
-	.x(this.fig.axes[0].x)
-        .y(this.fig.axes[0].y)
+	.x(this.fig.axes[0].xdom)
+        .y(this.fig.axes[0].ydom)
         .on("brushend", brushend.bind(this));
     
     this.fig.root.selectAll(".mpld3-axes")
@@ -58,7 +59,8 @@ mpld3_BoxZoomPlugin.prototype.draw = function(){
     this.enable = function(){
         brush.on("brushstart", brushstart);
         this.fig.canvas.selectAll("rect.background")
-	    .style("cursor", "crosshair");
+	    .style("cursor", "crosshair")
+	    .style("pointer-events", null);
         this.fig.canvas.selectAll("rect.extent, rect.resize")
 	    .style("display", null);
         this.enabled = true;
@@ -67,7 +69,8 @@ mpld3_BoxZoomPlugin.prototype.draw = function(){
     this.disable = function(){
         brush.on("brushstart", null).clear();
         this.fig.canvas.selectAll("rect.background")
-	    .style("cursor", null);
+	    .style("cursor", null)
+	    .style("pointer-events", "visible");
         this.fig.canvas.selectAll("rect.extent, rect.resize")
 	    .style("display", "none");
         this.enabled = false;
@@ -78,7 +81,7 @@ mpld3_BoxZoomPlugin.prototype.draw = function(){
     }
     
     function brushstart(d, i){
-	brush.x(d.x).y(d.y);
+	brush.x(d.xdom).y(d.ydom);
     }
     
     function brushend(d, i){
@@ -92,11 +95,6 @@ mpld3_BoxZoomPlugin.prototype.draw = function(){
 	}
 	d.axes.call(brush.clear());
     }
-
-    if(this.props.enabled){
-	this.enable();
-    }else{
-	this.disable();
-    }
+    this.disable();
 }    
 

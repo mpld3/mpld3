@@ -12,6 +12,10 @@ function mpld3_Button(toolbar, key) {
     this.active = false;
 }
 
+mpld3_Button.prototype.setState = function(state) {
+    (state) ? this.activate() : this.deactivate();
+}
+
 mpld3_Button.prototype.click = function() {
     this.active ? this.deactivate() : this.activate();
 };
