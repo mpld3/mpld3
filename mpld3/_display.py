@@ -53,7 +53,7 @@ if(typeof(window.mpld3) === "undefined"){
   require.config({paths: {d3: "{{ d3_url[:-3] }}"}});
   require(["d3"], function(d3){
     window.d3 = d3;
-    $.getScript("{{ mpld3_url }}", function(mpld3){
+    $.getScript("{{ mpld3_url }}", function(){
        {{ extra_js }}
        mpld3.draw_figure("{{ figid }}", {{ figure_json }});
     });
@@ -73,6 +73,7 @@ if(typeof(window.mpld3) === "undefined"){
 # is defined, and whether it's embedded in a notebook or in a standalone
 # HTML page.
 GENERAL_HTML = jinja2.Template("""
+
 <style>
 {{ extra_css }}
 </style>
@@ -88,33 +89,30 @@ function mpld3_load_lib(url, callback){
   document.getElementsByTagName("head")[0].appendChild(s);
 }
 
-
 if(typeof(mpld3) !== "undefined"){
    // already loaded: just create the figure
    !function(mpld3){
        {{ extra_js }}
        mpld3.draw_figure("{{ figid }}", {{ figure_json }});
    }(mpld3);
-
-
 }else if(typeof define === "function" && define.amd){
    // require.js is available: use it to load d3/mpld3
    require.config({paths: {d3: "{{ d3_url[:-3] }}"}});
    require(["d3"], function(d3){
       window.d3 = d3;
       mpld3_load_lib("{{ mpld3_url }}", function(){
-          {{ extra_js }}
-          mpld3.draw_figure("{{ figid }}", {{ figure_json }});
+         {{ extra_js }}
+         mpld3.draw_figure("{{ figid }}", {{ figure_json }});
       });
     });
 }else{
     // require.js not available: dynamically load d3 & mpld3
     mpld3_load_lib("{{ d3_url }}", function(){
-    mpld3_load_lib("{{ mpld3_url }}", function(mpld3){
-            {{ extra_js }}
-            mpld3.draw_figure("{{ figid }}", {{ figure_json }});
-        });
-    })
+         mpld3_load_lib("{{ mpld3_url }}", function(){
+                 {{ extra_js }}
+                 mpld3.draw_figure("{{ figid }}", {{ figure_json }});
+            })
+         });
 }
 </script>
 """)
