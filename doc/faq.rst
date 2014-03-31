@@ -3,6 +3,22 @@
 Frequently Asked Questions
 ==========================
 
+
+General
+-------
+
+- **Does mpld3 work for large datasets?**
+
+  Short answer: not really.  Mpld3 is designed for small to medium-scale visualizations, and this is unlikely to change. The reason is that mpld3 is build on the foundation of HTML's SVG, which is not suited for large datasets. Plots with more than a few thousand elements will have noticeably slow response for interactive features.
+
+  Big data visualization requires specialized tools which take direct advantage of your system's GPU. One project to keep an eye on is [vispy](http://vispy.org), a Python visualization library built on OpenGL which includes specific optimizations for visualizing larger datasets.
+
+- **What matplotlib features are not supported?**
+
+  matplotlib is a complicated system, and there are lots of small corner cases that are difficult to render correctly in d3. mpld3 correctly handles a large majority of matplotlib plots, but some pieces remain unsupported either because they have not yet been implemented, or because there are fundamental difficulties preventing their inclusion.
+
+  We keep a list of unsupported features at https://github.com/jakevdp/mpld3/wiki#mpld3-missing-features.  If you find something missing that's not on that list, please feel free to add it.
+
 IPython Notebook
 ----------------
 
@@ -48,13 +64,3 @@ Javascript
 
     mpld3.enable_notebook(d3_url='/files/d3.v3.min.js',
                           mpld3_url='/files/mpld3.v0.1.js')
-
-
-General
--------
-
-- **What matplotlib features are not supported?**
-
-  matplotlib is a complicated system, and there are lots of small corner cases that are difficult to render correctly in d3. mpld3 correctly handles a large majority of matplotlib plots, but some pieces remain unsupported either because they have not yet been implemented, or because there are fundamental difficulties preventing their inclusion.
-
-  We keep a list of unsupported features at https://github.com/jakevdp/mpld3/wiki#mpld3-missing-features.  If you find something missing that's not on that list, please feel free to add it.
