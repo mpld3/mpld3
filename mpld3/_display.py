@@ -1,7 +1,7 @@
 import random
 import json
 import jinja2
-
+import re
 from ._server import serve_and_open
 from .utils import deprecated, get_id
 from .mplexporter import Exporter
@@ -85,6 +85,7 @@ if(typeof(mpld3) !== "undefined"){
    // already loaded: just create the figure
    {{ extra_js }}
    mpld3.draw_figure("{{ figid }}", {{ figure_json }});
+
 }else if(typeof define === "function" && define.amd){
    // require.js is available: use it to load d3/mpld3
    require.config({paths: {d3: "{{ d3_url[:-3] }}"}});
@@ -144,9 +145,11 @@ def fig_to_dict(fig, d3_url=None, mpld3_url=None,
     :func:`display` : embed figure within the IPython notebook
     :func:`enable_notebook` : automatically embed figures in IPython notebook
     """
-
+    # unused variables
     d3_url = d3_url or urls.D3_URL
+    # unused variables
     mpld3_url = mpld3_url or urls.MPLD3_URL
+
     renderer = MPLD3Renderer()
     Exporter(renderer, close_mpl=False, **kwargs).run(fig)
     fig, figure_json, extra_css, extra_js = renderer.finished_figures[0]
@@ -212,8 +215,9 @@ def fig_to_html(fig, d3_url=None, mpld3_url=None, no_extras=False,
     if figure_id is None:
         figid = 'fig_' + get_id(fig) + str(int(random.random() * 1E10))
     else:
+        if re.match("(([[a-zA-Z][a-zA-Z0-9_]*)|(__.*__))$", figure_id):
+            raise ValueError("figure_id must start with a letter in [a-zA-Z] following with optional number")
         figid = figure_id
-
     renderer = MPLD3Renderer()
     Exporter(renderer, close_mpl=False, **kwargs).run(fig)
 
