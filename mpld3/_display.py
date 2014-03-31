@@ -28,8 +28,13 @@ SIMPLE_HTML = jinja2.Template("""
 
 <div id="{{ figid }}"></div>
 <script type="text/javascript">
-  {{ extra_js }}
-  mpld3.draw_figure("{{ figid }}", {{ figure_json }});
+
+  !function(mpld3){
+       {{ extra_js }}
+       mpld3.draw_figure("{{ figid }}", {{ figure_json }});
+  }(mpld3);
+
+
 </script>
 """)
 
@@ -48,10 +53,10 @@ if(typeof(window.mpld3) === "undefined"){
   require.config({paths: {d3: "{{ d3_url[:-3] }}"}});
   require(["d3"], function(d3){
     window.d3 = d3;
-    $.getScript("{{ mpld3_url }}", !function(mpld3){
+    $.getScript("{{ mpld3_url }}", function(mpld3){
        {{ extra_js }}
        mpld3.draw_figure("{{ figid }}", {{ figure_json }});
-    }(mpld3));
+    });
   });
 }else{
     !function (mpld3){
@@ -105,10 +110,10 @@ if(typeof(mpld3) !== "undefined"){
 }else{
     // require.js not available: dynamically load d3 & mpld3
     mpld3_load_lib("{{ d3_url }}", function(){
-    mpld3_load_lib("{{ mpld3_url }}", !function(mpld3){
+    mpld3_load_lib("{{ mpld3_url }}", function(mpld3){
             {{ extra_js }}
             mpld3.draw_figure("{{ figid }}", {{ figure_json }});
-        }(mpld3));
+        });
     })
 }
 </script>
@@ -221,7 +226,7 @@ def fig_to_html(fig, d3_url=None, mpld3_url=None, no_extras=False,
     if figure_id is None:
         figid = 'fig_' + get_id(fig) + str(int(random.random() * 1E10))
     else:
-        if re.match("(([[a-zA-Z][a-zA-Z0-9_]*)|(__.*__))$", figure_id):
+        if not re.match("(([[a-zA-Z][a-zA-Z0-9_]*)|(__.*__))$", figure_id):
             raise ValueError("figure_id must start with a letter in [a-zA-Z] following with optional number")
         figid = figure_id
     renderer = MPLD3Renderer()
