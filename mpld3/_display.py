@@ -48,14 +48,17 @@ if(typeof(window.mpld3) === "undefined"){
   require.config({paths: {d3: "{{ d3_url[:-3] }}"}});
   require(["d3"], function(d3){
     window.d3 = d3;
-    $.getScript("{{ mpld3_url }}", function(){
+    $.getScript("{{ mpld3_url }}", !function(mpld3){
        {{ extra_js }}
        mpld3.draw_figure("{{ figid }}", {{ figure_json }});
-    });
+    }(mpld3));
   });
 }else{
-    {{ extra_js }}
-    mpld3.draw_figure("{{ figid }}", {{ figure_json }});
+    !function (mpld3){
+            {{ extra_js }}
+            mpld3.draw_figure("{{ figid }}", {{ figure_json }});
+    }(mpld3);
+
 }
 </script>
 """)
@@ -83,8 +86,11 @@ function mpld3_load_lib(url, callback){
 
 if(typeof(mpld3) !== "undefined"){
    // already loaded: just create the figure
-   {{ extra_js }}
-   mpld3.draw_figure("{{ figid }}", {{ figure_json }});
+   !function(mpld3){
+       {{ extra_js }}
+       mpld3.draw_figure("{{ figid }}", {{ figure_json }});
+   }(mpld3);
+
 
 }else if(typeof define === "function" && define.amd){
    // require.js is available: use it to load d3/mpld3
@@ -99,10 +105,10 @@ if(typeof(mpld3) !== "undefined"){
 }else{
     // require.js not available: dynamically load d3 & mpld3
     mpld3_load_lib("{{ d3_url }}", function(){
-    mpld3_load_lib("{{ mpld3_url }}", function(){
+    mpld3_load_lib("{{ mpld3_url }}", !function(mpld3){
             {{ extra_js }}
             mpld3.draw_figure("{{ figid }}", {{ figure_json }});
-        });
+        }(mpld3));
     })
 }
 </script>
