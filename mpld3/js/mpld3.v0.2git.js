@@ -1002,6 +1002,31 @@
       buttons: this.props.buttons
     });
   }
+  mpld3_Figure.prototype.getBrush = function() {
+    if (typeof this._brush === "undefined") {
+      var brush = d3.svg.brush().x(d3.scale.linear()).y(d3.scale.linear()).on("brushstart", function(d) {
+        brush.x(d.xdom).y(d.ydom);
+      });
+      this.root.selectAll(".mpld3-axes").data(this.axes).call(brush);
+      this.axes.forEach(function(ax) {
+        brush.x(ax.xdom).y(ax.ydom);
+        ax.axes.call(brush);
+      });
+      this._brush = brush;
+      this.hideBrush();
+    }
+    return this._brush;
+  };
+  mpld3_Figure.prototype.showBrush = function(extentClass) {
+    extentClass = typeof extentClass === "undefined" ? "" : extentClass;
+    this.canvas.selectAll("rect.background").style("cursor", "crosshair").style("pointer-events", null);
+    this.canvas.selectAll("rect.extent, rect.resize").style("display", null).classed(extentClass, true);
+  };
+  mpld3_Figure.prototype.hideBrush = function(extentClass) {
+    extentClass = typeof extentClass === "undefined" ? "" : extentClass;
+    this.canvas.selectAll("rect.background").style("cursor", null).style("pointer-events", "visible");
+    this.canvas.selectAll("rect.extent, rect.resize").style("display", "none").classed(extentClass, false);
+  };
   mpld3_Figure.prototype.add_plugin = function(props) {
     var plug = props.type;
     if (typeof plug === "undefined") {
@@ -1214,6 +1239,7 @@
       });
       this.fig.props.buttons.push("boxzoom");
     }
+    this.extentClass = "boxzoombrush";
   }
   mpld3_BoxZoomPlugin.prototype.activate = function() {
     if (this.enable) this.enable();
@@ -1222,31 +1248,23 @@
     if (this.disable) this.disable();
   };
   mpld3_BoxZoomPlugin.prototype.draw = function() {
-    mpld3.insert_css("#" + this.fig.figid + " rect.extent", {
+    mpld3.insert_css("#" + this.fig.figid + " rect.extent." + this.extentClass, {
       fill: "#fff",
       "fill-opacity": 0,
       stroke: "#999"
     });
-    var brush = d3.svg.brush().x(this.fig.axes[0].xdom).y(this.fig.axes[0].ydom).on("brushend", brushend.bind(this));
-    this.fig.root.selectAll(".mpld3-axes").data(this.fig.axes).call(brush);
+    var brush = this.fig.getBrush().on("brushend", brushend.bind(this));
     this.enable = function() {
-      brush.on("brushstart", brushstart);
-      this.fig.canvas.selectAll("rect.background").style("cursor", "crosshair").style("pointer-events", null);
-      this.fig.canvas.selectAll("rect.extent, rect.resize").style("display", null);
+      this.fig.showBrush(this.extentClass);
       this.enabled = true;
     };
     this.disable = function() {
-      brush.on("brushstart", null).clear();
-      this.fig.canvas.selectAll("rect.background").style("cursor", null).style("pointer-events", "visible");
-      this.fig.canvas.selectAll("rect.extent, rect.resize").style("display", "none");
+      this.fig.hideBrush(this.extentClass);
       this.enabled = false;
     };
     this.toggle = function() {
       this.enabled ? this.disable() : this.enable();
     };
-    function brushstart(d, i) {
-      brush.x(d.xdom).y(d.ydom);
-    }
     function brushend(d, i) {
       if (this.enabled) {
         var extent = brush.extent();

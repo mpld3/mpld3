@@ -31,6 +31,7 @@ function mpld3_BoxZoomPlugin(fig, props) {
 	});
 	this.fig.props.buttons.push("boxzoom");
     }
+    this.extentClass = "boxzoombrush";
 }
 
 mpld3_BoxZoomPlugin.prototype.activate = function(){
@@ -42,46 +43,26 @@ mpld3_BoxZoomPlugin.prototype.deactivate = function(){
 };
 
 mpld3_BoxZoomPlugin.prototype.draw = function(){
-    mpld3.insert_css("#" + this.fig.figid + " rect.extent",
+    mpld3.insert_css("#" + this.fig.figid + " rect.extent." + this.extentClass,
 		     {"fill": "#fff",
                       "fill-opacity": 0,
                       "stroke": "#999"});
     
-    var brush = d3.svg.brush()
-	.x(this.fig.axes[0].xdom)
-        .y(this.fig.axes[0].ydom)
-        .on("brushend", brushend.bind(this));
-    
-    this.fig.root.selectAll(".mpld3-axes")
-	.data(this.fig.axes)
-	.call(brush)
+    // getBrush is a d3.svg.brush() object, set up for use on the figure.
+    var brush = this.fig.getBrush().on("brushend", brushend.bind(this));
     
     this.enable = function(){
-        brush.on("brushstart", brushstart);
-        this.fig.canvas.selectAll("rect.background")
-	    .style("cursor", "crosshair")
-	    .style("pointer-events", null);
-        this.fig.canvas.selectAll("rect.extent, rect.resize")
-	    .style("display", null);
+        this.fig.showBrush(this.extentClass);
         this.enabled = true;
     }
     
     this.disable = function(){
-        brush.on("brushstart", null).clear();
-        this.fig.canvas.selectAll("rect.background")
-	    .style("cursor", null)
-	    .style("pointer-events", "visible");
-        this.fig.canvas.selectAll("rect.extent, rect.resize")
-	    .style("display", "none");
+        this.fig.hideBrush(this.extentClass);
         this.enabled = false;
     }
     
     this.toggle = function(){
 	this.enabled ? this.disable() : this.enable();
-    }
-    
-    function brushstart(d, i){
-	brush.x(d.xdom).y(d.ydom);
     }
     
     function brushend(d, i){
@@ -96,5 +77,5 @@ mpld3_BoxZoomPlugin.prototype.draw = function(){
 	d.axes.call(brush.clear());
     }
     this.disable();
-}    
+}
 
