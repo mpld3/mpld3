@@ -44,6 +44,51 @@ function mpld3_Figure(figid, props) {
     });
 }
 
+// getBrush contains boilerplate for defining a d3 brush over the axes
+mpld3_Figure.prototype.getBrush = function() {
+    if (typeof this._brush === "undefined"){
+        var brush = d3.svg.brush()
+            .x(d3.scale.linear())
+            .y(d3.scale.linear())
+	    .on("brushstart", function(d){brush.x(d.xdom).y(d.ydom);});
+    
+	// this connects the axes instance to the brush elements
+	this.root.selectAll(".mpld3-axes")
+	    .data(this.axes)
+	    .call(brush);
+
+        // need to call the brush on each axes with correct x/y domains
+        this.axes.forEach(function(ax){
+            brush.x(ax.xdom).y(ax.ydom);
+            ax.axes.call(brush);
+	})
+
+        this._brush = brush;
+	this.hideBrush();
+    }
+    return this._brush;
+};
+
+mpld3_Figure.prototype.showBrush = function(extentClass) {
+    extentClass = (typeof extentClass === "undefined") ? "" : extentClass;
+    this.canvas.selectAll("rect.background")
+        .style("cursor", "crosshair")
+        .style("pointer-events", null);
+    this.canvas.selectAll("rect.extent, rect.resize")
+        .style("display", null)
+        .classed(extentClass, true);
+};
+
+mpld3_Figure.prototype.hideBrush = function(extentClass) {
+    extentClass = (typeof extentClass === "undefined") ? "" : extentClass;
+    this.canvas.selectAll("rect.background")
+        .style("cursor", null)
+        .style("pointer-events", "visible");
+    this.canvas.selectAll("rect.extent, rect.resize")
+        .style("display", "none")
+        .classed(extentClass, false);
+};
+
 mpld3_Figure.prototype.add_plugin = function(props) {
     var plug = props.type;
     if (typeof plug === "undefined"){
