@@ -10,7 +10,6 @@ mpld3_ZoomPlugin.prototype = Object.create(mpld3_Plugin.prototype);
 mpld3_ZoomPlugin.prototype.constructor = mpld3_ZoomPlugin;
 mpld3_ZoomPlugin.prototype.requiredProps = [];
 mpld3_ZoomPlugin.prototype.defaultProps = {
-    type: "zoom",
     button: true,
     enabled: null
 };
@@ -20,8 +19,8 @@ function mpld3_ZoomPlugin(fig, props) {
     var enabled = this.props.enabled;
     
     if (this.props.button){
-        mpld3.ButtonFactory({
-            toolbarKey: "zoom",
+        var ZoomButton = mpld3.ButtonFactory({
+            buttonID: "zoom",
             sticky: true,
             actions: ["scroll", "drag"],
             onActivate: this.activate.bind(this),
@@ -31,7 +30,7 @@ function mpld3_ZoomPlugin(fig, props) {
                 return mpld3.icons["move"];
             }
         });
-	this.fig.props.buttons.push("zoom");
+	this.fig.buttons.push(ZoomButton);
     }	
     if (this.props.enabled === null){
         this.props.enabled = !(this.props.button);

@@ -850,19 +850,13 @@
   mpld3_Toolbar.prototype.defaultProps = {
     buttons: [ "reset", "move" ]
   };
-  mpld3_Toolbar.prototype.buttonDict = {};
   function mpld3_Toolbar(fig, props) {
     mpld3_PlotElement.call(this, fig, props);
     this.buttons = [];
     this.props.buttons.forEach(this.addButton.bind(this));
   }
-  mpld3_Toolbar.prototype.addButton = function(key) {
-    var Button = this.buttonDict[key];
-    if (typeof Button === "undefined") {
-      console.warn("Skipping unrecognized Button type '" + key + "'.");
-    } else {
-      this.buttons.push(new Button(this, key));
-    }
+  mpld3_Toolbar.prototype.addButton = function(button) {
+    this.buttons.push(new button(this));
   };
   mpld3_Toolbar.prototype.draw = function() {
     mpld3.insert_css("div#" + this.fig.figid + " .mpld3-toolbar image", {
@@ -960,15 +954,17 @@
   mpld3_Button.prototype.onDeactivate = function() {};
   mpld3_Button.prototype.onDraw = function() {};
   mpld3.ButtonFactory = function(members) {
-    function B(toolbar, key) {
-      mpld3_Button.call(this, toolbar, key);
+    if (typeof members.buttonID !== "string") {
+      throw "ButtonFactory: buttonID must be present and be a string";
+    }
+    function B(toolbar) {
+      mpld3_Button.call(this, toolbar, this.buttonID);
     }
     B.prototype = Object.create(mpld3_Button.prototype);
     B.prototype.constructor = B;
     for (var key in members) {
       B.prototype[key] = members[key];
     }
-    mpld3.Toolbar.prototype.buttonDict[members.toolbarKey] = B;
     return B;
   };
   mpld3.Figure = mpld3_Figure;
@@ -984,8 +980,7 @@
       type: "zoom"
     }, {
       type: "boxzoom"
-    } ],
-    buttons: []
+    } ]
   };
   function mpld3_Figure(figid, props) {
     mpld3_PlotElement.call(this, null, props);
@@ -993,13 +988,14 @@
     this.width = this.props.width;
     this.height = this.props.height;
     this.data = this.props.data;
+    this.buttons = [];
     this.root = d3.select("#" + figid).append("div").style("position", "relative");
     this.axes = [];
     for (var i = 0; i < this.props.axes.length; i++) this.axes.push(new mpld3_Axes(this, this.props.axes[i]));
     this.plugins = [];
     for (var i = 0; i < this.props.plugins.length; i++) this.add_plugin(this.props.plugins[i]);
     this.toolbar = new mpld3.Toolbar(this, {
-      buttons: this.props.buttons
+      buttons: this.buttons
     });
   }
   mpld3_Figure.prototype.getBrush = function() {
@@ -1157,8 +1153,8 @@
   mpld3_ResetPlugin.prototype.defaultProps = {};
   function mpld3_ResetPlugin(fig, props) {
     mpld3_Plugin.call(this, fig, props);
-    mpld3.ResetButton = mpld3.ButtonFactory({
-      toolbarKey: "reset",
+    var ResetButton = mpld3.ButtonFactory({
+      buttonID: "reset",
       sticky: false,
       onActivate: function() {
         this.toolbar.fig.reset();
@@ -1167,7 +1163,7 @@
         return mpld3.icons["reset"];
       }
     });
-    this.fig.props.buttons.push("reset");
+    this.fig.buttons.push(ResetButton);
   }
   mpld3.ZoomPlugin = mpld3_ZoomPlugin;
   mpld3.register_plugin("zoom", mpld3_ZoomPlugin);
@@ -1175,7 +1171,6 @@
   mpld3_ZoomPlugin.prototype.constructor = mpld3_ZoomPlugin;
   mpld3_ZoomPlugin.prototype.requiredProps = [];
   mpld3_ZoomPlugin.prototype.defaultProps = {
-    type: "zoom",
     button: true,
     enabled: null
   };
@@ -1183,8 +1178,8 @@
     mpld3_Plugin.call(this, fig, props);
     var enabled = this.props.enabled;
     if (this.props.button) {
-      mpld3.ButtonFactory({
-        toolbarKey: "zoom",
+      var ZoomButton = mpld3.ButtonFactory({
+        buttonID: "zoom",
         sticky: true,
         actions: [ "scroll", "drag" ],
         onActivate: this.activate.bind(this),
@@ -1196,7 +1191,7 @@
           return mpld3.icons["move"];
         }
       });
-      this.fig.props.buttons.push("zoom");
+      this.fig.buttons.push(ZoomButton);
     }
     if (this.props.enabled === null) {
       this.props.enabled = !this.props.button;
@@ -1224,8 +1219,8 @@
     mpld3_Plugin.call(this, fig, props);
     var enabled = this.props.enabled;
     if (this.props.button) {
-      mpld3.ButtonFactory({
-        toolbarKey: "boxzoom",
+      var BoxZoomButton = mpld3.ButtonFactory({
+        buttonID: "boxzoom",
         sticky: true,
         actions: [ "drag" ],
         onActivate: this.activate.bind(this),
@@ -1237,7 +1232,7 @@
           return mpld3.icons["zoom"];
         }
       });
-      this.fig.props.buttons.push("boxzoom");
+      this.fig.buttons.push(BoxZoomButton);
     }
     this.extentClass = "boxzoombrush";
   }

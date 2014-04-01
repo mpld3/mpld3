@@ -20,8 +20,8 @@ function mpld3_BoxZoomPlugin(fig, props) {
     
     if (this.props.button){
 	// add a button to enable/disable box zoom
-	mpld3.ButtonFactory({
-	    toolbarKey: "boxzoom",
+	var BoxZoomButton = mpld3.ButtonFactory({
+	    buttonID: "boxzoom",
             sticky: true,
             actions: ["drag"],
 	    onActivate: this.activate.bind(this),
@@ -29,7 +29,7 @@ function mpld3_BoxZoomPlugin(fig, props) {
             onDraw: function(){this.setState(enabled);},
 	    icon: function(){return mpld3.icons["zoom"];},
 	});
-	this.fig.props.buttons.push("boxzoom");
+	this.fig.buttons.push(BoxZoomButton);
     }
     this.extentClass = "boxzoombrush";
 }

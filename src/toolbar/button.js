@@ -51,14 +51,16 @@ mpld3_Button.prototype.onDraw = function() {};
 
 /* Factory for button classes */
 mpld3.ButtonFactory = function(members) {
-    function B(toolbar, key) {
-        mpld3_Button.call(this, toolbar, key);
+    if (typeof members.buttonID !== "string"){
+        throw "ButtonFactory: buttonID must be present and be a string";
+    }
+    function B(toolbar) {
+        mpld3_Button.call(this, toolbar, this.buttonID);
     }
     B.prototype = Object.create(mpld3_Button.prototype);
     B.prototype.constructor = B;
     for (var key in members){
 	B.prototype[key] = members[key];
     }
-    mpld3.Toolbar.prototype.buttonDict[members.toolbarKey] = B;
     return B;
 }
