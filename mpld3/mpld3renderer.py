@@ -90,7 +90,6 @@ class MPLD3Renderer(Renderer):
                                 height=props['figheight'] * props['dpi'],
                                 axes=[],
                                 data={},
-                                buttons=[],
                                 id=get_id(fig))
 
     def close_figure(self, fig):

@@ -11,8 +11,7 @@ mpld3_Figure.prototype.requiredProps = ["width", "height"];
 mpld3_Figure.prototype.defaultProps = {
     data: {},
     axes: [],
-    plugins: [{type: "reset"}, {type: "zoom"}, {type: "boxzoom"}],
-    buttons: []
+    plugins: [{type: "reset"}, {type: "zoom"}, {type: "boxzoom"}]
 };
 
 function mpld3_Figure(figid, props) {
@@ -21,6 +20,7 @@ function mpld3_Figure(figid, props) {
     this.width = this.props.width;
     this.height = this.props.height;
     this.data = this.props.data;
+    this.buttons = [];
 
     // Make a root div with relative positioning,
     // so we can position elements absolutely within it.
@@ -40,7 +40,7 @@ function mpld3_Figure(figid, props) {
     // Create the figure toolbar
     //  do this last because plugins may modify the button list
     this.toolbar = new mpld3.Toolbar(this, {
-        buttons: this.props.buttons
+        buttons: this.buttons
     });
 }
 

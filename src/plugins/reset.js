@@ -13,8 +13,8 @@ mpld3_ResetPlugin.prototype.defaultProps = {};
 
 function mpld3_ResetPlugin(fig, props) {
     mpld3_Plugin.call(this, fig, props);
-    mpld3.ResetButton = mpld3.ButtonFactory({
-        toolbarKey: "reset",
+    var ResetButton = mpld3.ButtonFactory({
+        buttonID: "reset",
         sticky: false,
         onActivate: function() {
             this.toolbar.fig.reset();
@@ -23,5 +23,5 @@ function mpld3_ResetPlugin(fig, props) {
             return mpld3.icons["reset"];
         }
     });
-    this.fig.props.buttons.push("reset");
+    this.fig.buttons.push(ResetButton);
 }

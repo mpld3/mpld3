@@ -6,7 +6,6 @@ mpld3_Toolbar.prototype.constructor = mpld3_Toolbar;
 mpld3_Toolbar.prototype.defaultProps = {
     buttons: ["reset", "move"]
 };
-mpld3_Toolbar.prototype.buttonDict = {}; // to be filled by ButtonFactory
 
 function mpld3_Toolbar(fig, props) {
     mpld3_PlotElement.call(this, fig, props)
@@ -14,13 +13,8 @@ function mpld3_Toolbar(fig, props) {
     this.props.buttons.forEach(this.addButton.bind(this));
 }
 
-mpld3_Toolbar.prototype.addButton = function(key) {
-    var Button = this.buttonDict[key];
-    if (typeof(Button) === "undefined") {
-        console.warn("Skipping unrecognized Button type '" + key + "'.");
-    } else {
-        this.buttons.push(new Button(this, key));
-    }
+mpld3_Toolbar.prototype.addButton = function(button) {
+    this.buttons.push(new button(this));
 };
 
 mpld3_Toolbar.prototype.draw = function() {
