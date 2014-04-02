@@ -26,12 +26,12 @@ SIMPLE_HTML = jinja2.Template("""
 {{ extra_css }}
 </style>
 
-<div id="{{ figid }}"></div>
+<div id={{ figid }}></div>
 <script type="text/javascript">
 
   !function(mpld3){
        {{ extra_js }}
-       mpld3.draw_figure("{{ figid }}", {{ figure_json }});
+       mpld3.draw_figure({{ figid }}, {{ figure_json }});
   }(mpld3);
 
 
@@ -46,7 +46,7 @@ REQUIREJS_HTML = jinja2.Template("""
 {{ extra_css }}
 </style>
 
-<div id="{{ figid }}"></div>
+<div id={{ figid }}></div>
 <script type="text/javascript">
 
 if(typeof(window.mpld3) === "undefined"){
@@ -55,13 +55,13 @@ if(typeof(window.mpld3) === "undefined"){
     window.d3 = d3;
     $.getScript("{{ mpld3_url }}", function(){
        {{ extra_js }}
-       mpld3.draw_figure("{{ figid }}", {{ figure_json }});
+       mpld3.draw_figure({{ figid }}, {{ figure_json }});
     });
   });
 }else{
     !function (mpld3){
             {{ extra_js }}
-            mpld3.draw_figure("{{ figid }}", {{ figure_json }});
+            mpld3.draw_figure({{ figid }}, {{ figure_json }});
     }(mpld3);
 
 }
@@ -78,7 +78,7 @@ GENERAL_HTML = jinja2.Template("""
 {{ extra_css }}
 </style>
 
-<div id="{{ figid }}"></div>
+<div id={{ figid }}></div>
 <script>
 function mpld3_load_lib(url, callback){
   var s = document.createElement('script');
@@ -93,7 +93,7 @@ if(typeof(mpld3) !== "undefined"){
    // already loaded: just create the figure
    !function(mpld3){
        {{ extra_js }}
-       mpld3.draw_figure("{{ figid }}", {{ figure_json }});
+       mpld3.draw_figure({{ figid }}, {{ figure_json }});
    }(mpld3);
 }else if(typeof define === "function" && define.amd){
    // require.js is available: use it to load d3/mpld3
@@ -102,7 +102,7 @@ if(typeof(mpld3) !== "undefined"){
       window.d3 = d3;
       mpld3_load_lib("{{ mpld3_url }}", function(){
          {{ extra_js }}
-         mpld3.draw_figure("{{ figid }}", {{ figure_json }});
+         mpld3.draw_figure({{ figid }}, {{ figure_json }});
       });
     });
 }else{
@@ -110,7 +110,7 @@ if(typeof(mpld3) !== "undefined"){
     mpld3_load_lib("{{ d3_url }}", function(){
          mpld3_load_lib("{{ mpld3_url }}", function(){
                  {{ extra_js }}
-                 mpld3.draw_figure("{{ figid }}", {{ figure_json }});
+                 mpld3.draw_figure({{ figid }}, {{ figure_json }});
             })
          });
 }
@@ -224,9 +224,9 @@ def fig_to_html(fig, d3_url=None, mpld3_url=None, no_extras=False,
     if figure_id is None:
         figid = 'fig_' + get_id(fig) + str(int(random.random() * 1E10))
     else:
-        if not re.match("(([[a-zA-Z][a-zA-Z0-9_]*)|(__.*__))$", figure_id):
-            raise ValueError("figure_id must start with a letter in [a-zA-Z] following with optional number")
-        figid = figure_id
+        if re.search('\s', figure_id):
+            raise ValueError("Space is not allowed in id attribute.")
+        figid = json.dumps(figure_id)
     renderer = MPLD3Renderer()
     Exporter(renderer, close_mpl=False, **kwargs).run(fig)
 
