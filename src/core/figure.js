@@ -52,8 +52,7 @@ mpld3_Figure.prototype.getBrush = function() {
         // with the real x and y scales below.
         var brush = d3.svg.brush()
             .x(d3.scale.linear())
-            .y(d3.scale.linear())
-	    .on("brushstart", function(d){brush.x(d.xdom).y(d.ydom);});
+            .y(d3.scale.linear());
     
 	// this connects the axes instance to the brush elements
 	this.root.selectAll(".mpld3-axes")
@@ -74,6 +73,8 @@ mpld3_Figure.prototype.getBrush = function() {
 
 mpld3_Figure.prototype.showBrush = function(extentClass) {
     extentClass = (typeof extentClass === "undefined") ? "" : extentClass;
+    var brush = this.getBrush();
+    brush.on("brushstart", function(d){brush.x(d.xdom).y(d.ydom);});
     this.canvas.selectAll("rect.background")
         .style("cursor", "crosshair")
         .style("pointer-events", null);
@@ -84,6 +85,9 @@ mpld3_Figure.prototype.showBrush = function(extentClass) {
 
 mpld3_Figure.prototype.hideBrush = function(extentClass) {
     extentClass = (typeof extentClass === "undefined") ? "" : extentClass;
+    this.getBrush().on("brushstart", null)
+                   .on("brush", null)
+                   .on("brushend", null);
     this.canvas.selectAll("rect.background")
         .style("cursor", null)
         .style("pointer-events", "visible");

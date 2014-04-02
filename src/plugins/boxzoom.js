@@ -52,10 +52,11 @@ mpld3_BoxZoomPlugin.prototype.draw = function(){
                       "stroke": "#999"});
     
     // getBrush is a d3.svg.brush() object, set up for use on the figure.
-    var brush = this.fig.getBrush().on("brushend", brushend.bind(this));
+    var brush = this.fig.getBrush();
     
     this.enable = function(){
         this.fig.showBrush(this.extentClass);
+        brush.on("brushend", brushend.bind(this));
         this.enabled = true;
     }
     

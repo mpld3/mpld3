@@ -21,14 +21,17 @@ from mpld3 import plugins, utils
 
 class LinkedBrush(plugins.PluginBase):
     JAVASCRIPT = r"""
-    mpld3.LinkedBrushPlugin = function(fig, prop){
-      this.fig = fig;
-      this.prop = mpld3.process_props(this, prop, {}, ["id"]);
+    mpld3.register_plugin("linkedbrush", LinkedBrushPlugin);
+    LinkedBrushPlugin.prototype = Object.create(mpld3.Plugin.prototype);
+    LinkedBrushPlugin.prototype.constructor = LinkedBrushPlugin;
+    LinkedBrushPlugin.prototype.requiredProps = ["id"];
+    LinkedBrushPlugin.prototype.defaultProps = {};
 
-      var brush_plug = this;
+    function LinkedBrushPlugin(fig, props){
+      mpld3.Plugin.call(this, fig, props);
 
-      mpld3.ButtonFactory({
-          toolbarKey: "linkedbrush",
+      var BrushButton = mpld3.ButtonFactory({
+          buttonID: "linkedbrush",
           sticky: true,
           actions: ["drag"],
           onActivate: this.activate.bind(this),
@@ -36,22 +39,23 @@ class LinkedBrush(plugins.PluginBase):
           onDraw: this.deactivate.bind(this),
 	  icon: function(){return mpld3.icons["brush"];},
       });
-      this.fig.prop.toolbar.push("linkedbrush"); 
+      this.fig.buttons.push(BrushButton);
+      this.extentClass = "linkedbrush";
     }
 
-    mpld3.LinkedBrushPlugin.prototype.activate = function(){
+    LinkedBrushPlugin.prototype.activate = function(){
          if(this.enable) this.enable();
     };
-    mpld3.LinkedBrushPlugin.prototype.deactivate = function(){
+    LinkedBrushPlugin.prototype.deactivate = function(){
          if(this.disable) this.disable();
     };
 
-    mpld3.LinkedBrushPlugin.prototype.draw = function(){
-      var obj = mpld3.get_element(this.prop.id);
+    LinkedBrushPlugin.prototype.draw = function(){
+      var obj = mpld3.get_element(this.props.id);
       var fig = this.fig;
-      var dataKey = ("offsets" in obj.prop) ? "offsets" : "data";
+      var dataKey = ("offsets" in obj.props) ? "offsets" : "data";
 
-      mpld3.insert_css("#" + fig.figid + " rect.extent",
+      mpld3.insert_css("#" + fig.figid + " rect.extent." + this.extentClass,
                        {"fill": "#000",
                         "fill-opacity": .125,
                         "stroke": "#fff"});
@@ -60,28 +64,25 @@ class LinkedBrush(plugins.PluginBase):
                        {"stroke": "#ccc !important",
                         "fill": "#ccc !important"});
 
-      var dataClass = "mpld3data-" + obj.prop[dataKey];
+      var dataClass = "mpld3data-" + obj.props[dataKey];
+      var brush = fig.getBrush();
 
-      var brush = d3.svg.brush()
-                      .on("brushstart", brushstart)
-                      .on("brush", brushmove)
-                      .on("brushend", brushend);
-
-      // Label all data points for access below
+      // Label all data points & find data in each axes
+      var dataByAx = [];
       fig.axes.forEach(function(ax){
+         var axData = [];
          ax.elements.forEach(function(el){
-            if(el.prop[dataKey] === obj.prop[dataKey]){
+            if(el.props[dataKey] === obj.props[dataKey]){
                el.group.classed(dataClass, true);
+               axData.push(el);
             }
          });
-         brush.x(ax.x).y(ax.y);
-         //ax.axes.call(brush);
+         dataByAx.push(axData);
       });
-
 
       // For fast brushing, precompute a list of selection properties
       // properties to apply to the selction.
-      var data_map = [];
+      var allData = [];
       var dataToBrush = fig.canvas.selectAll("." + dataClass)
                            .each(function(){
                               for(var i=0; i<fig.axes.length; i++){
@@ -89,37 +90,43 @@ class LinkedBrush(plugins.PluginBase):
                                 for(var j=0; j<ax.elements.length; j++){
                                   var el = ax.elements[j];
                                   if("group" in el && el.group[0][0] === this){
-                                    data_map.push({i_ax: i,
-                                                   ix: el.prop.xindex,
-                                                   iy: el.prop.yindex});
+                                    allData.push({i_ax: i,
+                                                  ix: el.props.xindex,
+                                                  iy: el.props.yindex});
                                     return;
                                   }
                                 }
                               }
                             });
+      dataToBrush.data(allData);
 
-      dataToBrush.data(data_map)
-                 .call(brush);
-
-      var currentData;
+      var currentAxes;
 
       function brushstart(d){
-        if(currentData != this){
-          d3.select(currentData).call(brush.clear());
-          currentData = this;
-          brush.x(fig.axes[d.i_ax].x)
-               .y(fig.axes[d.i_ax].y);
+        if(currentAxes != this){
+          d3.select(currentAxes).call(brush.clear());
+          currentAxes = this;
+          brush.x(d.xdom).y(d.ydom);
         }
       }
 
       function brushmove(d){
-        var e = brush.extent();
-        dataToBrush.selectAll("path")
-                   .classed("mpld3-hidden",
-                       function(p) {
-                           return e[0][0] > p[d.ix] ||  e[1][0] < p[d.ix] ||
-                                  e[0][1] > p[d.iy] || e[1][1] < p[d.iy];
-                       });
+        var data = dataByAx[d.axnum];
+        if(data.length > 0){
+          var ix = data[0].props.xindex;
+          var iy = data[0].props.yindex;
+          var e = brush.extent();
+          if (brush.empty()){
+             dataToBrush.selectAll("path").classed("mpld3-hidden", false);
+          } else {
+             dataToBrush.selectAll("path")
+                        .classed("mpld3-hidden",
+                            function(p) {
+                                return e[0][0] > p[ix] || e[1][0] < p[ix] ||
+                                       e[0][1] > p[iy] || e[1][1] < p[iy];
+                            });
+          }
+        } 
       }
 
       function brushend(d){
@@ -128,40 +135,22 @@ class LinkedBrush(plugins.PluginBase):
                         .classed("mpld3-hidden", false);
          }
       }
-   
-      function brushend_clear(d){
-        d3.select(this).call(brush.clear());
-      }
 
       this.enable = function(){
+        this.fig.showBrush(this.extentClass);
         brush.on("brushstart", brushstart)
              .on("brush", brushmove)
              .on("brushend", brushend);
-        this.fig.canvas.selectAll("rect.background")
-              .style("cursor", "crosshair");
-        this.fig.canvas.selectAll("rect.extent, rect.resize")
-              .style("display", null);
         this.enabled = true;
       }
 
       this.disable = function(){
-        brush.on("brushstart", null)
-             .on("brush", null)
-             .on("brushend", brushend_clear);
-        d3.select(currentData).call(brush.clear());
-        this.fig.canvas.selectAll("rect.background")
-              .style("cursor", null);
-        this.fig.canvas.selectAll("rect.extent, rect.resize")
-              .style("display", "none");
+        this.fig.hideBrush(this.extentClass);
         this.enabled = false;
       }
 
       this.disable();
     }
-
-    mpld3.register_plugin("linkedbrush", mpld3.LinkedBrushPlugin);
-
-    mpld3.icons['brush'] = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABmJLR0QA/wD/AP+gvaeTAAAACXBI\nWXMAAEQkAABEJAFAZ8RUAAAAB3RJTUUH3gMCEiQKB9YaAgAAAWtJREFUOMuN0r1qVVEQhuFn700k\nnfEvBq0iNiIiOKXgH4KCaBeIhWARK/EibLwFCwVLjyAWaQzRGG9grC3URkHUBKKgRuWohWvL5pjj\nyTSLxcz7rZlZHyMiItqzFxGTEVF18/UoODNFxDIO4x12dkXqTcBPsCUzD+AK3ndFqhHwEsYz82gn\nN4dbmMRK9R/4KY7jAvbiWmYeHBT5Z4QCP8J1rGAeN3GvU3Mbl/Gq3qCDcxjLzOV+v78fq/iFIxFx\nPyJ2lNJpfBy2g59YzMyzEbEVLzGBJjOriLiBq5gaJrCIU3hcRCbwAtuwjm/Yg/V6I9NgDA1OR8RC\nZq6Vcd7iUwtn5h8fdMBdETGPE+Xe4ExELDRNs4bX2NfCUHe+7UExyfkCP8MhzOA7PuAkvrbwXyNF\nxF3MDqxiqlhXC7SPdaOKiN14g0u4g3H0MvOiTUSNY3iemb0ywmfMdfYyUmAJ2yPiBx6Wr/oy2Oqw\n+A1SupBzAOuE/AAAAABJRU5ErkJggg==\n";
     """
 
     def __init__(self, points):
@@ -171,7 +160,6 @@ class LinkedBrush(plugins.PluginBase):
             suffix = None
 
         self.dict_ = {"type": "linkedbrush",
-                      "clear_toolbar": False,
                       "id": utils.get_id(points, suffix)}
 
 
@@ -198,4 +186,6 @@ for axi in ax.flat:
 
 plugins.connect(fig, LinkedBrush(points))
 
-mpld3.show()
+mpld3.save_html(fig, 'tmp.html',
+                mpld3_url=mpld3.urls.MPLD3_LOCAL,
+                d3_url=mpld3.urls.D3_LOCAL)
