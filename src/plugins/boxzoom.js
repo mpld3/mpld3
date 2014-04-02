@@ -11,13 +11,16 @@ mpld3_BoxZoomPlugin.prototype.constructor = mpld3_BoxZoomPlugin;
 mpld3_BoxZoomPlugin.prototype.requiredProps = [];
 mpld3_BoxZoomPlugin.prototype.defaultProps = {
     button: true,
-    enabled: true,
+    enabled: null
 };
 
 function mpld3_BoxZoomPlugin(fig, props) {
     mpld3_Plugin.call(this, fig, props);
-    var enabled = this.props.enabled;
-    
+    if (this.props.enabled === null){
+        this.props.enabled = !(this.props.button);
+    }
+
+    var enabled = this.props.enabled;    
     if (this.props.button){
 	// add a button to enable/disable box zoom
 	var BoxZoomButton = mpld3.ButtonFactory({

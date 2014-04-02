@@ -117,7 +117,9 @@ class BoxZoom(PluginBase):
     -----
     Even if ``enabled`` is specified, other plugins may modify this state.
     """
-    def __init__(self, button=True, enabled=True):
+    def __init__(self, button=True, enabled=None):
+        if enabled is None:
+            enabled = not button
         self.dict_ = {"type": "boxzoom",
                       "button": button,
                       "enabled": enabled}
