@@ -47,6 +47,8 @@ function mpld3_Figure(figid, props) {
 // getBrush contains boilerplate for defining a d3 brush over the axes
 mpld3_Figure.prototype.getBrush = function() {
     if (typeof this._brush === "undefined"){
+        // use temporary linear scales here: we'll replace
+        // with the real x and y scales below.
         var brush = d3.svg.brush()
             .x(d3.scale.linear())
             .y(d3.scale.linear())
