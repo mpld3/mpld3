@@ -10,6 +10,7 @@ from .mplexporter.exporter import Exporter
 from .mplexporter.renderers import Renderer
 
 from .utils import get_id
+from .plugins import get_plugins
 
 
 class MPLD3Renderer(Renderer):
@@ -85,15 +86,10 @@ class MPLD3Renderer(Renderer):
     def open_figure(self, fig, props):
         self.datasets = []
         self.datalabels = []
-        if hasattr(fig, "mpld3_toolbar"):
-            toolbar = fig.mpld3_toolbar
-        else:
-            toolbar = ["reset", "move"]
         self.figure_json = dict(width=props['figwidth'] * props['dpi'],
                                 height=props['figheight'] * props['dpi'],
                                 axes=[],
                                 data={},
-                                toolbar=toolbar,
                                 id=get_id(fig))
 
     def close_figure(self, fig):
@@ -102,13 +98,11 @@ class MPLD3Renderer(Renderer):
         for i, dataset in enumerate(self.datasets):
             datalabel = self.datalabel(i + 1)
             self.figure_json['data'][datalabel] = np.asarray(dataset).tolist()
-        if hasattr(fig, "plugins"):
-            self.figure_json["plugins"] = []
-            for plugin in fig.plugins:
-                if hasattr(plugin, "get_dict"):
-                    self.figure_json["plugins"].append(plugin.get_dict())
-                    additional_css.append(plugin.css())
-                    additional_js.append(plugin.javascript())
+        self.figure_json["plugins"] = []
+        for plugin in get_plugins(fig):
+            self.figure_json["plugins"].append(plugin.get_dict())
+            additional_css.append(plugin.css())
+            additional_js.append(plugin.javascript())
         self.finished_figures.append((fig, self.figure_json,
                                       "".join(additional_css),
                                       "".join(additional_js)))

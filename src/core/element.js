@@ -18,13 +18,14 @@ mpld3_PlotElement.prototype.requiredProps = [];
 mpld3_PlotElement.prototype.defaultProps = {};
 
 mpld3_PlotElement.prototype.processProps = function(props) {
-    finalProps = {};
+    var finalProps = {};
 
     // Check that all required properties are specified
+    var this_name = this.name();
     this.requiredProps.forEach(function(p) {
         if (!(p in props)) {
             throw ("property '" + p + "' " +
-                "must be specified for " + this.name());
+                "must be specified for " + this_name);
         }
         finalProps[p] = props[p];
         delete props[p];

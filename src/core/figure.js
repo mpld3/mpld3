@@ -7,14 +7,11 @@ import "../toolbar/";
 mpld3.Figure = mpld3_Figure;
 mpld3_Figure.prototype = Object.create(mpld3_PlotElement.prototype);
 mpld3_Figure.prototype.constructor = mpld3_Figure;
-mpld3_Figure.prototype.requiredProps = ["width",
-    "height"
-];
+mpld3_Figure.prototype.requiredProps = ["width", "height"];
 mpld3_Figure.prototype.defaultProps = {
     data: {},
     axes: [],
-    plugins: [],
-    toolbar: ["reset", "move"]
+    plugins: [{type: "reset"}, {type: "zoom"}, {type: "boxzoom"}]
 };
 
 function mpld3_Figure(figid, props) {
@@ -23,6 +20,7 @@ function mpld3_Figure(figid, props) {
     this.width = this.props.width;
     this.height = this.props.height;
     this.data = this.props.data;
+    this.buttons = [];
 
     // Make a root div with relative positioning,
     // so we can position elements absolutely within it.
@@ -40,13 +38,66 @@ function mpld3_Figure(figid, props) {
         this.add_plugin(this.props.plugins[i]);
 
     // Create the figure toolbar
+    //  do this last because plugins may modify the button list
     this.toolbar = new mpld3.Toolbar(this, {
-        buttons: this.props.toolbar
+        buttons: this.buttons
     });
 }
 
+// getBrush contains boilerplate for defining a d3 brush over the axes
+mpld3_Figure.prototype.getBrush = function() {
+    if (typeof this._brush === "undefined"){
+        // use temporary linear scales here: we'll replace
+        // with the real x and y scales below.
+        var brush = d3.svg.brush()
+            .x(d3.scale.linear())
+            .y(d3.scale.linear())
+	    .on("brushstart", function(d){brush.x(d.xdom).y(d.ydom);});
+    
+	// this connects the axes instance to the brush elements
+	this.root.selectAll(".mpld3-axes")
+	    .data(this.axes)
+	    .call(brush);
+
+        // need to call the brush on each axes with correct x/y domains
+        this.axes.forEach(function(ax){
+            brush.x(ax.xdom).y(ax.ydom);
+            ax.axes.call(brush);
+	})
+
+        this._brush = brush;
+	this.hideBrush();
+    }
+    return this._brush;
+};
+
+mpld3_Figure.prototype.showBrush = function(extentClass) {
+    extentClass = (typeof extentClass === "undefined") ? "" : extentClass;
+    this.canvas.selectAll("rect.background")
+        .style("cursor", "crosshair")
+        .style("pointer-events", null);
+    this.canvas.selectAll("rect.extent, rect.resize")
+        .style("display", null)
+        .classed(extentClass, true);
+};
+
+mpld3_Figure.prototype.hideBrush = function(extentClass) {
+    extentClass = (typeof extentClass === "undefined") ? "" : extentClass;
+    this.canvas.selectAll("rect.background")
+        .style("cursor", null)
+        .style("pointer-events", "visible");
+    this.canvas.selectAll("rect.extent, rect.resize")
+        .style("display", "none")
+        .classed(extentClass, false);
+};
+
 mpld3_Figure.prototype.add_plugin = function(props) {
     var plug = props.type;
+    if (typeof plug === "undefined"){
+        console.warn("unspecified plugin type. Skipping this");
+        return;
+    }
+    delete props.type;
 
     if (plug in mpld3.plugin_map)
         plug = mpld3.plugin_map[plug];

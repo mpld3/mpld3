@@ -33,7 +33,7 @@ function mpld3_Markers(ax, props) {
     }
 
     // Call the PathCollection constructor
-    PCprops = {
+    var PCprops = {
         paths: [this.markerpath],
         offsets: ax.fig.get_data(this.props.data),
         xindex: this.props.xindex,

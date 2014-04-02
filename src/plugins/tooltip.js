@@ -1,11 +1,13 @@
+import "base";
+
 /**********************************************************************/
 /* Tooltip Plugin */
 mpld3.TooltipPlugin = mpld3_TooltipPlugin;
-mpld3_TooltipPlugin.prototype = Object.create(mpld3_PlotElement.prototype);
+mpld3.register_plugin("tooltip", mpld3_TooltipPlugin);
+mpld3_TooltipPlugin.prototype = Object.create(mpld3_Plugin.prototype);
 mpld3_TooltipPlugin.prototype.constructor = mpld3_TooltipPlugin;
 mpld3_TooltipPlugin.prototype.requiredProps = ["id"];
 mpld3_TooltipPlugin.prototype.defaultProps = {
-    type: "tooltip",
     labels: null,
     hoffset: 0,
     voffset: 10,
@@ -13,7 +15,7 @@ mpld3_TooltipPlugin.prototype.defaultProps = {
 };
 
 function mpld3_TooltipPlugin(fig, props) {
-    mpld3_PlotElement.call(this, fig, props);
+    mpld3_Plugin.call(this, fig, props);
 }
 
 mpld3_TooltipPlugin.prototype.draw = function() {
@@ -47,7 +49,7 @@ mpld3_TooltipPlugin.prototype.draw = function() {
     function mouseover(d, i) {
         this.tooltip
             .style("visibility", "visible")
-            .text((labels === null) ? "(" + d[0] + ", " + d[1] + ")" : getMod(labels, i));
+            .text((labels === null) ? "(" + d + ")" : getMod(labels, i));
     }
 
     function mousemove(d, i) {
@@ -71,5 +73,3 @@ mpld3_TooltipPlugin.prototype.draw = function() {
         .on("mousemove", mousemove.bind(this))
         .on("mouseout", mouseout.bind(this));
 }
-
-mpld3.register_plugin("tooltip", mpld3.TooltipPlugin);

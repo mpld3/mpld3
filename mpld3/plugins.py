@@ -7,14 +7,21 @@ matplotlib plots.  A number of plugins are defined here; it is also possible
 to create nearly any imaginable behavior by defining your own custom plugin.
 """
 
-__all__ = ['connect', 'PluginBase', 'PointLabelTooltip', 'PointHTMLTooltip',
-           'LineLabelTooltip']
+__all__ = ['connect', 'clear', 'get_plugins', 'PluginBase',
+           'Reset', 'Zoom', 'BoxZoom',
+           'PointLabelTooltip', 'PointHTMLTooltip', 'LineLabelTooltip']
 
 import json
 import uuid
 import matplotlib
 
 from .utils import get_id
+
+
+def get_plugins(fig):
+    """Get the list of plugins in the figure"""
+    connect(fig)
+    return fig.mpld3_plugins
 
 
 def connect(fig, *plugins):
@@ -37,18 +44,20 @@ def connect(fig, *plugins):
     >>> lines = ax.plot(range(10), '-k')
     >>> plugins.connect(fig, plugins.LineLabelTooltip(lines[0]))
     """
-    if not hasattr(fig, 'plugins'):
-        fig.plugins = []
+    if not hasattr(fig, 'mpld3_plugins'):
+        fig.mpld3_plugins = DEFAULT_PLUGINS[:]
     for plugin in plugins:
-        fig.plugins.append(plugin)
+        fig.mpld3_plugins.append(plugin)
+
+
+def clear(fig):
+    """Clear all plugins from the figure, including defaults"""
+    fig.mpld3_plugins = []
 
 
 class PluginBase(object):
     def get_dict(self):
-        if hasattr(self, "dict_"):
-            return self.dict_
-        else:
-            raise NotImplementedError()
+        return self.dict_
 
     def javascript(self):
         if hasattr(self, "JAVASCRIPT"):
@@ -64,6 +73,54 @@ class PluginBase(object):
             return self.css_
         else:
             return ""
+
+
+class Reset(PluginBase):
+    """A Plugin to add a reset button"""
+    dict_ = {"type": "reset"}
+
+
+class Zoom(PluginBase):
+    """A Plugin to add zoom behavior to the plot
+
+    Parameters
+    ----------
+    button : boolean, optional
+        if True (default), then add a button to enable/disable zoom behavior
+    enabled : boolean, optional
+        specify whether the zoom should be enabled by default. By default,
+        zoom is enabled if button == False, and disabled if button == True.
+
+    Notes
+    -----
+    Even if ``enabled`` is specified, other plugins may modify this state.
+    """
+    def __init__(self, button=True, enabled=None):
+        if enabled is None:
+            enabled = not button
+        self.dict_ = {"type": "zoom",
+                      "button": button,
+                      "enabled": enabled}
+
+
+class BoxZoom(PluginBase):
+    """A Plugin to add box-zoom behavior to the plot
+
+    Parameters
+    ----------
+    button : boolean, optional
+        if True (default), then add a button to enable/disable zoom behavior
+    enabled : boolean, optional
+        specify whether the zoom should be enabled by default. default=True.
+
+    Notes
+    -----
+    Even if ``enabled`` is specified, other plugins may modify this state.
+    """
+    def __init__(self, button=True, enabled=True):
+        self.dict_ = {"type": "boxzoom",
+                      "button": button,
+                      "enabled": enabled}
 
 
 class PointLabelTooltip(PluginBase):
@@ -217,3 +274,5 @@ class PointHTMLTooltip(PluginBase):
                       "labels": labels,
                       "hoffset": hoffset,
                       "voffset": voffset}
+
+DEFAULT_PLUGINS = [Reset(), Zoom(), BoxZoom()]

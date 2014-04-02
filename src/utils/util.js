@@ -1,10 +1,15 @@
 /**********************************************************************/
+/* Plugin registry */
+mpld3.register_plugin = function(name, obj){
+    mpld3.plugin_map[name] = obj;
+};
+
+/**********************************************************************/
 /* Data Parsing Functions */
 mpld3.draw_figure = function(figid, spec) {
     var element = document.getElementById(figid);
     if (element === null) {
         throw (figid + " is not a valid id");
-        return null;
     }
     var fig = new mpld3.Figure(figid, spec);
     mpld3.figures.push(fig);
@@ -136,6 +141,10 @@ function getMod(L, i) {
     return (L.length > 0) ? L[i % L.length] : null;
 }
 
+mpld3.path = function() {
+    return mpld3_path();
+}
+
 function mpld3_path(_) {
     var x = function(d, i) {
         return d[0];
@@ -233,11 +242,29 @@ function mpld3_path(_) {
     return path;
 }
 
-mpld3.path = function() {
-    return mpld3_path();
-}
+mpld3.multiscale = mpld3_multiscale;
 
-mpld3.icons = {
-    reset: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABmJLR0QA/wD/AP+gvaeTAAAACXBI\nWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH3gIcACMoD/OzIwAAAJhJREFUOMtjYKAx4KDUgNsMDAx7\nyNV8i4GB4T8U76VEM8mGYNNMtCH4NBM0hBjNMIwSsMzQ0MamcDkDA8NmQi6xggpUoikwQbIkHk2u\nE0rLI7vCBknBSyxeRDZAE6qHgQkq+ZeBgYERSfFPAoHNDNUDN4BswIRmKgxwEasP2dlsDAwMYlA/\n/mVgYHiBpkkGKscIDaPfVMmuAGnOTaGsXF0MAAAAAElFTkSuQmCC\n",
-    move: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABmJLR0QA/wD/AP+gvaeTAAAACXBI\nWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH3gIcACQMfLHBNQAAANZJREFUOMud07FKA0EQBuAviaKB\nlFr7COJrpAyYRlKn8hECEkFEn8ROCCm0sBMRYgh5EgVFtEhsRjiO27vkBoZd/vn5d3b+XcrjFI9q\nxgXWkc8pUjOB93GMd3zgB9d1unjDSxmhWSHQqOJki+MtOuv/b3ZifUqctIrMxwhHuG1gim4Ma5kR\nWuEkXFgU4B0MW1Ho4TeyjX3s4TDq3zn8ALvZ7q5wX9DqLOHCDA95cFBAnOO1AL/ZdNopgY3fQcqF\nyriMe37hM9w521ZkkvlMo7o/8g7nZYQ/QDctp1nTCf0AAAAASUVORK5CYII=\n"
-};
+function mpld3_multiscale(_){
+    var args = Array.prototype.slice.call(arguments, 0);
+    var N = args.length;
+    function scale(x) {
+        args.forEach(function(mapping){
+            x = mapping(x);
+        });
+        return x;
+    }
+    scale.domain = function(x) {
+        if (!arguments.length) return args[0].domain();
+        args[0].domain(x);
+        return scale;
+    };
+    scale.range = function(x) {
+        if (!arguments.length) return args[N - 1].range();
+        args[N - 1].range(x);
+        return scale;
+    };
+    scale.step = function(i) {
+        return args[i];
+    };
+    return scale;
+}
