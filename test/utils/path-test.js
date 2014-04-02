@@ -28,7 +28,7 @@ suite.addBatch({
 	},
 	"simple closed path": {
 	    topic: function(mpld3) {
-		var data = [[0, 0], [1, 0], [0, 1], [0, 0]];
+		var data = [[0, 0], [1, 0], [0, 1]];
 		var pathcodes = ['M', 'L', 'L', 'Z'];
 		return mpld3.path().call(data, pathcodes);
 	    },

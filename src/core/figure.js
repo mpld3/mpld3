@@ -1,6 +1,7 @@
 import "element";
 import "axes";
 import "../toolbar/";
+import "../plugins/";
 
 /**********************************************************************/
 /* Figure object: */

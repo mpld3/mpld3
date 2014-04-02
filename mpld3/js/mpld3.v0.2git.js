@@ -967,175 +967,6 @@
     }
     return B;
   };
-  mpld3.Figure = mpld3_Figure;
-  mpld3_Figure.prototype = Object.create(mpld3_PlotElement.prototype);
-  mpld3_Figure.prototype.constructor = mpld3_Figure;
-  mpld3_Figure.prototype.requiredProps = [ "width", "height" ];
-  mpld3_Figure.prototype.defaultProps = {
-    data: {},
-    axes: [],
-    plugins: [ {
-      type: "reset"
-    }, {
-      type: "zoom"
-    }, {
-      type: "boxzoom"
-    } ]
-  };
-  function mpld3_Figure(figid, props) {
-    mpld3_PlotElement.call(this, null, props);
-    this.figid = figid;
-    this.width = this.props.width;
-    this.height = this.props.height;
-    this.data = this.props.data;
-    this.buttons = [];
-    this.root = d3.select("#" + figid).append("div").style("position", "relative");
-    this.axes = [];
-    for (var i = 0; i < this.props.axes.length; i++) this.axes.push(new mpld3_Axes(this, this.props.axes[i]));
-    this.plugins = [];
-    for (var i = 0; i < this.props.plugins.length; i++) this.add_plugin(this.props.plugins[i]);
-    this.toolbar = new mpld3.Toolbar(this, {
-      buttons: this.buttons
-    });
-  }
-  mpld3_Figure.prototype.getBrush = function() {
-    if (typeof this._brush === "undefined") {
-      var brush = d3.svg.brush().x(d3.scale.linear()).y(d3.scale.linear()).on("brushstart", function(d) {
-        brush.x(d.xdom).y(d.ydom);
-      });
-      this.root.selectAll(".mpld3-axes").data(this.axes).call(brush);
-      this.axes.forEach(function(ax) {
-        brush.x(ax.xdom).y(ax.ydom);
-        ax.axes.call(brush);
-      });
-      this._brush = brush;
-      this.hideBrush();
-    }
-    return this._brush;
-  };
-  mpld3_Figure.prototype.showBrush = function(extentClass) {
-    extentClass = typeof extentClass === "undefined" ? "" : extentClass;
-    this.canvas.selectAll("rect.background").style("cursor", "crosshair").style("pointer-events", null);
-    this.canvas.selectAll("rect.extent, rect.resize").style("display", null).classed(extentClass, true);
-  };
-  mpld3_Figure.prototype.hideBrush = function(extentClass) {
-    extentClass = typeof extentClass === "undefined" ? "" : extentClass;
-    this.canvas.selectAll("rect.background").style("cursor", null).style("pointer-events", "visible");
-    this.canvas.selectAll("rect.extent, rect.resize").style("display", "none").classed(extentClass, false);
-  };
-  mpld3_Figure.prototype.add_plugin = function(props) {
-    var plug = props.type;
-    if (typeof plug === "undefined") {
-      console.warn("unspecified plugin type. Skipping this");
-      return;
-    }
-    delete props.type;
-    if (plug in mpld3.plugin_map) plug = mpld3.plugin_map[plug];
-    if (typeof plug !== "function") {
-      console.warn("Skipping unrecognized plugin: " + plug);
-      return;
-    }
-    if (props.clear_toolbar) {
-      this.props.toolbar = [];
-    }
-    if ("buttons" in props) {
-      if (typeof props.buttons === "string") {
-        this.props.toolbar.push(props.buttons);
-      } else {
-        for (var i = 0; i < props.buttons.length; i++) {
-          this.props.toolbar.push(props.buttons[i]);
-        }
-      }
-    }
-    this.plugins.push(new plug(this, props));
-  };
-  mpld3_Figure.prototype.draw = function() {
-    this.canvas = this.root.append("svg:svg").attr("class", "mpld3-figure").attr("width", this.width).attr("height", this.height);
-    for (var i = 0; i < this.axes.length; i++) {
-      this.axes[i].draw();
-    }
-    this.enable_zoom();
-    for (var i = 0; i < this.plugins.length; i++) {
-      this.plugins[i].draw();
-    }
-    this.toolbar.draw();
-  };
-  mpld3_Figure.prototype.reset = function(duration) {
-    this.axes.forEach(function(ax) {
-      ax.reset(duration, false);
-    });
-  };
-  mpld3_Figure.prototype.enable_zoom = function() {
-    for (var i = 0; i < this.axes.length; i++) {
-      this.axes[i].enable_zoom();
-    }
-    this.zoom_on = true;
-  };
-  mpld3_Figure.prototype.disable_zoom = function() {
-    for (var i = 0; i < this.axes.length; i++) {
-      this.axes[i].disable_zoom();
-    }
-    this.zoom_on = false;
-  };
-  mpld3_Figure.prototype.toggle_zoom = function() {
-    if (this.zoom_on) {
-      this.disable_zoom();
-    } else {
-      this.enable_zoom();
-    }
-  };
-  mpld3_Figure.prototype.get_data = function(data) {
-    if (data === null || typeof data === "undefined") {
-      return null;
-    } else if (typeof data === "string") {
-      return this.data[data];
-    } else {
-      return data;
-    }
-  };
-  mpld3.PlotElement = mpld3_PlotElement;
-  function mpld3_PlotElement(parent, props) {
-    this.parent = parent;
-    if (typeof props !== "undefined") this.props = this.processProps(props);
-    this.fig = parent instanceof mpld3_Figure ? parent : parent && "fig" in parent ? parent.fig : null;
-    this.ax = parent instanceof mpld3_Axes ? parent : parent && "ax" in parent ? parent.ax : null;
-  }
-  mpld3_PlotElement.prototype.requiredProps = [];
-  mpld3_PlotElement.prototype.defaultProps = {};
-  mpld3_PlotElement.prototype.processProps = function(props) {
-    var finalProps = {};
-    var this_name = this.name();
-    this.requiredProps.forEach(function(p) {
-      if (!(p in props)) {
-        throw "property '" + p + "' " + "must be specified for " + this_name;
-      }
-      finalProps[p] = props[p];
-      delete props[p];
-    });
-    for (var p in this.defaultProps) {
-      if (p in props) {
-        finalProps[p] = props[p];
-        delete props[p];
-      } else {
-        finalProps[p] = this.defaultProps[p];
-      }
-    }
-    if ("id" in props) {
-      finalProps.id = props.id;
-      delete props.id;
-    } else if (!("id" in finalProps)) {
-      finalProps.id = mpld3.generateId();
-    }
-    for (var p in props) {
-      console.warn("Unrecognized property '" + p + "' " + "for object " + this.name() + " (value = " + props[p] + ").");
-    }
-    return finalProps;
-  };
-  mpld3_PlotElement.prototype.name = function() {
-    var funcNameRegex = /function (.{1,})\(/;
-    var results = funcNameRegex.exec(this.constructor.toString());
-    return results && results.length > 1 ? results[1] : "";
-  };
   mpld3.Plugin = mpld3_Plugin;
   mpld3_Plugin.prototype = Object.create(mpld3_PlotElement.prototype);
   mpld3_Plugin.prototype.constructor = mpld3_Plugin;
@@ -1319,6 +1150,175 @@
       this.tooltip.style("visibility", "hidden");
     }
     obj.elements().on("mouseover", mouseover.bind(this)).on("mousemove", mousemove.bind(this)).on("mouseout", mouseout.bind(this));
+  };
+  mpld3.Figure = mpld3_Figure;
+  mpld3_Figure.prototype = Object.create(mpld3_PlotElement.prototype);
+  mpld3_Figure.prototype.constructor = mpld3_Figure;
+  mpld3_Figure.prototype.requiredProps = [ "width", "height" ];
+  mpld3_Figure.prototype.defaultProps = {
+    data: {},
+    axes: [],
+    plugins: [ {
+      type: "reset"
+    }, {
+      type: "zoom"
+    }, {
+      type: "boxzoom"
+    } ]
+  };
+  function mpld3_Figure(figid, props) {
+    mpld3_PlotElement.call(this, null, props);
+    this.figid = figid;
+    this.width = this.props.width;
+    this.height = this.props.height;
+    this.data = this.props.data;
+    this.buttons = [];
+    this.root = d3.select("#" + figid).append("div").style("position", "relative");
+    this.axes = [];
+    for (var i = 0; i < this.props.axes.length; i++) this.axes.push(new mpld3_Axes(this, this.props.axes[i]));
+    this.plugins = [];
+    for (var i = 0; i < this.props.plugins.length; i++) this.add_plugin(this.props.plugins[i]);
+    this.toolbar = new mpld3.Toolbar(this, {
+      buttons: this.buttons
+    });
+  }
+  mpld3_Figure.prototype.getBrush = function() {
+    if (typeof this._brush === "undefined") {
+      var brush = d3.svg.brush().x(d3.scale.linear()).y(d3.scale.linear()).on("brushstart", function(d) {
+        brush.x(d.xdom).y(d.ydom);
+      });
+      this.root.selectAll(".mpld3-axes").data(this.axes).call(brush);
+      this.axes.forEach(function(ax) {
+        brush.x(ax.xdom).y(ax.ydom);
+        ax.axes.call(brush);
+      });
+      this._brush = brush;
+      this.hideBrush();
+    }
+    return this._brush;
+  };
+  mpld3_Figure.prototype.showBrush = function(extentClass) {
+    extentClass = typeof extentClass === "undefined" ? "" : extentClass;
+    this.canvas.selectAll("rect.background").style("cursor", "crosshair").style("pointer-events", null);
+    this.canvas.selectAll("rect.extent, rect.resize").style("display", null).classed(extentClass, true);
+  };
+  mpld3_Figure.prototype.hideBrush = function(extentClass) {
+    extentClass = typeof extentClass === "undefined" ? "" : extentClass;
+    this.canvas.selectAll("rect.background").style("cursor", null).style("pointer-events", "visible");
+    this.canvas.selectAll("rect.extent, rect.resize").style("display", "none").classed(extentClass, false);
+  };
+  mpld3_Figure.prototype.add_plugin = function(props) {
+    var plug = props.type;
+    if (typeof plug === "undefined") {
+      console.warn("unspecified plugin type. Skipping this");
+      return;
+    }
+    delete props.type;
+    if (plug in mpld3.plugin_map) plug = mpld3.plugin_map[plug];
+    if (typeof plug !== "function") {
+      console.warn("Skipping unrecognized plugin: " + plug);
+      return;
+    }
+    if (props.clear_toolbar) {
+      this.props.toolbar = [];
+    }
+    if ("buttons" in props) {
+      if (typeof props.buttons === "string") {
+        this.props.toolbar.push(props.buttons);
+      } else {
+        for (var i = 0; i < props.buttons.length; i++) {
+          this.props.toolbar.push(props.buttons[i]);
+        }
+      }
+    }
+    this.plugins.push(new plug(this, props));
+  };
+  mpld3_Figure.prototype.draw = function() {
+    this.canvas = this.root.append("svg:svg").attr("class", "mpld3-figure").attr("width", this.width).attr("height", this.height);
+    for (var i = 0; i < this.axes.length; i++) {
+      this.axes[i].draw();
+    }
+    this.enable_zoom();
+    for (var i = 0; i < this.plugins.length; i++) {
+      this.plugins[i].draw();
+    }
+    this.toolbar.draw();
+  };
+  mpld3_Figure.prototype.reset = function(duration) {
+    this.axes.forEach(function(ax) {
+      ax.reset(duration, false);
+    });
+  };
+  mpld3_Figure.prototype.enable_zoom = function() {
+    for (var i = 0; i < this.axes.length; i++) {
+      this.axes[i].enable_zoom();
+    }
+    this.zoom_on = true;
+  };
+  mpld3_Figure.prototype.disable_zoom = function() {
+    for (var i = 0; i < this.axes.length; i++) {
+      this.axes[i].disable_zoom();
+    }
+    this.zoom_on = false;
+  };
+  mpld3_Figure.prototype.toggle_zoom = function() {
+    if (this.zoom_on) {
+      this.disable_zoom();
+    } else {
+      this.enable_zoom();
+    }
+  };
+  mpld3_Figure.prototype.get_data = function(data) {
+    if (data === null || typeof data === "undefined") {
+      return null;
+    } else if (typeof data === "string") {
+      return this.data[data];
+    } else {
+      return data;
+    }
+  };
+  mpld3.PlotElement = mpld3_PlotElement;
+  function mpld3_PlotElement(parent, props) {
+    this.parent = parent;
+    if (typeof props !== "undefined") this.props = this.processProps(props);
+    this.fig = parent instanceof mpld3_Figure ? parent : parent && "fig" in parent ? parent.fig : null;
+    this.ax = parent instanceof mpld3_Axes ? parent : parent && "ax" in parent ? parent.ax : null;
+  }
+  mpld3_PlotElement.prototype.requiredProps = [];
+  mpld3_PlotElement.prototype.defaultProps = {};
+  mpld3_PlotElement.prototype.processProps = function(props) {
+    var finalProps = {};
+    var this_name = this.name();
+    this.requiredProps.forEach(function(p) {
+      if (!(p in props)) {
+        throw "property '" + p + "' " + "must be specified for " + this_name;
+      }
+      finalProps[p] = props[p];
+      delete props[p];
+    });
+    for (var p in this.defaultProps) {
+      if (p in props) {
+        finalProps[p] = props[p];
+        delete props[p];
+      } else {
+        finalProps[p] = this.defaultProps[p];
+      }
+    }
+    if ("id" in props) {
+      finalProps.id = props.id;
+      delete props.id;
+    } else if (!("id" in finalProps)) {
+      finalProps.id = mpld3.generateId();
+    }
+    for (var p in props) {
+      console.warn("Unrecognized property '" + p + "' " + "for object " + this.name() + " (value = " + props[p] + ").");
+    }
+    return finalProps;
+  };
+  mpld3_PlotElement.prototype.name = function() {
+    var funcNameRegex = /function (.{1,})\(/;
+    var results = funcNameRegex.exec(this.constructor.toString());
+    return results && results.length > 1 ? results[1] : "";
   };
   if (typeof module === "object" && module.exports) {
     module.exports = mpld3;
