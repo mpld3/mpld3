@@ -166,7 +166,7 @@ def fig_to_dict(fig, d3_url=None, mpld3_url=None,
 
 
 def fig_to_html(fig, d3_url=None, mpld3_url=None, no_extras=False,
-                template_type="general", figure_id=None, **kwargs):
+                template_type="general", figid=None, **kwargs):
     """Output html representation of the figure
 
     Parameters
@@ -194,9 +194,9 @@ def fig_to_html(fig, d3_url=None, mpld3_url=None, no_extras=False,
         ``"general"``
              more complicated, but works both in and out of the
              notebook, whether or not require.js and jquery are available
-    figure_id : string (optional: valid html element ID [a-zA-Z_0-9] characters only)
-        This will allow you to set select figure id instead of
-        generating a random one.
+    figid : string (optional)
+        The html/css id of the figure div, which must not contain spaces.
+        If not specified, a random id will be generated.
 
     **kwargs :
         Additional keyword arguments passed to mplexporter.Exporter
@@ -221,12 +221,11 @@ def fig_to_html(fig, d3_url=None, mpld3_url=None, no_extras=False,
     d3_url = d3_url or urls.D3_URL
     mpld3_url = mpld3_url or urls.MPLD3_URL
 
-    if figure_id is None:
+    if figid is None:
         figid = 'fig_' + get_id(fig) + str(int(random.random() * 1E10))
-    else:
-        if re.search('\s', figure_id):
-            raise ValueError("Space is not allowed in id attribute.")
-        figid = json.dumps(figure_id)
+    elif re.search('\s', figid):
+        raise ValueError("figid must not contain spaces")
+
     renderer = MPLD3Renderer()
     Exporter(renderer, close_mpl=False, **kwargs).run(fig)
 
@@ -236,7 +235,7 @@ def fig_to_html(fig, d3_url=None, mpld3_url=None, no_extras=False,
         extra_css = ""
         extra_js = ""
 
-    return template.render(figid=figid,
+    return template.render(figid=json.dumps(figid),
                            d3_url=d3_url,
                            mpld3_url=mpld3_url,
                            figure_json=json.dumps(figure_json),
