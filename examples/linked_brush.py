@@ -52,7 +52,13 @@ class LinkedBrush(plugins.PluginBase):
 
     LinkedBrushPlugin.prototype.draw = function(){
       var obj = mpld3.get_element(this.props.id);
+      if(obj === null){
+        throw("LinkedBrush: no object with id='" + this.props.id + "' was found");
+      }
       var fig = this.fig;
+      if(!("offsets" in obj.props)){
+        throw("Plot object with id='" + this.props.id + "' is not a scatter plot");
+      }
       var dataKey = ("offsets" in obj.props) ? "offsets" : "data";
 
       mpld3.insert_css("#" + fig.figid + " rect.extent." + this.extentClass,
@@ -186,6 +192,4 @@ for axi in ax.flat:
 
 plugins.connect(fig, LinkedBrush(points))
 
-mpld3.save_html(fig, 'tmp.html',
-                mpld3_url=mpld3.urls.MPLD3_LOCAL,
-                d3_url=mpld3.urls.D3_LOCAL)
+mpld3.show()
