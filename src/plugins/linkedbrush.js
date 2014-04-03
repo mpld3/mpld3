@@ -83,24 +83,8 @@ mpld3_LinkedBrushPlugin.prototype.draw = function(){
     // For fast brushing, precompute a list of selection properties
     // properties to apply to the selction.
     var allData = [];
-    var dataToBrush = fig.canvas.selectAll("." + dataClass)
-                         .each(function(){
-                            for(var i=0; i<fig.axes.length; i++){
-                                var ax = fig.axes[i];
-                                for(var j=0; j<ax.elements.length; j++){
-                                    var el = ax.elements[j];
-                                    if("group" in el
-                                       && el.group[0][0] === this){
-                                        allData.push({i_ax: i,
-                                                      ix: el.props.xindex,
-                                                      iy: el.props.yindex});
-                                        return;
-                                    }
-                                }
-                            }
-                         });
-    dataToBrush.data(allData);
-
+    var dataToBrush = fig.canvas.selectAll("." + dataClass);
+    console.log("yo");
     var currentAxes;
 
     function brushstart(d){
