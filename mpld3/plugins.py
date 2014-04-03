@@ -111,7 +111,8 @@ class BoxZoom(PluginBase):
     button : boolean, optional
         if True (default), then add a button to enable/disable zoom behavior
     enabled : boolean, optional
-        specify whether the zoom should be enabled by default. default=True.
+        specify whether the zoom should be enabled by default. By default,
+        zoom is enabled if button == False, and disabled if button == True.
 
     Notes
     -----
@@ -201,6 +202,55 @@ class LineLabelTooltip(PluginBase):
                       "location": location}
 
 
+class LinkedBrush(PluginBase):
+    """A Plugin to enable linked brushing between plots
+
+    Parameters
+    ----------
+    points : matplotlib Collection or Line2D object
+        A representative of the scatter plot elements to brush.
+    button : boolean, optional
+        if True (default), then add a button to enable/disable zoom behavior
+    enabled : boolean, optional
+        specify whether the zoom should be enabled by default. default=True.
+
+    Examples
+    --------
+    >>> import matplotlib.pyplot as plt
+    >>> import numpy as np
+    >>> from mpld3 import fig_to_html, plugins
+    >>> X = np.random.random((3, 100))
+    >>> fig, ax = plt.subplots(3, 3)
+    >>> for i in range(2):
+    ...     for j in range(2):
+    ...         points = ax[i, j].scatter(X[i], X[j])
+    >>> plugins.connect(fig, LinkedBrush(points))
+    >>> fig_to_html(fig)
+
+    Notes
+    -----
+    Notice that in the above example, only one of the four sets of points is
+    passed to the plugin. This is all that is needed: for the sake of efficient
+    data storage, mpld3 keeps track of which plot objects draw from the same
+    data.
+
+    Also note that for the linked brushing to work correctly, the data must
+    not contain any NaNs. The presence of NaNs makes the different data views
+    have different sizes, so that mpld3 is unable to link the related points.
+    """
+
+    def __init__(self, points, button=True, enabled=True):
+        if isinstance(points, matplotlib.lines.Line2D):
+            suffix = "pts"
+        else:
+            suffix = None
+
+        self.dict_ = {"type": "linkedbrush",
+                      "button": button,
+                      "enabled": enabled,
+                      "id": get_id(points, suffix)}
+
+
 class PointHTMLTooltip(PluginBase):
     """A Plugin to enable an HTML tooltip:
     formated text which hovers over points.
@@ -276,5 +326,6 @@ class PointHTMLTooltip(PluginBase):
                       "labels": labels,
                       "hoffset": hoffset,
                       "voffset": voffset}
+
 
 DEFAULT_PLUGINS = [Reset(), Zoom(), BoxZoom()]

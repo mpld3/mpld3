@@ -2,8 +2,7 @@ import "base";
 import "../toolbar/button"
 import "../utils/icons"
 
-/**********************************************************************/
-/* BoxZoom Plugin */
+
 mpld3.BoxZoomPlugin = mpld3_BoxZoomPlugin;
 mpld3.register_plugin("boxzoom", mpld3_BoxZoomPlugin);
 mpld3_BoxZoomPlugin.prototype = Object.create(mpld3_Plugin.prototype);
@@ -72,8 +71,7 @@ mpld3_BoxZoomPlugin.prototype.draw = function(){
     function brushend(d, i){
 	if(this.enabled){
 	    var extent = brush.extent();
-            if(extent[0][0] != extent[1][0] &&
-               extent[0][1] != extent[1][1]){
+            if(!brush.empty()){
 		d.set_axlim([extent[0][0], extent[1][0]],
 		            [extent[0][1], extent[1][1]]);
             }
