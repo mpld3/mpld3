@@ -1,13 +1,11 @@
 """
 Linked Brushing Example
 =======================
-This example shows a prototype of a linked brush plot, using the iris dataset
-from scikit-learn.  Eventually, this plugin will be made a part of the mpld3
-javascript source.  For now, this should be considered a proof-of-concept.
-
-Click the paintbrush button at the bottom left to enable and disable the
-brushing behavior.  The standard zoom and home buttons are available as well.
+This example uses the standard Iris dataset and plots it with a linked brushing
+tool for dynamically exploring the data. The paintbrush button at the bottom
+left can be used to enable and disable the behavior.
 """
+
 import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
@@ -38,6 +36,7 @@ for axi in ax.flat:
     for axis in [axi.xaxis, axi.yaxis]:
         axis.set_major_formatter(plt.NullFormatter())
 
+# Here we connect the linked brush plugin
 plugins.connect(fig, plugins.LinkedBrush(points))
 
 mpld3.show()
