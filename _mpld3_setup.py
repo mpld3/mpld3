@@ -24,7 +24,7 @@ SUBMODULE_SYNC_PATHS = [('mplexporter/mplexporter', 'mpld3/')]
 def get_version():
     """Get the version info from the mpld3 package without importing it"""
     with open(os.path.join("mpld3", "__about__.py"), "r") as init_file:
-        exec(compile(init_file.read(), 'mpld3/__about__.py', 'exec'))
+        exec(compile(init_file.read(), 'mpld3/__about__.py', 'exec'), globals())
     try:
         return __version__
     except NameError:
@@ -160,7 +160,7 @@ class UpdateSubmodules(Command):
 BUILD_WARNING = """
 # It appears that the javascript sources may have been modified.
 # If this is the case, then the JS libraries should be rebuilt.
-# Please run 
+# Please run
 #   python setup.py buildjs
 # to re-build the javascript libraries.
 # This requires npm to be installed: see CONTRIBUTING.md for details.
@@ -170,7 +170,7 @@ BUILD_WARNING = """
 
 VERSION_ERROR = """
 # Javascript libraries for mpld3 version {0} are missing.
-# Please run 
+# Please run
 #   python setup.py buildjs
 # to re-build the javascript libraries.
 # This requires npm to be installed: see CONTRIBUTING.md for details.
