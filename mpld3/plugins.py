@@ -234,7 +234,9 @@ class LinkedBrush(PluginBase):
     data storage, mpld3 keeps track of which plot objects draw from the same
     data.
 
-    Also note that for the linked brushing to work correctly, 
+    Also note that for the linked brushing to work correctly, the data must
+    not contain any NaNs. The presence of NaNs makes the different data views
+    have different sizes, so that mpld3 is unable to link the related points.
     """
 
     def __init__(self, points, button=True, enabled=True):
