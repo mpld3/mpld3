@@ -85,9 +85,10 @@ mpld3_Figure.prototype.showBrush = function(extentClass) {
 
 mpld3_Figure.prototype.hideBrush = function(extentClass) {
     extentClass = (typeof extentClass === "undefined") ? "" : extentClass;
-    this.getBrush().on("brushstart", null)
-                   .on("brush", null)
-                   .on("brushend", null);
+    var brush = this.getBrush();
+    brush.on("brushstart", null)
+         .on("brush", null)
+         .on("brushend", function(d){d.axes.call(brush.clear());});
     this.canvas.selectAll("rect.background")
         .style("cursor", null)
         .style("pointer-events", "visible");

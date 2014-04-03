@@ -68,7 +68,7 @@ mpld3_BoxZoomPlugin.prototype.draw = function(){
 	this.enabled ? this.disable() : this.enable();
     }
     
-    function brushend(d, i){
+    function brushend(d){
 	if(this.enabled){
 	    var extent = brush.extent();
             if(!brush.empty()){

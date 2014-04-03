@@ -1095,7 +1095,7 @@
     this.toggle = function() {
       this.enabled ? this.disable() : this.enable();
     };
-    function brushend(d, i) {
+    function brushend(d) {
       if (this.enabled) {
         var extent = brush.extent();
         if (!brush.empty()) {
@@ -1324,7 +1324,10 @@
   };
   mpld3_Figure.prototype.hideBrush = function(extentClass) {
     extentClass = typeof extentClass === "undefined" ? "" : extentClass;
-    this.getBrush().on("brushstart", null).on("brush", null).on("brushend", null);
+    var brush = this.getBrush();
+    brush.on("brushstart", null).on("brush", null).on("brushend", function(d) {
+      d.axes.call(brush.clear());
+    });
     this.canvas.selectAll("rect.background").style("cursor", null).style("pointer-events", "visible");
     this.canvas.selectAll("rect.extent, rect.resize").style("display", "none").classed(extentClass, false);
   };
