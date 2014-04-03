@@ -6,8 +6,8 @@ import warnings
 __all__ = ["D3_URL", "MPLD3_URL", "MPLD3MIN_URL",
            "D3_LOCAL", "MPLD3_LOCAL", "MPLD3MIN_LOCAL"]
 
-WWW_JS_DIR = "http://mpld3.github.io/js/"
-D3_URL = "http://d3js.org/d3.v3.min.js"
+WWW_JS_DIR = "https://mpld3.github.io/js/"
+D3_URL = WWW_JS_DIR + "http://d3js.org/d3.v3.min.js"
 MPLD3_URL = WWW_JS_DIR + "mpld3.v{0}.js".format(__version__)
 MPLD3MIN_URL = WWW_JS_DIR + "mpld3.v{0}.min.js".format(__version__)
 

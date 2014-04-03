@@ -166,7 +166,7 @@ def fig_to_dict(fig, d3_url=None, mpld3_url=None,
 
 
 def fig_to_html(fig, d3_url=None, mpld3_url=None, no_extras=False,
-                template_type="general", figid=None, **kwargs):
+                template_type="general", figid=None, use_http=False, **kwargs):
     """Output html representation of the figure
 
     Parameters
@@ -197,6 +197,8 @@ def fig_to_html(fig, d3_url=None, mpld3_url=None, no_extras=False,
     figid : string (optional)
         The html/css id of the figure div, which must not contain spaces.
         If not specified, a random id will be generated.
+    use_http : boolean (optional)
+        If true, use http:// instead of https:// for d3_url and mpld3_url.
 
     **kwargs :
         Additional keyword arguments passed to mplexporter.Exporter
@@ -220,6 +222,10 @@ def fig_to_html(fig, d3_url=None, mpld3_url=None, no_extras=False,
     # TODO: allow fig to be a list of figures?
     d3_url = d3_url or urls.D3_URL
     mpld3_url = mpld3_url or urls.MPLD3_URL
+
+    if use_http:
+        d3_url = d3_url.replace('https://', 'http://')
+        mpld3_url = mpld3_url.replace('https://', 'http://')
 
     if figid is None:
         figid = 'fig_' + get_id(fig) + str(int(random.random() * 1E10))
