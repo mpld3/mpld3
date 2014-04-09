@@ -17,6 +17,14 @@
     fig.draw();
     return fig;
   };
+  mpld3.cloneObj = mpld3_cloneObj;
+  function mpld3_cloneObj(oldObj) {
+    var newObj = {};
+    for (var key in oldObj) {
+      newObj[key] = oldObj[key];
+    }
+    return newObj;
+  }
   mpld3.merge_objects = function(_) {
     var output = {};
     var obj;
@@ -451,7 +459,6 @@
   };
   function mpld3_PathCollection(ax, props) {
     mpld3_PlotElement.call(this, ax, props);
-    this.paths = this.props.paths;
     if (this.props.facecolors == null || this.props.facecolors.length == 0) {
       this.props.facecolors = [ "none" ];
     }
@@ -481,7 +488,7 @@
       return this.pathcoords.x(d[0]);
     }.bind(this)).y(function(d) {
       return this.pathcoords.y(d[1]);
-    }.bind(this)).apply(this, getMod(this.paths, i));
+    }.bind(this)).apply(this, getMod(this.props.paths, i));
   };
   mpld3_PathCollection.prototype.styleFunc = function(d, i) {
     var styles = {
@@ -560,10 +567,10 @@
     if (this.props.markerpath !== null) {
       this.marker = this.props.markerpath[0].length == 0 ? null : mpld3.path().call(this.props.markerpath[0], this.props.markerpath[1]);
     } else {
-      this.marker = this.props.markername === null ? null : d3.svg.symbol(this.props.markername).size(Math.pow(this.props.markersize, 2));
+      this.marker = this.props.markername === null ? null : d3.svg.symbol(this.props.markername).size(Math.pow(this.props.markersize, 2))();
     }
     var PCprops = {
-      paths: [ this.markerpath ],
+      paths: [ this.props.markerpath ],
       offsets: ax.fig.get_data(this.props.data),
       xindex: this.props.xindex,
       yindex: this.props.yindex,
@@ -1337,6 +1344,7 @@
       console.warn("unspecified plugin type. Skipping this");
       return;
     }
+    props = mpld3_cloneObj(props);
     delete props.type;
     if (plug in mpld3.plugin_map) plug = mpld3.plugin_map[plug];
     if (typeof plug !== "function") {
@@ -1411,6 +1419,7 @@
   mpld3_PlotElement.prototype.requiredProps = [];
   mpld3_PlotElement.prototype.defaultProps = {};
   mpld3_PlotElement.prototype.processProps = function(props) {
+    props = mpld3_cloneObj(props);
     var finalProps = {};
     var this_name = this.name();
     this.requiredProps.forEach(function(p) {

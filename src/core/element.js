@@ -18,6 +18,9 @@ mpld3_PlotElement.prototype.requiredProps = [];
 mpld3_PlotElement.prototype.defaultProps = {};
 
 mpld3_PlotElement.prototype.processProps = function(props) {
+    // clone so that input is not overwritten
+    props = mpld3_cloneObj(props);
+
     var finalProps = {};
 
     // Check that all required properties are specified

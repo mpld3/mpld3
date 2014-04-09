@@ -103,6 +103,9 @@ mpld3_Figure.prototype.add_plugin = function(props) {
         console.warn("unspecified plugin type. Skipping this");
         return;
     }
+
+    // clone props without the "type" argument
+    props = mpld3_cloneObj(props);
     delete props.type;
 
     if (plug in mpld3.plugin_map)

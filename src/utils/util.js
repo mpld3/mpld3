@@ -21,6 +21,16 @@ mpld3.draw_figure = function(figid, spec) {
 /**********************************************************************/
 /* Convenience Functions                                              */
 
+mpld3.cloneObj = mpld3_cloneObj;
+
+function mpld3_cloneObj(oldObj) {
+   var newObj = {};
+   for(var key in oldObj){
+       newObj[key] = oldObj[key];
+   }
+   return newObj;
+}
+
 mpld3.merge_objects = function(_) {
     var output = {};
     var obj;
