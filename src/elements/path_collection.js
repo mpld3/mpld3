@@ -23,7 +23,6 @@ mpld3_PathCollection.prototype.defaultProps = {
 
 function mpld3_PathCollection(ax, props) {
     mpld3_PlotElement.call(this, ax, props);
-    this.paths = this.props.paths;
 
     if (this.props.facecolors == null ||
         this.props.facecolors.length == 0) {
@@ -75,7 +74,7 @@ mpld3_PathCollection.prototype.pathFunc = function(d, i) {
         .y(function(d) {
             return this.pathcoords.y(d[1]);
         }.bind(this))
-        .apply(this, getMod(this.paths, i));
+        .apply(this, getMod(this.props.paths, i));
 };
 
 mpld3_PathCollection.prototype.styleFunc = function(d, i) {

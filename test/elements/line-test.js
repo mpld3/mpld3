@@ -1,5 +1,5 @@
 var vows = require("vows"),
-    load = require("./load"),
+    load = require("../load"),
     assert = require("assert");
 
 var suite = vows.describe("mpld3.Line");
@@ -28,10 +28,10 @@ suite.addBatch({
                 });
             },
             "draw line": function(line) {
-                xdom = line.ax.x.domain()
+                var xdom = line.ax.x.domain()
                 assert.equal(xdom[0], 0)
                 assert.equal(xdom[1], 1)
-                ydom = line.ax.y.domain()
+                var ydom = line.ax.y.domain()
                 assert.equal(ydom[0], 2)
                 assert.equal(ydom[1], 3)
             }

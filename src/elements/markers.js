@@ -1,3 +1,5 @@
+import "path_collection"
+
 /**********************************************************************/
 /* Markers Element */
 mpld3.Markers = mpld3_Markers;
@@ -29,12 +31,12 @@ function mpld3_Markers(ax, props) {
     } else {
         this.marker = (this.props.markername === null) ? null :
             d3.svg.symbol(this.props.markername)
-            .size(Math.pow(this.props.markersize, 2));
+            .size(Math.pow(this.props.markersize, 2))();
     }
 
     // Call the PathCollection constructor
     var PCprops = {
-        paths: [this.markerpath],
+        paths: [this.props.markerpath],
         offsets: ax.fig.get_data(this.props.data),
         xindex: this.props.xindex,
         yindex: this.props.yindex,
