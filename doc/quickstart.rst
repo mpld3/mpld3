@@ -5,9 +5,21 @@ Quick Start Guide
 
 The mpld3 package is extremely easy to use: you can simply take any script
 generating a matplotlib plot, run it through one of mpld3's convenience
-routines, and embed the result in a web page. For some example of this
-in action, see the :ref:`example-gallery`.  Here we'll give a quick overview
-of the basic mpld3 functions you should know about.
+routines, and embed the result in a web page.
+
+To install mpld3 with pip::
+
+    pip install mpld3
+
+Then you can make an interactive plot like so::
+
+    import matplotlib.pyplot as plt, mpld3
+    plt.plot([3,1,4,1,5], 'ks-', mec='w', mew=5, ms=20)
+    mpld3.show_d3(plt.gcf())
+
+For more examples of this in action, see the :ref:`example-gallery`.
+Next, we'll give a quick overview of the basic mpld3 functions you
+should know about.
 
 
 General Functions
