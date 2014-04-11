@@ -251,7 +251,6 @@ def fig_to_html(fig, d3_url=None, mpld3_url=None, no_extras=False,
                            extra_js=extra_js)
 
 
-
 def display(fig=None, closefig=True, local=False, **kwargs):
     """Display figure in IPython notebook via the HTML display hook
 
@@ -284,11 +283,12 @@ def display(fig=None, closefig=True, local=False, **kwargs):
 
     if local:
         if 'mpld3_url' in kwargs or 'd3_url' in kwargs:
-            warnings.warn("enable_notebook: "
+            warnings.warn("display: "
                           "specified urls are ignored when local=True")
-        d3_url, mpld3_url = write_js_libs(os.getcwd())
-        kwargs['d3_url'] = "/files/" + os.path.basename(d3_url)
-        kwargs['mpld3_url'] = "/files/" + os.path.basename(mpld3_url)
+    
+        d3_url, mpld3_url = write_js_libs()
+        kwargs['d3_url'] = d3_url
+        kwargs['mpld3_url'] = mpld3_url
 
     if fig is None:
         fig = plt.gcf()
@@ -379,9 +379,10 @@ def enable_notebook(local=False, **kwargs):
         if 'mpld3_url' in kwargs or 'd3_url' in kwargs:
             warnings.warn("enable_notebook: "
                           "specified urls are ignored when local=True")
-        d3_url, mpld3_url = write_js_libs(os.getcwd())
-        kwargs['d3_url'] = "/files/" + os.path.basename(d3_url)
-        kwargs['mpld3_url'] = "/files/" + os.path.basename(mpld3_url)
+    
+        d3_url, mpld3_url = write_js_libs()
+        kwargs['d3_url'] = d3_url
+        kwargs['mpld3_url'] = mpld3_url
 
     ip = get_ipython()
     formatter = ip.display_formatter.formatters['text/html']
