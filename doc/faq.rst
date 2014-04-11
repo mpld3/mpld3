@@ -13,8 +13,8 @@ General
 
   Big data visualization requires specialized tools which do careful automatic data summarization and/or take direct advantage of your system's GPU. There are a couple other Python projects that are making great headway in this area:
 
-- `Bokeh <http://bokeh.pydata.org/>`_ is a project which targets browser-based graphics, and recent releases are beginning to do big data in the browser the right way.
-- `VisPy <http://vispy.org>`_ is another effort to provide easy visualization of large datasets. It is based on OpenGL, with plans to add a WebGL backend.
+  - `Bokeh <http://bokeh.pydata.org/>`_ is a project which targets browser-based graphics, and recent releases are beginning to do big data in the browser the right way.
+  - `VisPy <http://vispy.org>`_ is another effort to provide easy visualization of large datasets. It is based on OpenGL, with plans to add a WebGL backend.
 
 - **What matplotlib features are not supported?**
 
