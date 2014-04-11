@@ -9,9 +9,12 @@ General
 
 - **Does mpld3 work for large datasets?**
 
-  Short answer: not really.  Mpld3 is designed for small to medium-scale visualizations, and this is unlikely to change. The reason is that mpld3 is build on the foundation of HTML's SVG, which is not suited for large datasets. Plots with more than a few thousand elements will have noticeably slow response for interactive features.
+  Short answer: not really.  Mpld3, like matplolib itself, is designed for small to medium-scale visualizations, and this is unlikely to change. The reason is that mpld3 is built upon the foundation of HTML's SVG, which is not particularly well-suited for large datasets. Plots with more than a few thousand elements will have noticeably slow response for interactive features.
 
-  Big data visualization requires specialized tools which take direct advantage of your system's GPU. One project to keep an eye on is [vispy](http://vispy.org), a Python visualization library built on OpenGL which includes specific optimizations for visualizing larger datasets.
+  Big data visualization requires specialized tools which do careful automatic data summarization and/or take direct advantage of your system's GPU. There are a couple other Python projects that are making great headway in this area:
+
+- `Bokeh <http://bokeh.pydata.org/>`_ is a project which targets browser-based graphics, and recent releases are beginning to do big data in the browser the right way.
+- `VisPy <http://vispy.org>`_ is another effort to provide easy visualization of large datasets. It is based on OpenGL, with plans to add a WebGL backend.
 
 - **What matplotlib features are not supported?**
 
