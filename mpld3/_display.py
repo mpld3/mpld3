@@ -1,9 +1,11 @@
+import warnings
 import random
 import json
 import jinja2
 import re
+import os
 from ._server import serve_and_open
-from .utils import deprecated, get_id
+from .utils import deprecated, get_id, write_js_libs
 from .mplexporter import Exporter
 from .mpld3renderer import MPLD3Renderer
 from . import urls
@@ -250,7 +252,7 @@ def fig_to_html(fig, d3_url=None, mpld3_url=None, no_extras=False,
 
 
 
-def display(fig=None, closefig=True, **kwargs):
+def display(fig=None, closefig=True, local=False, **kwargs):
     """Display figure in IPython notebook via the HTML display hook
 
     Parameters
@@ -260,6 +262,9 @@ def display(fig=None, closefig=True, **kwargs):
     closefig : boolean (default: True)
         If true, close the figure so that the IPython matplotlib mode will not
         display the png version of the figure.
+    local : boolean (optional, default=False)
+        if True, then copy the d3 & mpld3 libraries to a location visible to
+        the notebook server, and source them from there.
     **kwargs :
         additional keyword arguments are passed through to :func:`fig_to_html`.
 
@@ -276,6 +281,15 @@ def display(fig=None, closefig=True, **kwargs):
     # import here, in case users don't have requirements installed
     from IPython.display import HTML
     import matplotlib.pyplot as plt
+
+    if local:
+        if 'mpld3_url' in kwargs or 'd3_url' in kwargs:
+            warnings.warn("enable_notebook: "
+                          "specified urls are ignored when local=True")
+        d3_url, mpld3_url = write_js_libs(os.getcwd())
+        kwargs['d3_url'] = "/files/" + os.path.basename(d3_url)
+        kwargs['mpld3_url'] = "/files/" + os.path.basename(mpld3_url)
+
     if fig is None:
         fig = plt.gcf()
     if closefig:
@@ -332,7 +346,7 @@ def show(fig=None, ip='127.0.0.1', port=8888, n_retries=50,
     serve_and_open(html, ip=ip, port=port, n_retries=n_retries, files=files)
 
 
-def enable_notebook(**kwargs):
+def enable_notebook(local=False, **kwargs):
     """Enable the automatic display of figures in the IPython Notebook.
 
     This function should be used with the inline Matplotlib backend
@@ -343,6 +357,9 @@ def enable_notebook(**kwargs):
 
     Parameters
     ----------
+    local : boolean (optional, default=False)
+        if True, then copy the d3 & mpld3 libraries to a location visible to
+        the notebook server, and source them from there.
     **kwargs :
         all keyword parameters are passed through to :func:`fig_to_html`
 
@@ -357,6 +374,15 @@ def enable_notebook(**kwargs):
         from matplotlib.figure import Figure
     except ImportError:
         raise ImportError('This feature requires IPython 1.0+ and Matplotlib')
+
+    if local:
+        if 'mpld3_url' in kwargs or 'd3_url' in kwargs:
+            warnings.warn("enable_notebook: "
+                          "specified urls are ignored when local=True")
+        d3_url, mpld3_url = write_js_libs(os.getcwd())
+        kwargs['d3_url'] = "/files/" + os.path.basename(d3_url)
+        kwargs['mpld3_url'] = "/files/" + os.path.basename(mpld3_url)
+
     ip = get_ipython()
     formatter = ip.display_formatter.formatters['text/html']
     formatter.for_type(Figure,

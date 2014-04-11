@@ -59,11 +59,6 @@ Javascript
 
 - **How can I use mpld3 without an internet connection?**
 
-  To use mpld3 without an internet connection, you need to use a local version of the mpld3 and d3 libraries. The easiest way to do this is to use :func:`mpld3.show`, though this does not work well within the IPython notebook.
+  To use mpld3 without an internet connection, you need to use a local version of the mpld3 and d3 libraries. Outside the IPython notebook, you can use the :func:`mpld3.show()` function, which automatically uses local copies of the javascript libraries.
 
-  You can also specify the location of the library to use with the ``mpld3_url`` and ``d3_url`` keyword arguments to most functions. These specify where generated html should point to find the mpld3 and d3 libraries, respecively. There are some variables defined in the submodule ``mpld3.urls`` which contain default paths for each of these.
-
-  Using these locally in the IPython notebook is a bit more tricky, because you need to make both the mpld3 and d3 libraries visible to the notebook server. If you copy the mpld3 and d3 libraries to the same directory as your notebook, they will be visible to the server at the urls ``/files/mpld3.js`` and ``/files/d3.js``. You can then specify these urls when calling :func:`mpld3.enable_notebook`::
-
-    mpld3.enable_notebook(d3_url='/files/d3.v3.min.js',
-                          mpld3_url='/files/mpld3.v0.1.js')
+  Inside the IPython notebook, both the :func:`mpld3.enable_notebook` and :func:`mpld3.display` functions take a boolean keyword ``local``. Setting this to ``True`` will copy the mpld3 and d3 javascript libraries to the notebook directory, and will use the appropriate path within IPython (``/files/*.js``) to load the libraries.
