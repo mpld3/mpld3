@@ -15,17 +15,20 @@ from mpld3 import plugins, utils
 
 class DragPlugin(plugins.PluginBase):
     JAVASCRIPT = r"""
-    var DragPlugin = function(fig, prop){
-      this.fig = fig;
-      this.prop = mpld3.process_props(this, prop, {}, ["id"]);
-
-      mpld3.insert_css("#" + fig.figid + " path.dragging",
-                       {"fill-opacity": "1.0 !important",
-                        "stroke-opacity": "1.0 !important"});
-    }
+    mpld3.register_plugin("drag", DragPlugin);
+    DragPlugin.prototype = Object.create(mpld3.Plugin.prototype);
+    DragPlugin.prototype.constructor = DragPlugin;
+    DragPlugin.prototype.requiredProps = ["id"];
+    DragPlugin.prototype.defaultProps = {}
+    function DragPlugin(fig, props){
+        mpld3.Plugin.call(this, fig, props);
+        mpld3.insert_css("#" + fig.figid + " path.dragging",
+                         {"fill-opacity": "1.0 !important",
+                          "stroke-opacity": "1.0 !important"});
+    };
 
     DragPlugin.prototype.draw = function(){
-        var obj = mpld3.get_element(this.prop.id);
+        var obj = mpld3.get_element(this.props.id);
 
         var drag = d3.behavior.drag()
             .origin(function(d) { return {x:obj.ax.x(d[0]),
@@ -35,7 +38,7 @@ class DragPlugin(plugins.PluginBase):
             .on("dragend", dragended);
 
         obj.elements()
-           .data(obj.data)
+           .data(obj.offsets)
            .style("cursor", "default")
            .call(drag);
 
@@ -55,8 +58,6 @@ class DragPlugin(plugins.PluginBase):
           d3.select(this).classed("dragging", false);
         }
     }
-
-    mpld3.register_plugin("drag", DragPlugin);
     """
 
     def __init__(self, points):
