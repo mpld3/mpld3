@@ -22,6 +22,11 @@ General
 
   We keep a list of unsupported features at https://github.com/jakevdp/mpld3/wiki#mpld3-missing-features.  If you find something missing that's not on that list, please feel free to add it.
 
+- **Can I use mpld3 without matplotlib?**
+
+  Yes! The client-side interface of mpld3 is a pure javascript library, which builds figures based on a well-defined JSON specification. This specification was designed with matplotlib in mind, but there's nothing stopping you from generating the JSON from another source, or even editing it by hand. Unfortunately, at the moment, this JSON spec is not well-documented, but we hope to address that in the future.
+
+
 IPython Notebook
 ----------------
 
