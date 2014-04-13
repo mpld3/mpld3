@@ -20,31 +20,29 @@ class HighlightLines(plugins.PluginBase):
     """A plugin to highlight lines on hover"""
 
     JAVASCRIPT = """
-    var LineHighlightPlugin = function(fig, prop){
-       this.fig = fig;
-       this.prop = mpld3.process_props(this, prop,
-                                       {alpha_bg:0.3, alpha_fg:1.0},
-                                       ["line_ids"]);
+    mpld3.register_plugin("linehighlight", LineHighlightPlugin);
+    LineHighlightPlugin.prototype = Object.create(mpld3.Plugin.prototype);
+    LineHighlightPlugin.prototype.constructor = LineHighlightPlugin;
+    LineHighlightPlugin.prototype.requiredProps = ["line_ids"];
+    LineHighlightPlugin.prototype.defaultProps = {alpha_bg:0.3, alpha_fg:1.0}
+    function LineHighlightPlugin(fig, props){
+        mpld3.Plugin.call(this, fig, props);
     };
 
     LineHighlightPlugin.prototype.draw = function(){
-      for(var i=0; i<this.prop.line_ids.length; i++){
-         var obj = mpld3.get_element(this.prop.line_ids[i]),
-             alpha_fg = this.prop.alpha_fg;
-             alpha_bg = this.prop.alpha_bg;
+      for(var i=0; i<this.props.line_ids.length; i++){
+         var obj = mpld3.get_element(this.props.line_ids[i]),
+             alpha_fg = this.props.alpha_fg;
+             alpha_bg = this.props.alpha_bg;
          obj.elements()
              .on("mouseover", function(d, i){
                             d3.select(this).transition().duration(50)
-                                .style("stroke-opacity", alpha_fg)
-                          })
+                              .style("stroke-opacity", alpha_fg); })
              .on("mouseout", function(d, i){
                             d3.select(this).transition().duration(200)
-                                .style("stroke-opacity", alpha_bg);
-                          });
+                              .style("stroke-opacity", alpha_bg); });
       }
     };
-
-    mpld3.register_plugin("linehighlight", LineHighlightPlugin);
     """
 
     def __init__(self, lines):
