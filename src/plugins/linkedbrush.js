@@ -84,7 +84,6 @@ mpld3_LinkedBrushPlugin.prototype.draw = function(){
     // properties to apply to the selction.
     var allData = [];
     var dataToBrush = fig.canvas.selectAll("." + dataClass);
-    console.log("yo");
     var currentAxes;
 
     function brushstart(d){

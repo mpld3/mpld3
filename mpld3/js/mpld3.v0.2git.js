@@ -1235,7 +1235,6 @@
     });
     var allData = [];
     var dataToBrush = fig.canvas.selectAll("." + dataClass);
-    console.log("yo");
     var currentAxes;
     function brushstart(d) {
       if (currentAxes != this) {
