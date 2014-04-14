@@ -22,16 +22,19 @@ from mpld3 import plugins, utils
 
 class LinkedDragPlugin(plugins.PluginBase):
     JAVASCRIPT = r"""
-    var DragPlugin = function(fig, prop){
-      this.fig = fig;
-      this.prop = mpld3.process_props(this, prop, {},
-                                      ["idpts", "idline", "idpatch"]);
-    }
+    mpld3.register_plugin("drag", DragPlugin);
+    DragPlugin.prototype = Object.create(mpld3.Plugin.prototype);
+    DragPlugin.prototype.constructor = DragPlugin;
+    DragPlugin.prototype.requiredProps = ["idpts", "idline", "idpatch"];
+    DragPlugin.prototype.defaultProps = {}
+    function DragPlugin(fig, props){
+        mpld3.Plugin.call(this, fig, props);
+    };
 
     DragPlugin.prototype.draw = function(){
-        var patchobj = mpld3.get_element(this.prop.idpatch);
-        var ptsobj = mpld3.get_element(this.prop.idpts);
-        var lineobj = mpld3.get_element(this.prop.idline);
+        var patchobj = mpld3.get_element(this.props.idpatch);
+        var ptsobj = mpld3.get_element(this.props.idpts);
+        var lineobj = mpld3.get_element(this.props.idline);
 
         var drag = d3.behavior.drag()
             .origin(function(d) { return {x:ptsobj.ax.x(d[0]),
@@ -40,14 +43,14 @@ class LinkedDragPlugin(plugins.PluginBase):
             .on("drag", dragged)
             .on("dragend", dragended);
 
-        lineobj.line.attr("d", lineobj.datafunc(ptsobj.data));
-        patchobj.path.attr("d", patchobj.datafunc(ptsobj.data,
+        lineobj.path.attr("d", lineobj.datafunc(ptsobj.offsets));
+        patchobj.path.attr("d", patchobj.datafunc(ptsobj.offsets,
                                                   patchobj.pathcodes));
-        lineobj.data = ptsobj.data;
-        patchobj.data = ptsobj.data;
+        lineobj.data = ptsobj.offsets;
+        patchobj.data = ptsobj.offsets;
 
         ptsobj.elements()
-           .data(ptsobj.data)
+           .data(ptsobj.offsets)
            .style("cursor", "default")
            .call(drag);
 
@@ -61,8 +64,8 @@ class LinkedDragPlugin(plugins.PluginBase):
           d[1] = ptsobj.ax.y.invert(d3.event.y);
           d3.select(this)
             .attr("transform", "translate(" + [d3.event.x,d3.event.y] + ")");
-          lineobj.line.attr("d", lineobj.datafunc(ptsobj.data));
-          patchobj.path.attr("d", patchobj.datafunc(ptsobj.data,
+          lineobj.path.attr("d", lineobj.datafunc(ptsobj.offsets));
+          patchobj.path.attr("d", patchobj.datafunc(ptsobj.offsets,
                                                     patchobj.pathcodes));
         }
 
