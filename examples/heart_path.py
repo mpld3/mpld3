@@ -32,9 +32,9 @@ class LinkedDragPlugin(plugins.PluginBase):
     };
 
     DragPlugin.prototype.draw = function(){
-        var patchobj = mpld3.get_element(this.props.idpatch);
-        var ptsobj = mpld3.get_element(this.props.idpts);
-        var lineobj = mpld3.get_element(this.props.idline);
+        var patchobj = mpld3.get_element(this.props.idpatch, this.fig);
+        var ptsobj = mpld3.get_element(this.props.idpts, this.fig);
+        var lineobj = mpld3.get_element(this.props.idline, this.fig);
 
         var drag = d3.behavior.drag()
             .origin(function(d) { return {x:ptsobj.ax.x(d[0]),
