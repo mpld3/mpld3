@@ -42,10 +42,6 @@ nosetests.xml
 # ipython
 .ipynb_checkpoints
 
-# temporary files
-test_plots/*.png
-*.html
-
 # documentation
 doc/_build
 doc/examples
@@ -57,3 +53,7 @@ mpld3/mplexporter
 
 # npm
 node_modules
+
+# testing outputs
+_pngs
+_test_plots.html
