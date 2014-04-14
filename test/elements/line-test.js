@@ -10,30 +10,27 @@ suite.addBatch({
         "simple Line": {
             topic: function(mpld3) {
                 var fig_props = {
-                    width: 100,
-                    height: 200
+                    width: 400,
+                    height: 300
                 };
                 var ax_props = {
                     xlim: [0, 1],
                     ylim: [2, 3]
-
-                }
+                };
+                var line_props = {
+                    data: [[0, 2], [1, 3], [2, 4]]
+                };
                 var fig = new mpld3.Figure("chart", fig_props);
                 var ax = new mpld3.Axes(fig, ax_props);
-                return new mpld3.Line(ax, {
-                    data: {
-                        x: [0, 1],
-                        y: [2, 3]
-                    }
-                });
+                var line = new mpld3.Line(ax, line_props);
+                ax.elements.push(line);
+                fig.axes.push(ax);
+                fig.draw();
+                return line;
             },
             "draw line": function(line) {
-                var xdom = line.ax.x.domain()
-                assert.equal(xdom[0], 0)
-                assert.equal(xdom[1], 1)
-                var ydom = line.ax.y.domain()
-                assert.equal(ydom[0], 2)
-                assert.equal(ydom[1], 3)
+		assert.equal(line.datafunc(line.data, line.pathcodes),
+                             "M0,240L320,0L640,-240")
             }
         }
     }
