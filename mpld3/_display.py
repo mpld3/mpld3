@@ -124,20 +124,13 @@ TEMPLATE_DICT = {"simple": SIMPLE_HTML,
                  "general": GENERAL_HTML}
 
 
-def fig_to_dict(fig, d3_url=None, mpld3_url=None,
-                template_type="general", **kwargs):
-    """Output json representation of the figure
+def fig_to_dict(fig, **kwargs):
+    """Output json-serializable dictionary representation of the figure
 
     Parameters
     ----------
     fig : matplotlib figure
         The figure to display
-    d3_url : string (optional)
-        The URL of the d3 library.  If not specified, a standard web path
-        will be used.
-    mpld3_url : string (optional)
-        The URL of the mpld3 library.  If not specified, a standard web path
-        will be used.
     **kwargs :
         Additional keyword arguments passed to mplexporter.Exporter
 
@@ -156,15 +149,10 @@ def fig_to_dict(fig, d3_url=None, mpld3_url=None,
     :func:`display` : embed figure within the IPython notebook
     :func:`enable_notebook` : automatically embed figures in IPython notebook
     """
-    # unused variables
-    d3_url = d3_url or urls.D3_URL
-    # unused variables
-    mpld3_url = mpld3_url or urls.MPLD3_URL
-
     renderer = MPLD3Renderer()
     Exporter(renderer, close_mpl=False, **kwargs).run(fig)
-    fig, figure_json, extra_css, extra_js = renderer.finished_figures[0]
-    return figure_json
+    fig, figure_dict, extra_css, extra_js = renderer.finished_figures[0]
+    return figure_dict
 
 
 def fig_to_html(fig, d3_url=None, mpld3_url=None, no_extras=False,
@@ -249,7 +237,6 @@ def fig_to_html(fig, d3_url=None, mpld3_url=None, no_extras=False,
                            figure_json=json.dumps(figure_json),
                            extra_css=extra_css,
                            extra_js=extra_js)
-
 
 
 def display(fig=None, closefig=True, local=False, **kwargs):
@@ -446,7 +433,7 @@ def save_json(fig, fileobj, **kwargs):
         The filename or file-like object in which to write the HTML
         representation of the figure.
     **kwargs :
-        additional keyword arguments will be passed to :func:`fig_to_html`
+        additional keyword arguments will be passed to :func:`fig_to_dict`
 
     See Also
     --------
