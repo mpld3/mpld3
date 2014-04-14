@@ -278,16 +278,18 @@ class PointHTMLTooltip(PluginBase):
     """
 
     JAVASCRIPT = """
-    var HtmlTooltipPlugin = function(fig, prop){
-       this.fig = fig;
-       var required = ["id"];
-       var defaults = {labels:null, hoffset:0, voffset:10};
-       this.prop = mpld3.process_props(this, prop, defaults, required);
+    mpld3.register_plugin("htmltooltip", HtmlTooltipPlugin);
+    HtmlTooltipPlugin.prototype = Object.create(mpld3.Plugin.prototype);
+    HtmlTooltipPlugin.prototype.constructor = HtmlTooltipPlugin;
+    HtmlTooltipPlugin.prototype.requiredProps = ["id"];
+    HtmlTooltipPlugin.prototype.defaultProps = {labels:null, hoffset:0, voffset:10};
+    function HtmlTooltipPlugin(fig, props){
+        mpld3.Plugin.call(this, fig, props);
     };
 
     HtmlTooltipPlugin.prototype.draw = function(){
-       var obj = mpld3.get_element(this.prop.id);
-       var labels = this.prop.labels;
+       var obj = mpld3.get_element(this.props.id);
+       var labels = this.props.labels;
        var tooltip = d3.select("body").append("div")
                     .attr("class", "mpld3-tooltip")
                     .style("position", "absolute")
@@ -300,14 +302,12 @@ class PointHTMLTooltip(PluginBase):
                                      .style("visibility", "visible");})
            .on("mousemove", function(d, i){
                     tooltip
-                      .style("top", d3.event.pageY + this.prop.voffset + "px")
-                      .style("left",d3.event.pageX + this.prop.hoffset + "px");
+                      .style("top", d3.event.pageY + this.props.voffset + "px")
+                      .style("left",d3.event.pageX + this.props.hoffset + "px");
                  }.bind(this))
            .on("mouseout",  function(d, i){
                            tooltip.style("visibility", "hidden");});
     };
-
-    mpld3.register_plugin("htmltooltip", HtmlTooltipPlugin);
     """
 
     def __init__(self, points, labels=None,
