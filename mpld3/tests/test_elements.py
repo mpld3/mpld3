@@ -117,3 +117,20 @@ def test_text():
     assert_equal(text['v_baseline'], 'central')
     assert_equal(text['zorder'], 3)
     assert_equal(text['coordinates'], "data")
+
+
+def test_image():
+    fig, ax = plt.subplots()
+    ax.imshow(np.random.random((20, 20)), cmap=plt.cm.binary,
+              alpha=0.2, zorder=4, extent=(2, 4, 3, 5))
+    rep = fig_to_dict(fig)
+    axrep = rep['axes'][0]
+    image = axrep['images'][0]
+
+    # TODO: how to test data?
+    assert_equal(list(sorted(image.keys())),
+                 ['alpha', 'coordinates', 'data', 'extent', 'id', 'zorder'])
+    assert_equal(image['alpha'], 0.2)
+    assert_equal(image['extent'], (2, 4, 3, 5))
+    assert_equal(image['zorder'], 4)
+    assert_equal(image['coordinates'], "data")
