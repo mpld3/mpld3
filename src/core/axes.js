@@ -24,9 +24,6 @@ mpld3_Axes.prototype.defaultProps = {
     }, {
         position: "bottom"
     }],
-    grids: [],
-    "xgridprops": {},
-    "ygridprops": {},
     "lines": [],
     "paths": [],
     "markers": [],

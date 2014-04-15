@@ -6,9 +6,8 @@ import "../utils/";
 mpld3.PlotElement = mpld3_PlotElement;
 
 function mpld3_PlotElement(parent, props) {
-    this.parent = parent;
-    if (typeof props !== "undefined")
-        this.props = this.processProps(props);
+    this.parent = isUndefinedOrNull(parent) ? null : parent;
+    this.props = isUndefinedOrNull(props) ? {} : this.processProps(props);
     this.fig = (parent instanceof mpld3_Figure) ? parent :
         (parent && "fig" in parent) ? parent.fig : null;
     this.ax = (parent instanceof mpld3_Axes) ? parent :
