@@ -12,8 +12,8 @@ def test_line():
     ax.plot(np.arange(10), np.random.random(10),
             '--k', alpha=0.3, zorder=10, lw=2)
     rep = fig_to_dict(fig)
-    ax = rep['axes'][0]
-    line = ax['lines'][0]
+    axrep = rep['axes'][0]
+    line = axrep['lines'][0]
 
     assert_equal(list(sorted(line.keys())),
                  ['alpha', 'color', 'coordinates', 'dasharray', 'data', 'id',
@@ -31,8 +31,8 @@ def test_markers():
     ax.plot(np.arange(10), np.random.random(10),
             '^k', alpha=0.3, zorder=10, mec='r', mew=2, c='b')
     rep = fig_to_dict(fig)
-    ax = rep['axes'][0]
-    markers = ax['markers'][0]
+    axrep = rep['axes'][0]
+    markers = axrep['markers'][0]
 
     assert_equal(list(sorted(markers.keys())),
                  ['alpha', 'coordinates', 'data', 'edgecolor', 'edgewidth',
@@ -55,8 +55,8 @@ def test_scatter():
     ax.scatter(np.arange(10), np.random.random(10), c='r', s=30,
                marker='^', alpha=0.3, lw=2, edgecolors='b', zorder=10)
     rep = fig_to_dict(fig)
-    ax = rep['axes'][0]
-    points = ax['collections'][0]
+    axrep = rep['axes'][0]
+    points = axrep['collections'][0]
 
     assert_equal(list(sorted(points.keys())),
                  ['alphas', 'edgecolors', 'edgewidths', 'facecolors', 'id',
@@ -73,3 +73,47 @@ def test_scatter():
                  ['M', 'L', 'L', 'Z'])
     assert_equal(points['pathtransforms'],
                  [[6.085806194501846, 0.0, 0.0, 6.085806194501846, 0.0, 0.0]])
+
+
+def test_patch():
+    fig, ax = plt.subplots()
+    ax.add_patch(plt.Rectangle((0, 0), 1, 2, alpha=0.2, linewidth=2,
+                               edgecolor='green', facecolor='red', zorder=3))
+    rep = fig_to_dict(fig)
+    axrep = rep['axes'][0]
+    path = axrep['paths'][0]
+
+    assert_equal(list(sorted(path.keys())),
+                 ['alpha', 'coordinates', 'dasharray', 'data', 'edgecolor',
+                  'edgewidth', 'facecolor', 'id', 'pathcodes',
+                  'xindex', 'yindex', 'zorder'])
+
+    assert_equal(path['alpha'], 0.2)
+    assert_equal(path['edgecolor'], "#008000")
+    assert_equal(path['facecolor'], "#FF0000")
+    assert_equal(path['edgewidth'], 2)
+    assert_equal(path['zorder'], 3)
+
+
+def test_text():
+    fig, ax = plt.subplots()
+    ax.text(0.1, 0.1, "abcde", size=14, color='red', alpha=0.7,
+            rotation=15, ha='center', va='center')
+    rep = fig_to_dict(fig)
+    axrep = rep['axes'][0]
+    text = axrep['texts'][0]
+
+    assert_equal(list(sorted(text.keys())),
+                 ['alpha', 'color', 'coordinates', 'fontsize', 'h_anchor',
+                  'id', 'position', 'rotation', 'text', 'v_baseline',
+                  'zorder'])
+    assert_equal(text['alpha'], 0.7)
+    assert_equal(text['color'], "#FF0000")
+    assert_equal(text['text'], "abcde")
+    assert_equal(text['rotation'], -15)
+    assert_equal(text['fontsize'], 14)
+    assert_equal(text['position'], [0.1, 0.1])
+    assert_equal(text['h_anchor'], 'middle')
+    assert_equal(text['v_baseline'], 'central')
+    assert_equal(text['zorder'], 3)
+    assert_equal(text['coordinates'], "data")
