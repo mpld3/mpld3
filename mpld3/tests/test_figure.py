@@ -23,12 +23,13 @@ def test_basic_figure():
 
 def test_axes():
     bbox = [0.1, 0.1, 0.8, 0.8]
-    lims = [-10, 10]
+    xlim = [-10, 10]
+    ylim = [-20, 20]
 
     fig = plt.figure()
     ax = fig.add_axes(bbox)
-    ax.set_xlim(lims)
-    ax.set_ylim(lims)
+    ax.set_xlim(xlim)
+    ax.set_ylim(ylim)
 
     rep = fig_to_dict(fig)
     axrep = rep['axes'][0]
@@ -42,8 +43,11 @@ def test_axes():
     for key in ['collections', 'images', 'lines', 'markers', 'paths', 'texts']:
         assert_equal(axrep[key], [])
 
-    for key in ['xlim', 'ylim', 'xdomain', 'ydomain']:
-        assert_equal(axrep[key], lims)
+    for key in ['xlim', 'xdomain']:
+        assert_equal(axrep[key], xlim)
+
+    for key in ['ylim', 'ydomain']:
+        assert_equal(axrep[key], ylim)
 
     for key in ['xscale', 'yscale']:
         assert_equal(axrep[key], 'linear')
