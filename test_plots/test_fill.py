@@ -1,29 +1,25 @@
 """Plot to test text"""
 import matplotlib.pyplot as plt
 import numpy as np
+import mpld3
 
-def main():
-    fig, ax = plt.subplots()
-    ax.grid(color='lightgray')
+fig, ax = plt.subplots()
+ax.grid(color='lightgray')
 
-    x = np.linspace(0, 4 * np.pi, 1000)
-    y1 = 0.5 * np.sin(0.5 * x)
-    y2 = np.sin(x)
-    y3 = np.cos(x)
+x = np.linspace(0, 4 * np.pi, 1000)
+y1 = 0.5 * np.sin(0.5 * x)
+y2 = np.sin(x)
+y3 = np.cos(x)
 
-    y1[450:550] = np.nan
+y1[450:550] = np.nan
 
-    ax.fill(x, y1, alpha=0.3, facecolor='green')
-    ax.fill_between(x, y2, y3, alpha=0.3, facecolor='red')
-    ax.fill_between(x, -y2, -y3, alpha=0.3, facecolor='blue')
+ax.fill(x, y1, alpha=0.3, facecolor='green')
+ax.fill_between(x, y2, y3, alpha=0.3, facecolor='red')
+ax.fill_between(x, -y2, -y3, alpha=0.3, facecolor='blue')
 
-    ax.set_xlim(0, 4 * np.pi)
-    ax.set_ylim(-1.1, 1.1)
+ax.set_xlim(0, 4 * np.pi)
+ax.set_ylim(-1.1, 1.1)
 
-    ax.set_title("fill() and fill_between()", size=18)
+ax.set_title("fill() and fill_between()", size=18)
 
-    return fig
-
-if __name__ == '__main__':
-    main()
-    plt.show()
+mpld3.show()

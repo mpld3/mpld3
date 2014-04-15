@@ -31,7 +31,7 @@ class HighlightLines(plugins.PluginBase):
 
     LineHighlightPlugin.prototype.draw = function(){
       for(var i=0; i<this.props.line_ids.length; i++){
-         var obj = mpld3.get_element(this.props.line_ids[i]),
+         var obj = mpld3.get_element(this.props.line_ids[i], this.fig),
              alpha_fg = this.props.alpha_fg;
              alpha_bg = this.props.alpha_bg;
          obj.elements()
