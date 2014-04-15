@@ -117,7 +117,7 @@ class ExecFile(object):
         Execute the file, catching matplotlib figures
         """
         dirname, fname = os.path.split(self.filename)
-        print 'plotting %s' % fname
+        print('plotting {0}'.format(fname))
 
         # close any currently open figures
         plt.close('all')
@@ -128,18 +128,18 @@ class ExecFile(object):
         with mpld3_noshow() as mpld3:
             with use_dir(dirname):
                 try:
-                    execfile(os.path.basename(self.filename),
-                             {'plt': plt, 'mpld3': mpld3})
+                    exec(open(os.path.basename(self.filename)).read(),
+                         {'plt': plt, 'mpld3': mpld3})
                     gcf = matplotlib._pylab_helpers.Gcf
                     fig_mgr_list = gcf.get_all_fig_managers()
                     self.figlist = sorted([manager.canvas.figure
                                            for manager in fig_mgr_list],
                                           key=lambda fig: fig.number)
                 except:
-                    print 80*'_'
-                    print '%s is not compiling:' % fname
+                    print(80 * '_')
+                    print('{0} is not compiling:'.format(fname))
                     traceback.print_exc()
-                    print 80*'_'
+                    print(80 * '_')
                 finally:
                     ncol = gc.collect()
 
