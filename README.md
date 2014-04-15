@@ -23,11 +23,12 @@ the JSON description readable by mpld3.js.
 
 Installation
 ------------
-mpld3 requires [matplotlib](http://matplotlib.org) version 1.3+ and
+mpld3 is compatible with python 2.6-2.7 and 3.3-3.4. It requires
+[matplotlib](http://matplotlib.org) version 1.3 and
 [jinja2](http://jinja.pocoo.org/) version 2.7+.
 
-Optionally, mpld3 can be used with [IPython](http://ipython.org), and requires
-version 1.1+.
+Optionally, mpld3 can be used with [IPython](http://ipython.org) notebook,
+and requires IPython version 1.x or (preferably) version 2.0+.
 
 This package is based on the [mplexporter](http://github.com/mpld3/mplexporter)
 framework for crawling and exporting matplotlib images. mplexporter is bundled
