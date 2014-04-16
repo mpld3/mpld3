@@ -44,6 +44,8 @@ def connect(fig, *plugins):
     >>> lines = ax.plot(range(10), '-k')
     >>> plugins.connect(fig, plugins.LineLabelTooltip(lines[0]))
     """
+    if not isinstance(fig, matplotlib.figure.Figure):
+        raise ValueError("plugins.connect: first argument must be a figure")
     if not hasattr(fig, 'mpld3_plugins'):
         fig.mpld3_plugins = DEFAULT_PLUGINS[:]
     for plugin in plugins:
