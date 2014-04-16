@@ -11,6 +11,8 @@ You may also see the [blog post](http://jakevdp.github.io/blog/2013/12/19/a-d3-v
 [IPython notebook examples](http://nbviewer.ipython.org/github/jakevdp/mpld3/tree/master/notebooks/)
 available in the ``notebooks`` directory of this repository.
 
+[![build status](https://travis-ci.org/mpld3/mpld3.png?branch=master)](https://travis-ci.org/mpld3/mpld3)
+
 
 About
 -----
