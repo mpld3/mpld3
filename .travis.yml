@@ -1,0 +1,24 @@
+language: python
+
+python:
+  - 2.7
+  - 3.3
+
+env:
+  - DEPS="numpy=1.8 matplotlib=1.3 jinja2=2.7.2 pandas=0.13.1 nose"
+
+install:
+  - conda create -n testenv --yes python=$TRAVIS_PYTHON_VERSION
+  - source activate testenv
+  - conda install --yes $DEPS
+  - python setup.py install
+
+before_install:
+  - if [ ${TRAVIS_PYTHON_VERSION:0:1} == "2" ]; then wget http://repo.continuum.io/miniconda/Miniconda-2.2.2-Linux-x86_64.sh -O miniconda.sh; else wget http://repo.continuum.io/miniconda/Miniconda3-2.2.2-Linux-x86_64.sh -O miniconda.sh; fi
+  - chmod +x miniconda.sh
+  - ./miniconda.sh -b
+  - export PATH=/home/travis/anaconda/bin:$PATH
+  # Learned the hard way: miniconda is not always up-to-date with conda.
+  - conda update --yes conda
+
+script: nosetests mpld3
