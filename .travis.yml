@@ -14,6 +14,11 @@ install:
   - python setup.py install
 
 before_install:
+  # install npm packages first, to use system python
+  - sudo apt-get install npm
+  - npm config set python python2.7
+  - npm install d3 vows smash jsdom
+  # then install python version to test
   - if [ ${TRAVIS_PYTHON_VERSION:0:1} == "2" ]; then wget http://repo.continuum.io/miniconda/Miniconda-2.2.2-Linux-x86_64.sh -O miniconda.sh; else wget http://repo.continuum.io/miniconda/Miniconda3-2.2.2-Linux-x86_64.sh -O miniconda.sh; fi
   - chmod +x miniconda.sh
   - ./miniconda.sh -b
@@ -21,4 +26,6 @@ before_install:
   # Learned the hard way: miniconda is not always up-to-date with conda.
   - conda update --yes conda
 
-script: nosetests mpld3
+script:
+  - nosetests mpld3
+  - make test  # Javascript tests
