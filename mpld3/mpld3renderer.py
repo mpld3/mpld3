@@ -193,7 +193,10 @@ class MPLD3Renderer(Renderer):
                       zorder=styles['zorder'])
 
         def affine_convert(t):
-            m = t.get_matrix()
+            if hasattr(t,'get_matrix'):
+                m = t.get_matrix()
+            else:
+                m = t
             return m[0, :2].tolist() + m[1, :2].tolist() + m[2, :2].tolist()
 
         pathsdict = self.add_data(offsets, "offsets")
