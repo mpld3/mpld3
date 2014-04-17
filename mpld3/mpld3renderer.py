@@ -192,13 +192,11 @@ class MPLD3Renderer(Renderer):
                       pathcoordinates=path_coordinates,
                       zorder=styles['zorder'])
 
-        def affine_convert(t):
-            m = t.get_matrix()
-            return m[0, :2].tolist() + m[1, :2].tolist() + m[2, :2].tolist()
-
         pathsdict = self.add_data(offsets, "offsets")
         pathsdict['paths'] = [(v.tolist(), p) for (v, p) in paths]
-        pathsdict['pathtransforms'] = [affine_convert(t)
+        pathsdict['pathtransforms'] = [(t[0, :2].tolist()
+                                        + t[1, :2].tolist()
+                                        + t[2, :2].tolist())
                                        for t in path_transforms]
         pathsdict.update(styles)
         pathsdict['id'] = get_id(mplobj)
