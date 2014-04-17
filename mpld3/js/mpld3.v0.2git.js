@@ -1039,7 +1039,7 @@
     this.fig.disable_zoom();
   };
   mpld3_ZoomPlugin.prototype.draw = function() {
-    this.fig.disable_zoom();
+    if (this.props.enabled) this.fig.enable_zoom(); else this.fig.disable_zoom();
   };
   mpld3.BoxZoomPlugin = mpld3_BoxZoomPlugin;
   mpld3.register_plugin("boxzoom", mpld3_BoxZoomPlugin);
