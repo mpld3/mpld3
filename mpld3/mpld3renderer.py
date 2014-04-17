@@ -2,6 +2,7 @@ import random
 import json
 import jinja2
 import itertools
+import pdb
 
 import numpy as np
 
@@ -193,7 +194,10 @@ class MPLD3Renderer(Renderer):
                       zorder=styles['zorder'])
 
         def affine_convert(t):
-            m = t.get_matrix()
+            try:
+                m = t.get_matrix()
+            except:
+                m = t
             return m[0, :2].tolist() + m[1, :2].tolist() + m[2, :2].tolist()
 
         pathsdict = self.add_data(offsets, "offsets")
