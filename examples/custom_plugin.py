@@ -12,8 +12,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 import mpld3
 from mpld3 import plugins, utils
-import jinja2
-import json
 
 
 class LinkedView(plugins.PluginBase):
