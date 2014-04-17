@@ -1366,7 +1366,7 @@
     for (var i = 0; i < this.axes.length; i++) {
       this.axes[i].draw();
     }
-    this.enable_zoom();
+    this.disable_zoom();
     for (var i = 0; i < this.plugins.length; i++) {
       this.plugins[i].draw();
     }
