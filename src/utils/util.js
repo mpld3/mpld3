@@ -55,8 +55,9 @@ function mpld3_generateId(N, chars) {
     N = (typeof(N) !== "undefined") ? N : 10;
     chars = (typeof(chars) !== "undefined") ? chars :
         "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-    var id = "";
-    for (var i = 0; i < N; i++)
+    // make sure first character is a letter, not a digit (HTML 4 rules)
+    var id = chars.charAt(Math.round(Math.random() * (chars.length - 11)));
+    for (var i = 1; i < N; i++)
         id += chars.charAt(Math.round(Math.random() * (chars.length - 1)));
     return id;
 }
