@@ -1,6 +1,7 @@
 """Plot to test text"""
 import matplotlib.pyplot as plt
 import mpld3
+from mpld3 import plugins
 
 fig, ax = plt.subplots(2, 2, sharex='col', sharey='row')
 fig.subplots_adjust(hspace=0.3)
@@ -13,5 +14,7 @@ for i in range(2):
         ax[i, j].grid(True, color='lightgray')
         ax[i, j].set_xlabel('xlabel')
         ax[i, j].set_ylabel('ylabel')
+
+plugins.connect(fig, plugins.MousePosition())
 
 mpld3.show()
