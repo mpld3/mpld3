@@ -140,8 +140,8 @@ mpld3_Figure.prototype.draw = function() {
         this.axes[i].draw();
     }
 
-    // enable zoom by default; plugins or toolbar items might change this.
-    this.enable_zoom();
+    // disable zoom by default; plugins or toolbar items might change this.
+    this.disable_zoom();
 
     for (var i = 0; i < this.plugins.length; i++) {
         this.plugins[i].draw();
