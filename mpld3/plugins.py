@@ -9,7 +9,8 @@ to create nearly any imaginable behavior by defining your own custom plugin.
 
 __all__ = ['connect', 'clear', 'get_plugins', 'PluginBase',
            'Reset', 'Zoom', 'BoxZoom',
-           'PointLabelTooltip', 'PointHTMLTooltip', 'LineLabelTooltip']
+           'PointLabelTooltip', 'PointHTMLTooltip', 'LineLabelTooltip',
+           'MousePosition']
 
 import json
 import uuid

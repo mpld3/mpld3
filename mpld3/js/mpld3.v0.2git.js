@@ -1292,7 +1292,6 @@
         var ax = fig.axes[i];
         return function() {
           var pos = d3.mouse(this), x = ax.x.invert(pos[0]), y = ax.y.invert(pos[1]);
-          console.log(x, y);
           coords.text("(" + fmt(x) + ", " + fmt(y) + ")");
         };
       }();
