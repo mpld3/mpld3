@@ -9,6 +9,7 @@ module.exports = function() {
       sandbox = {console: console, d3: d3}; 
 
   files.unshift("src/start");
+  files.push("src/version");
   files.push("src/end");
 
   function topic() {

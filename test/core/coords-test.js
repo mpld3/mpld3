@@ -7,7 +7,7 @@ var suite = vows.describe('mpld3.Coordinates')
 suite.addBatch({
     "Coordinates": {
 	topic: load("core/figure", "core/axes", "core/coordinates").document(),
-	"Coordinates('display')": {
+	"A Coordinates('display') object": {
 	    topic: function(mpld3) {
                 var fig_props = {
                     width: 400,
@@ -18,12 +18,12 @@ suite.addBatch({
                 fig.draw();
                 return new mpld3.Coordinates("display", fig.axes[0]);
 	    },
-	    "display coordinates": function(coords){
+	    "transforms to the correct display coordinates": function(coords){
                 assert.equal(coords.xy([100, 100])[0], 100);
                 assert.equal(coords.xy([100, 100])[1], 100);
 	    }
 	},
-	"Coordinates('data')": {
+	"A Coordinates('data') object": {
 	    topic: function(mpld3) {
                 var fig_props = {
                     width: 400,
@@ -34,12 +34,12 @@ suite.addBatch({
                 fig.draw();
                 return new mpld3.Coordinates("data", fig.axes[0]);
 	    },
-	    "data coordinates": function(coords){
+	    "transforms to the correct display coordinates": function(coords){
                 assert.equal(coords.xy([0.3, 0.4])[0], 208);
                 assert.equal(coords.xy([0.3, 0.4])[1], 72);
 	    }
 	},
-	"Coordinates('axes')": {
+	"A Coordinates('axes') object": {
 	    topic: function(mpld3) {
                 var fig_props = {
                     width: 400,
@@ -50,12 +50,12 @@ suite.addBatch({
                 fig.draw();
                 return new mpld3.Coordinates("axes", fig.axes[0]);
 	    },
-	    "axes coordinates": function(coords){
+	    "transforms to the correct display coordinates": function(coords){
                 assert.equal(coords.xy([0.3, 0.4])[0], 96);
                 assert.equal(coords.xy([0.3, 0.4])[1], 144);
 	    }
 	},
-	"Coordinates('figure')": {
+	"A Coordinates('figure') object": {
 	    topic: function(mpld3) {
                 var fig_props = {
                     width: 400,
@@ -66,7 +66,7 @@ suite.addBatch({
                 fig.draw();
                 return new mpld3.Coordinates("figure", fig.axes[0]);
 	    },
-	    "figure coordinates": function(coords){
+	    "transforms to the correct display coordinates": function(coords){
                 assert.equal(coords.xy([0.3, 0.4])[0], 80);
                 assert.equal(coords.xy([0.3, 0.4])[1], 150);
 	    }

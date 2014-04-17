@@ -7,7 +7,7 @@ var suite = vows.describe("mpld3.Figure");
 suite.addBatch({
     "Figure": {
         topic: load("core/figure").document(),
-        "simple figure": {
+        "A simple figure": {
             topic: function(mpld3) {
                 var props = {
                     width: 400,
@@ -15,11 +15,13 @@ suite.addBatch({
                     plugins: []
                 };
                 var figure = new mpld3.Figure("chart", props);
+                figure.draw();
                 return figure;
             },
-            "inserts a new figure element": function(figure) {
-                figure.draw();
+            "has the expected id": function(figure){
                 assert.equal(figure.figid, "chart");
+            },
+            "has the expected width and height": function(figure){
                 assert.equal(figure.props.width, 400);
                 assert.equal(figure.props.height, 300);
             }
