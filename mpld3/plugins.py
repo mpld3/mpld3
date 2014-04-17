@@ -82,6 +82,25 @@ class Reset(PluginBase):
     dict_ = {"type": "reset"}
 
 
+class MousePosition(PluginBase):
+    """A Plugin to display coordinates for the current mouse position
+
+    Example
+    -------
+    >>> import matplotlib.pyplot as plt
+    >>> from mpld3 import fig_to_html, plugins
+    >>> fig, ax = plt.subplots()
+    >>> points = ax.plot(range(10), 'o')
+    >>> plugins.connect(fig, plugins.MousePosition())
+    >>> fig_to_html(fig)
+    """
+
+    def __init__(self, fontsize=12, fmt=".3g"):
+        self.dict_ = {"type": "mouseposition",
+                      "fontsize": fontsize,
+                      "fmt": fmt}
+
+
 class Zoom(PluginBase):
     """A Plugin to add zoom behavior to the plot
 

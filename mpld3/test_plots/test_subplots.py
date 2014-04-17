@@ -1,6 +1,7 @@
 """Plot to test text"""
 import matplotlib.pyplot as plt
 import mpld3
+from mpld3 import plugins
 
 
 def create_plot():
@@ -16,6 +17,7 @@ def create_plot():
             ax[i, j].set_xlabel('xlabel')
             ax[i, j].set_ylabel('ylabel')
 
+    plugins.connect(fig, plugins.MousePosition())
     return fig
 
 
