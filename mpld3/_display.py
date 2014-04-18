@@ -267,7 +267,7 @@ def display(fig=None, closefig=True, local=False, **kwargs):
     - In IPython < 2.0, ``local=True`` may fail if the current working
       directory is changed within the notebook (e.g. with the %cd command).
     - In IPython 2.0+, ``local=True`` may fail if a url prefix is added
-      (e.g. by setting NotebookApp.base_project_url).
+      (e.g. by setting NotebookApp.base_url).
 
     See Also
     --------
@@ -364,7 +364,7 @@ def enable_notebook(local=False, **kwargs):
     - In IPython < 2.0, ``local=True`` may fail if the current working
       directory is changed within the notebook (e.g. with the %cd command).
     - In IPython 2.0+, ``local=True`` may fail if a url prefix is added
-      (e.g. by setting NotebookApp.base_project_url).
+      (e.g. by setting NotebookApp.base_url).
 
     See Also
     --------
