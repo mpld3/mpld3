@@ -81,7 +81,8 @@ def write_js_libs(location=None, d3_src=None, mpld3_src=None):
 
     if nbextension:
         install_nbextension([d3_src, mpld3_src])
-        prefix = 'nbextensions/'
+        # this will not work if a url prefix is added
+        prefix = '/nbextensions/'
     else:
         # IPython < 2.0 or explicit path.
         # This won't work if users have changed the kernel directory.
