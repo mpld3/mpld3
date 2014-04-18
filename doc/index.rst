@@ -31,7 +31,9 @@ Contents
    :maxdepth: 2
 
    quickstart
+   install
    faq
+   plugins
    examples/index
    notebooks/index
    modules/API

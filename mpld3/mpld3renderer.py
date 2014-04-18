@@ -1,3 +1,11 @@
+"""
+mpld3 renderer
+==============
+
+This is the renderer class which implements the mplexporter framework for mpld3
+"""
+__all__ = ["MPLD3Renderer"]
+
 import random
 import json
 import jinja2
@@ -14,6 +22,12 @@ from .plugins import get_plugins
 
 
 class MPLD3Renderer(Renderer):
+    """Renderer class for mpld3
+
+    This renderer class plugs into the ``mplexporter`` package in order to
+    convert matplotlib figures into a JSON-serializable dictionary
+    representation which can be read by mpld3.js.
+    """
     def __init__(self):
         self.figure_json = None
         self.axes_json = None

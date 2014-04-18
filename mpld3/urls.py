@@ -1,7 +1,12 @@
+"""
+mpld3 URLs
+==========
+URLs and filepaths for the mpld3 javascript libraries
+"""
+
 import os
 from . import __path__, __version__
 import warnings
-#warnings.warn("using temporary MPLD3_URL: switch to ghpages ASAP!")
 
 __all__ = ["D3_URL", "MPLD3_URL", "MPLD3MIN_URL",
            "D3_LOCAL", "MPLD3_LOCAL", "MPLD3MIN_LOCAL"]

@@ -7,7 +7,7 @@ The mpld3 package is extremely easy to use: you can simply take any script
 generating a matplotlib plot, run it through one of mpld3's convenience
 routines, and embed the result in a web page.
 
-To install mpld3 with pip::
+The current release of mpld3 can be installed with pip::
 
     pip install mpld3
 
@@ -15,9 +15,11 @@ Then you can make an interactive plot like so::
 
     import matplotlib.pyplot as plt, mpld3
     plt.plot([3,1,4,1,5], 'ks-', mec='w', mew=5, ms=20)
-    mpld3.show_d3(plt.gcf())
+    mpld3.show()
 
-For more examples of this in action, see the :ref:`example-gallery`.
+For more information on installation, see :ref:`installing-mpld3`.
+For more examples of mpld3 in action, see the :ref:`example-gallery`.
+
 Next, we'll give a quick overview of the basic mpld3 functions you
 should know about.
 
@@ -63,7 +65,7 @@ See some examples of these being used in the :ref:`notebook-examples`.
 :func:`enable_notebook`
     This function will adjust the IPython notebook display properties so that
     mpld3 will be used to display every figure, without having to call
-    :func:`display_d3`. This is useful if you want every figure to be
+    :func:`display` each time. This is useful if you want every figure to be
     automatically embedded in the notebook as an interactive javascript figure.
     Note: this should be used in conjunction with the ``%matplotlib inline``
     mode within the notebook: see the `IPython documentation
@@ -91,9 +93,8 @@ format.  mpld3 supplies the following convenience routines for this purpose:
 
 Plugins
 -------
-Plugins are a way to extend matplotlib figures with interactive features that
-will appear in the browser-based visualization.  There are several examples
-of these plugins in the :ref:`example-gallery`.  For some examples of built-in
-plugins, see :ref:`scatter_tooltip` and :ref:`html_tooltips`.  For some
-examples of defining custom plugin behavior, see :ref:`random_walk` and
-:ref:`custom_plugin`.
+The mpld3 plugin framework allows nearly endless possibilities for adding interactive behavior to matplotlib plots rendered in d3.
+The package includes several built-in plugins, which add zooming, panning, and other interactive behaviors to plots.
+Several examples of these plugins can be seen in the :ref:`example-gallery`.
+For some examples of built-in plugins, see :ref:`linked_brush`, :ref:`scatter_tooltip` and :ref:`html_tooltips`.  For some examples of defining custom plugin behavior, see :ref:`random_walk` and :ref:`custom_plugin`.
+More information on using and creating plugins can be found in the :ref:`mpld3-plugins` documentation.
