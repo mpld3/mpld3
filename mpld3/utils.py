@@ -1,3 +1,9 @@
+"""
+mpld3 Utilities
+===============
+Utility routines for the mpld3 package
+"""
+
 import os
 import shutil
 import warnings

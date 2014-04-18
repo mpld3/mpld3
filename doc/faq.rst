@@ -1,4 +1,4 @@
-.. _faq
+.. _faq:
 
 Frequently Asked Questions
 ==========================

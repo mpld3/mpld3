@@ -49,6 +49,7 @@ help:
 clean:
 	rm -rf $(BUILDDIR)/*
 	rm -rf examples
+	rm -rf notebooks
 
 html:
 	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(BUILDDIR)/html

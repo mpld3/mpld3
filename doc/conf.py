@@ -128,7 +128,7 @@ html_theme = 'haiku'
 
 # The name for this set of Sphinx documents.  If None, it defaults to
 # "<project> v<release> documentation".
-html_title = "MPLD3: Bringing Matplotlib to the Browser"
+html_title = "mpld3: Bringing Matplotlib to the Browser"
 
 # A shorter title for the navigation bar.  Default is the same as html_title.
 #html_short_title = None
