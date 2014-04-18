@@ -5,7 +5,7 @@ import jinja2
 import re
 import os
 from ._server import serve_and_open
-from .utils import deprecated, get_id, write_js_libs
+from .utils import deprecated, get_id, write_ipynb_local_js
 from .mplexporter import Exporter
 from .mpld3renderer import MPLD3Renderer
 from . import urls
@@ -251,7 +251,7 @@ def display(fig=None, closefig=True, local=False, **kwargs):
         display the png version of the figure.
     local : boolean (optional, default=False)
         if True, then copy the d3 & mpld3 libraries to a location visible to
-        the notebook server, and source them from there.
+        the notebook server, and source them from there. See Notes below.
     **kwargs :
         additional keyword arguments are passed through to :func:`fig_to_html`.
 
@@ -259,6 +259,15 @@ def display(fig=None, closefig=True, local=False, **kwargs):
     -------
     fig_d3 : IPython.display.HTML object
         the IPython HTML rich display of the figure.
+
+    Notes
+    -----
+    Known issues: using ``local=True`` may not work correctly in certain cases:
+
+    - In IPython < 2.0, ``local=True`` may fail if the current working
+      directory is changed within the notebook (e.g. with the %cd command).
+    - In IPython 2.0+, ``local=True`` may fail if a url prefix is added
+      (e.g. by setting NotebookApp.base_project_url).
 
     See Also
     --------
@@ -271,12 +280,9 @@ def display(fig=None, closefig=True, local=False, **kwargs):
 
     if local:
         if 'mpld3_url' in kwargs or 'd3_url' in kwargs:
-            warnings.warn("display: "
-                          "specified urls are ignored when local=True")
-    
-        d3_url, mpld3_url = write_js_libs()
-        kwargs['d3_url'] = d3_url
-        kwargs['mpld3_url'] = mpld3_url
+            warnings.warn(
+                "display: specified urls are ignored when local=True")
+        kwargs['d3_url'], kwargs['mpld3_url'] = write_ipynb_local_js()
 
     if fig is None:
         fig = plt.gcf()
@@ -347,9 +353,18 @@ def enable_notebook(local=False, **kwargs):
     ----------
     local : boolean (optional, default=False)
         if True, then copy the d3 & mpld3 libraries to a location visible to
-        the notebook server, and source them from there.
+        the notebook server, and source them from there. See Notes below.
     **kwargs :
         all keyword parameters are passed through to :func:`fig_to_html`
+
+    Notes
+    -----
+    Known issues: using ``local=True`` may not work correctly in certain cases:
+
+    - In IPython < 2.0, ``local=True`` may fail if the current working
+      directory is changed within the notebook (e.g. with the %cd command).
+    - In IPython 2.0+, ``local=True`` may fail if a url prefix is added
+      (e.g. by setting NotebookApp.base_project_url).
 
     See Also
     --------
@@ -365,12 +380,9 @@ def enable_notebook(local=False, **kwargs):
 
     if local:
         if 'mpld3_url' in kwargs or 'd3_url' in kwargs:
-            warnings.warn("enable_notebook: "
-                          "specified urls are ignored when local=True")
-    
-        d3_url, mpld3_url = write_js_libs()
-        kwargs['d3_url'] = d3_url
-        kwargs['mpld3_url'] = mpld3_url
+            warnings.warn(
+                "enable_notebook: specified urls are ignored when local=True")
+        kwargs['d3_url'], kwargs['mpld3_url'] = write_ipynb_local_js()
 
     ip = get_ipython()
     formatter = ip.display_formatter.formatters['text/html']

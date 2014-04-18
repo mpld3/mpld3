@@ -29,7 +29,7 @@ def deprecated(func, old_name, new_name):
     return new_func
 
 
-def write_js_libs(location=None, d3_src=None, mpld3_src=None):
+def write_ipynb_local_js(location=None, d3_src=None, mpld3_src=None):
     """
     Write the mpld3 and d3 javascript libraries to the given file location.
 
@@ -80,19 +80,40 @@ def write_js_libs(location=None, d3_src=None, mpld3_src=None):
         raise ValueError("mpld3 src not found at '{0}'".format(mpld3_src))
 
     if nbextension:
-        install_nbextension([d3_src, mpld3_src])
-        # this will not work if a url prefix is added
+        # IPython 2.0+.
+        # This will not work if a url prefix is added
         prefix = '/nbextensions/'
+
+        try:
+            install_nbextension([d3_src, mpld3_src])
+        except IOError:
+            # files may be read only. We'll try deleting them and re-installing
+            from IPython.utils.path import get_ipython_dir
+            nbext = os.path.join(get_ipython_dir(), "nbextensions")
+
+            for src in [d3_src, mpld3_src]:
+                dest = os.path.join(nbext, os.path.basename(src))
+                if os.path.exists(dest):
+                    os.remove(dest)
+            install_nbextension([d3_src, mpld3_src])
+
     else:
         # IPython < 2.0 or explicit path.
         # This won't work if users have changed the kernel directory.
+        prefix = '/files/'
+
         d3_dest = os.path.join(location, d3js)
         mpld3_dest = os.path.join(location, mpld3js)
 
-        shutil.copyfile(d3_src, d3_dest)
-        shutil.copyfile(mpld3_src, mpld3_dest)
+        for src, dest in [(d3_src, d3_dest), (mpld3_src, mpld3_dest)]:
+            try:
+                shutil.copyfile(src, dest)
+            except IOError:
+                # file may be read only. We'll try deleting it first
+                if os.path.exists(dest):
+                    os.remove(dest)
+                shutil.copyfile(src, dest)
 
-        prefix = '/files/'
 
     return prefix + d3js, prefix + mpld3js
 
