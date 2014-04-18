@@ -20,7 +20,8 @@ function mpld3_ZoomPlugin(fig, props) {
         this.props.enabled = !(this.props.button);
     }
 
-    var enabled = this.props.enabled;    
+    var enabled = this.props.enabled;
+
     if (this.props.button){
         var ZoomButton = mpld3.ButtonFactory({
             buttonID: "zoom",
@@ -46,5 +47,8 @@ mpld3_ZoomPlugin.prototype.deactivate = function(){
 };
 
 mpld3_ZoomPlugin.prototype.draw = function(){
-    this.fig.disable_zoom();
+    if(this.props.enabled)
+      this.fig.enable_zoom();
+    else
+      this.fig.disable_zoom();
 }
