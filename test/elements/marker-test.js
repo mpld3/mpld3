@@ -7,7 +7,7 @@ var suite = vows.describe("mpld3.Markers");
 suite.addBatch({
     "Markers": {
         topic: load("elements/markers").document(),
-        "d3 markers": {
+        "A simple set of circle markers": {
             topic: function(mpld3) {
                 var fig_props = {
                     width: 400,
@@ -29,11 +29,17 @@ suite.addBatch({
                 fig.draw();
                 return markers;
             },
-            "draw d3 markers": function(markers) {
+            "has the expected marker path": function(markers) {
                 assert.equal(markers.marker, "M0,3.385137501286538A3.385137501286538,3.385137501286538 0 1,1 0,-3.385137501286538A3.385137501286538,3.385137501286538 0 1,1 0,3.385137501286538Z");
+            },
+            "has the expected offsets": function(markers) {
+                assert.equal(markers.offsets[0][0], 0);
+                assert.equal(markers.offsets[0][1], 2);
+                assert.equal(markers.offsets[1][0], 1);
+                assert.equal(markers.offsets[1][1], 3);
             }
         },
-        "path markers": {
+        "A set of markers with custom paths": {
             topic: function(mpld3) {
                 var fig_props = {
                     width: 100,
@@ -46,10 +52,7 @@ suite.addBatch({
                 var marker_props = {
                     markerpath: [[[0, 0], [1, 0], [1, 1], [0, 1]],
                                  ["M", "L", "L", "L", "Z"]],
-                    data: {
-                        x: [0, 1],
-                        y: [2, 3]
-                    }
+                    data: [[0, 1], [2, 3]]
                 };
                 var fig = new mpld3.Figure("fig01", fig_props);
                 var ax = new mpld3.Axes(fig, ax_props);
@@ -59,8 +62,14 @@ suite.addBatch({
                 fig.draw();
                 return markers;
             },
-            "draw path markers": function(markers) {
+            "has the expected SVG output": function(markers) {
                 assert.equal(markers.marker, "M 0 0 L 1 0 L 1 1 L 0 1 Z");
+            },
+            "has the expected offsets": function(markers) {
+                assert.equal(markers.offsets[0][0], 0);
+                assert.equal(markers.offsets[0][1], 1);
+                assert.equal(markers.offsets[1][0], 2);
+                assert.equal(markers.offsets[1][1], 3);
             }
         }
     }

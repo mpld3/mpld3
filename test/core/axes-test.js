@@ -7,7 +7,7 @@ var suite = vows.describe("mpld3.Axes");
 suite.addBatch({
     "Axes": {
         topic: load("core/figure", "core/axes").document(),
-        "simple axes": {
+        "A simple axes": {
             topic: function(mpld3) {
                 var ax_props = {
                     xlim: [0, 1],
@@ -25,8 +25,10 @@ suite.addBatch({
                 fig.draw();
                 return fig.axes[0];
             },
-            "draw an axes element": function(ax) {
+            "has the expected axnum": function(ax) {
                 assert.equal(ax.axnum, 0);
+            },
+            "has the expected dimensions": function(ax) {
                 assert.equal(ax.width, 400 * 0.8);
                 assert.equal(ax.height, 300 * 0.8);
             }

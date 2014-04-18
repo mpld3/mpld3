@@ -7,7 +7,7 @@ var suite = vows.describe("mpld3.Line");
 suite.addBatch({
     "Line": {
         topic: load("elements/line").document(),
-        "simple Line": {
+        "A simple Line": {
             topic: function(mpld3) {
                 var fig_props = {
                     width: 400,
@@ -28,7 +28,7 @@ suite.addBatch({
                 fig.draw();
                 return line;
             },
-            "draw line": function(line) {
+            "returns the expected SVG path": function(line) {
 		assert.equal(line.datafunc(line.data, line.pathcodes),
                              "M0,240L320,0L640,-240")
             }
