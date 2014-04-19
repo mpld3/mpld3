@@ -34,6 +34,14 @@ def create_plot():
                                    fc='yellow', ec='black', alpha=0.3,
                                    transform=ax.transAxes))
 
+    # add a patch with facecolor=None
+    ax.add_patch(patches.Circle((4.0, 2.5), 0.4,
+                                facecolor='none', edgecolor='k'))
+
+    # add a patch with edgecolor=None
+    ax.add_patch(patches.Circle((4.0, 1.5), 0.4, facecolor='#9999FF',
+                                edgecolor='none', linewidth=2))
+
     # make sure axes ratio is equal
     ax.set_xlim(0.5, 0.5 + 3. * 4. / 3.)
     ax.set_ylim(0.5, 3.5)
