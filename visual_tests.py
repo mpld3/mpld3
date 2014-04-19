@@ -1,8 +1,8 @@
 """
-Generate Test Plots
+Visualize Test Plots
 
-This script will go through all the plots in the ``test_plots`` directory, and
-save them as D3js to a single HTML file for inspection.
+This script will go through all the plots in the ``mpld3/test_plots``
+directory, and save them as D3js to a single HTML file for inspection.
 """
 import os
 import glob
@@ -128,8 +128,9 @@ class ExecFile(object):
         with mpld3_noshow() as mpld3:
             with use_dir(dirname):
                 try:
+                    # execute file, forcing __name__ == '__main__'
                     exec(open(os.path.basename(self.filename)).read(),
-                         {'plt': plt, 'mpld3': mpld3})
+                         {'plt': plt, 'mpld3': mpld3, '__name__': '__main__'})
                     gcf = matplotlib._pylab_helpers.Gcf
                     fig_mgr_list = gcf.get_all_fig_managers()
                     self.figlist = sorted([manager.canvas.figure
@@ -157,7 +158,7 @@ class ExecFile(object):
             yield (json.dumps(fig_json), extra_js, extra_css)
 
 
-def combine_testplots(wildcard='test_plots/*.py',
+def combine_testplots(wildcard='mpld3/test_plots/*.py',
                       outfile='_test_plots.html',
                       pngdir='_pngs',
                       d3_url=None, mpld3_url=None):
@@ -228,7 +229,7 @@ def run_main():
     args = parser.parse_args()
 
     if len(args.files) == 0:
-        wildcard = ['test_plots/*.py', 'examples/*.py']
+        wildcard = ['mpld3/test_plots/*.py', 'examples/*.py']
     else:
         wildcard = args.files
 
