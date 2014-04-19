@@ -5,6 +5,7 @@ Utility routines for the mpld3 package
 """
 
 import os
+import re
 import shutil
 import warnings
 from functools import wraps
@@ -14,11 +15,29 @@ from . import urls
 warnings.simplefilter("always", DeprecationWarning)
 
 
-def get_id(obj, suffix=None):
+def html_id_ok(objid, html5=False):
+    """Check whether objid is valid as an HTML id attribute.
+
+    If html5 == True, then use the more liberal html5 rules.
+    """
+    if html5:
+        return not re.search('\s', objid)
+    else:
+        return bool(re.match("^[a-zA-Z][a-zA-Z0-9\-\.\:\_]*$", objid))
+
+
+def get_id(obj, suffix="", prefix="el", warn_on_invalid=True):
     """Get a unique id for the object"""
-    objid = str(os.getpid()) + str(id(obj))
-    if suffix:
-        objid += str(suffix)
+    if not suffix:
+        suffix = ""
+    if not prefix:
+        prefix = ""
+
+    objid = prefix + str(os.getpid()) + str(id(obj)) + suffix
+
+    if warn_on_invalid and not html_id_ok(objid):
+        warnings.warn('"{0}" is not a valid html ID. This may cause problems')
+
     return objid
 
 
@@ -54,7 +73,7 @@ def write_js_libs(location=None, d3_src=None, mpld3_src=None):
         path in mpld3.urls.D3_LOCAL will be used.
     mpld3_src : string (optional)
         the source location of the mpld3 library. If not specified, the
-        standard path in mpld3.urls.MPLD3_LOCAL will be used.    
+        standard path in mpld3.urls.MPLD3_LOCAL will be used.
 
     Returns
     -------
@@ -71,7 +90,7 @@ def write_js_libs(location=None, d3_src=None, mpld3_src=None):
             nbextension = True
     else:
         nbextension = False
-    
+
     if d3_src is None:
         d3_src = urls.D3_LOCAL
     if mpld3_src is None:
@@ -101,4 +120,3 @@ def write_js_libs(location=None, d3_src=None, mpld3_src=None):
         prefix = '/files/'
 
     return prefix + d3js, prefix + mpld3js
-
