@@ -26,6 +26,12 @@ General
 
   Yes! The client-side interface of mpld3 is a pure javascript library, which builds figures based on a well-defined JSON specification. This specification was designed with matplotlib in mind, but there's nothing stopping you from generating the JSON from another source, or even editing it by hand. Unfortunately, at the moment, this JSON spec is not well-documented, but we hope to address that in the future.
 
+- **Can mpld3 render to HTML5 canvas rather than SVG?**
+
+  At the moment, mpld3 only renders to SVG via D3, not to canvas.  However, the mpld3 JSON output is not specific to the display protocol, so it would be possible to create a canvas backend on top of the mpld3 architecture.
+
+  If you're interested in a Python to canvas visualization package, you might check out the `Bokeh <http://bokeh.pydata.org/>`_ project.
+
 
 IPython Notebook
 ----------------
@@ -36,9 +42,9 @@ IPython Notebook
 
   Long answer: like matplotlib's :func:`plt.show` function, :func:`mpld3.show` does not play well with the IPython notebook. :func:`mpld3.show` generates an html representation of a figure, then launches a local web server and attempts to open a browser page to display it. This behavior is nice when running a stand-alone script, but is generally not what you want within the IPython notebook, which is already in a browser window!
 
-- **Why am I getting strange javascript errors within the iPython notebook?**
+- **Why am I getting no output/strange javascript errors within the iPython notebook?**
 
-  Most likely, the notebook contains multiple versions of the mpld3 javascript source. Javascript has a way of hanging around in the IPython notebook even when you don't want it to. The first step in this situation is the following:
+  Most likely, the notebook contains multiple versions of the mpld3 javascript source. Javascript has a way of hanging around in the IPython notebook even when you don't want it to. To address this, you must clear the notebook and relaunch it. Follow these steps:
 
   1. Clear all the output in the notebook (This can be done via the toolbar, with Cell -> All Output -> Clear)
   2. Save your notebook
@@ -66,4 +72,4 @@ Javascript
 
   To use mpld3 without an internet connection, you need to use a local version of the mpld3 and d3 libraries. Outside the IPython notebook, you can use the :func:`mpld3.show()` function, which automatically uses local copies of the javascript libraries.
 
-  Inside the IPython notebook, both the :func:`mpld3.enable_notebook` and :func:`mpld3.display` functions take a boolean keyword ``local``. Setting this to ``True`` will copy the mpld3 and d3 javascript libraries to the notebook directory, and will use the appropriate path within IPython (``/files/*.js``) to load the libraries.
+  Inside the IPython notebook, both the :func:`mpld3.enable_notebook` and :func:`mpld3.display` functions take a boolean keyword ``local``. Setting this to ``True`` will copy the mpld3 and d3 javascript libraries to the notebook directory, and will use the appropriate path within IPython (``/files/*.js``) to load the libraries. Be aware, though, that currently ``local=True`` will fail for some use-cases of the notebook. See the documentation of the above functions for details.

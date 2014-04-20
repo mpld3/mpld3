@@ -2,7 +2,7 @@
 
 .. raw:: html
 
-    <a href="https://github.com/jakevdp/mpld3"><img style="position: fixed; top: 0; right: 0; border: 0;" src="https://s3.amazonaws.com/github/ribbons/forkme_right_orange_ff7600.png" alt="Fork me on GitHub"></a>
+    <a href="https://github.com/jakevdp/mpld3"><img style="position: fixed; top: 0; right: 0; border: 0;" src="https://s3.amazonaws.com/github/ribbons/forkme_right_red_aa0000.png" alt="Fork me on GitHub"></a>
 
     <div class="example-banner"></div>
 
@@ -14,10 +14,11 @@ MPLD3
 =====
 The mpld3 project brings together `Matplotlib <http://www.matplotlib.org>`_,
 the popular Python-based graphing library, and `D3js <http://d3js.org>`_,
-the popular Javascript library for creating data-driven web pages.  The
-result is a simple API for exporting your matplotlib graphics to HTML code
-which can be used within the browser, within standard web pages, blogs, or
-tools such as the `IPython notebook <http://ipython.org/notebook.html>`_.
+the popular Javascript library for creating interactive data visualizations
+for the web.  The result is a simple API for exporting your matplotlib
+graphics to HTML code which can be used within the browser, within standard
+web pages, blogs, or tools such as the
+`IPython notebook <http://ipython.org/notebook.html>`_.
 
 See the :ref:`example-gallery` or :ref:`notebook-examples` for some
 interactive demonstrations of mpld3 in action.
