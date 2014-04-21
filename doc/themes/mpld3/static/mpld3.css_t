@@ -131,7 +131,7 @@ div.header img.rightlogo {
 
 div.header img.leftlogo {
     float: left;
-    margin-right: 20px;
+    margin-right: 30px;
     margin-top: 16px;
 }
 
