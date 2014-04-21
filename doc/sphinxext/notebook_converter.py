@@ -40,6 +40,20 @@ RST_TEMPLATE = jinja2.Template("""
 """)
 
 
+def get_notebook_title(nb_json, default=None):
+    """Determine a suitable title for the notebook.
+
+    This will return the text of the first header cell.
+    If that does not exist, it will return the default.
+    """
+    worksheets = nb_json['worksheets']
+    cells = worksheets[0]['cells']
+    for cell in cells:
+        if cell['cell_type'] == 'heading':
+            return cell['source']
+    return default
+
+
 def main(app):
     static_dir = os.path.join(app.builder.srcdir, '_static')
     target_dir = os.path.join(app.builder.srcdir, 'notebooks')
@@ -58,6 +72,7 @@ def main(app):
         os.makedirs(rendered_dir)
 
     nbroots = []
+    nbtitles = []
     exporter = HTMLExporter(template_file='full')
 
     for nb_src in glob.glob(os.path.join(source_dir, '*.ipynb')):
@@ -77,11 +92,11 @@ def main(app):
             f.write(body)
 
         nbroots.append(root)
+        nbtitles.append(get_notebook_title(nb_json, root))
 
-    for nbroot in nbroots:
+    for nbroot, nbtitle in zip(nbroots, nbtitles):
         with open(os.path.join(target_dir, nbroot + '.rst'), 'w') as f:
-            f.write(RST_TEMPLATE.render(title=nbroot,
-                                        nbroot=nbroot))
+            f.write(RST_TEMPLATE.render(title=nbtitle, nbroot=nbroot))
 
     with open(os.path.join(target_dir, 'index.rst'), 'w') as f:
         f.write(INDEX_TEMPLATE.render(notebooks=nbroots,
