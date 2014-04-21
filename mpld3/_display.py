@@ -51,7 +51,12 @@ REQUIREJS_HTML = jinja2.Template("""
 <div id={{ figid }}></div>
 <script type="text/javascript">
 
-if(typeof(window.mpld3) === "undefined"){
+if(typeof(window.mpld3) !== "undefined" && window.mpld3._mpld3IsLoaded){
+    !function (mpld3){
+            {{ extra_js }}
+            mpld3.draw_figure({{ figid }}, {{ figure_json }});
+    }(mpld3);
+}else{
   require.config({paths: {d3: "{{ d3_url[:-3] }}"}});
   require(["d3"], function(d3){
     window.d3 = d3;
@@ -60,12 +65,6 @@ if(typeof(window.mpld3) === "undefined"){
        mpld3.draw_figure({{ figid }}, {{ figure_json }});
     });
   });
-}else{
-    !function (mpld3){
-            {{ extra_js }}
-            mpld3.draw_figure({{ figid }}, {{ figure_json }});
-    }(mpld3);
-
 }
 </script>
 """)
@@ -91,7 +90,7 @@ function mpld3_load_lib(url, callback){
   document.getElementsByTagName("head")[0].appendChild(s);
 }
 
-if(typeof(mpld3) !== "undefined"){
+if(typeof(mpld3) !== "undefined" && mpld3._mpld3IsLoaded){
    // already loaded: just create the figure
    !function(mpld3){
        {{ extra_js }}

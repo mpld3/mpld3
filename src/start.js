@@ -12,6 +12,7 @@
 
 !function(d3) {
     var mpld3 = {
+        _mpld3IsLoaded: true,  // used when loading lib in case global variable mpld3 is set to something else
         figures: [],
         plugin_map: {},
     };

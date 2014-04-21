@@ -1,5 +1,6 @@
 !function(d3) {
   var mpld3 = {
+    _mpld3IsLoaded: true,
     figures: [],
     plugin_map: {}
   };
