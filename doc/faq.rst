@@ -38,9 +38,11 @@ IPython Notebook
 
 - **Why does IPython notebook freeze when I run an mpld3 example?**
 
-  Short answer: This most often happens when someone uses :func:`mpld3.show` within the IPython notebook. Use :func:`mpld3.display` or :func:`mpld3.enable_notebook` when using mpld3 with IPython notebook. See the :ref:`quickstart-guide` for a description of the various mpld3 functions.
+  Short answer: This most often happens when someone uses :func:`mpld3.show` within the IPython notebook. Instead, you should use :func:`mpld3.display` or :func:`mpld3.enable_notebook`. See the :ref:`quickstart-guide` for a description of the various mpld3 functions.
 
-  Long answer: like matplotlib's :func:`plt.show` function, :func:`mpld3.show` does not play well with the IPython notebook. :func:`mpld3.show` generates an html representation of a figure, then launches a local web server and attempts to open a browser page to display it. This behavior is nice when running a stand-alone script, but is generally not what you want within the IPython notebook, which is already in a browser window!
+  Long answer: like matplotlib's :func:`plt.show` function, :func:`mpld3.show` does not play well with the IPython notebook. :func:`mpld3.show` generates an html representation of a figure, then launches a local web server and attempts to open a browser page to display it. This behavior is nice when running a stand-alone script, but is generally not what you want within the IPython notebook, which is already in a browser window! Try :func:`mpld3.display` or :func:`mpld3.enable_notebook` instead; these are specifically designed for embedding figures within the IPython notebook.
+
+  If you accidentally use :func:`mpld3.show` within the notebook, you will have to interrupt the kernel (Kernel->Interrupt) to be able to continue.
 
 - **I'm using SSL to have a secure connection and/or make a remote IPython notebook play nice with Windows 8. How do I get mpld3 to work?**
 
