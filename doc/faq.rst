@@ -42,17 +42,6 @@ IPython Notebook
 
   Long answer: like matplotlib's :func:`plt.show` function, :func:`mpld3.show` does not play well with the IPython notebook. :func:`mpld3.show` generates an html representation of a figure, then launches a local web server and attempts to open a browser page to display it. This behavior is nice when running a stand-alone script, but is generally not what you want within the IPython notebook, which is already in a browser window!
 
-- **Why am I getting no output/strange javascript errors within the iPython notebook?**
-
-  Most likely, the notebook contains multiple versions of the mpld3 javascript source. Javascript has a way of hanging around in the IPython notebook even when you don't want it to. To address this, you must clear the notebook and relaunch it. Follow these steps:
-
-  1. Clear all the output in the notebook (This can be done via the toolbar, with Cell -> All Output -> Clear)
-  2. Save your notebook
-  3. Close the notebook window
-  4. Re-open the notebook window
-
-  You now have a clean notebook, and can try running an mpld3 script again.
-
 - **I'm using SSL to have a secure connection and/or make a remote IPython notebook play nice with Windows 8. How do I get mpld3 to work?**
 
   Default browser security settings do not allow secure web pages to load javascript libraries from an insecure server. To work around this, simply specify alternative urls for d3 and mpld3 when you call :func:`mpld3.enable_notebook`. For example::
@@ -73,3 +62,22 @@ Javascript
   To use mpld3 without an internet connection, you need to use a local version of the mpld3 and d3 libraries. Outside the IPython notebook, you can use the :func:`mpld3.show()` function, which automatically uses local copies of the javascript libraries.
 
   Inside the IPython notebook, both the :func:`mpld3.enable_notebook` and :func:`mpld3.display` functions take a boolean keyword ``local``. Setting this to ``True`` will copy the mpld3 and d3 javascript libraries to the notebook directory, and will use the appropriate path within IPython (``/files/*.js``) to load the libraries. Be aware, though, that currently ``local=True`` will fail for some use-cases of the notebook. See the documentation of the above functions for details.
+
+
+Troubleshooting
+---------------
+
+- **Why is the notebook behavior breaking when I update mpld3?**
+
+  Short answer: you must make sure that your notebook is pointing to the correct javascript libraries. The best way to do this is to follow the following steps:
+
+  1. Clear all the output in the notebook (This can be done via the toolbar, with Cell -> All Output -> Clear)
+  2. Save your notebook
+  3. Close the notebook window
+  4. Re-open the notebook window
+
+  Long answer: mpld3 is a bit more complicated than the average Python package, especially when it is used in the IPython notebook. You must keep in mind that there are two distinct components which interact: the Python library, and the javascript library.
+
+  If you have an IPython notebook that uses mpld3 and you update the library, you must make sure that your notebook is using **both** the updated Python package and the updated Javascript package. Using the updated Python package can be as simple as restarting the kernel and running the notebook again. However, because the javascript library is referenced in the output cells, loaded on page load, and cached by the browser, it is very easy to find yourself using old versions of the Javascript library even if you're using the newer version of the Python library.
+
+  If you have any strange notebook issues after updating mpld3, then it is best to wipe the output, restart the browser, and start again from a clean slate. This can be done using the steps outlined above.
