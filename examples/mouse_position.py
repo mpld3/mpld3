@@ -1,14 +1,15 @@
 """
-Draw an Image
-=============
+Image with Mouse Position
+=========================
 This example shows how mpld3 can display images using plt.imshow().
-Use the toolbar buttons at the bottom-right of the plot to enable zooming
-and panning, and to reset the view.
+It also includes the mouse position plugin, so that the mouse coordinates
+are displayed in the lower-right corner.
 """
 import matplotlib.pyplot as plt
 import numpy as np
 
 import mpld3
+from mpld3 import plugins
 
 fig, ax = plt.subplots()
 
@@ -26,5 +27,7 @@ im = ax.imshow(X, extent=(10, 20, 10, 20),
 fig.colorbar(im, ax=ax)
 
 ax.set_title('An Image', size=20)
+
+plugins.connect(fig, plugins.MousePosition(fontsize=14))
 
 mpld3.show()
