@@ -11,7 +11,7 @@ import random
 IPYTHON_WARNING = """
 Note: if you're in the IPython notebook, mpld3.show() is not the best command
       to use. Consider using mpld3.display(), or mpld3.enable_notebook().
-      See more information at http://mpld3.github.io/quickstart.html.
+      See more information at http://mpld3.github.io/quickstart.html .
 
 You must interrupt the kernel to end this command
 """
