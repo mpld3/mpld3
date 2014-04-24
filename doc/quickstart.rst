@@ -67,7 +67,7 @@ See some examples of these being used in the :ref:`notebook-examples`.
     mpld3 will be used to display every figure, without having to call
     :func:`display` each time. This is useful if you want every figure to be
     automatically embedded in the notebook as an interactive javascript figure.
-    Note: this should be used in conjunction with the ``%matplotlib inline``
+    This function should be called *after* setting ``%matplotlib inline``
     mode within the notebook: see the `IPython documentation
     <http://ipython.org/ipython-doc/dev/interactive/notebook.html#plotting>`_
     for details.
