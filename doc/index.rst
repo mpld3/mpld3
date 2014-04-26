@@ -10,7 +10,7 @@
     <script type="text/javascript" src="_static/banner_data.js"></script>
 
 
-MPLD3
+mpld3
 =====
 The mpld3 project brings together `Matplotlib <http://www.matplotlib.org>`_,
 the popular Python-based graphing library, and `D3js <http://d3js.org>`_,
