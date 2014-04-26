@@ -72,7 +72,7 @@ Test Plots
 ----------
 To explore the comparison between D3 renderings and matplotlib renderings for
 various plot types, run the script ``visualize_tests.py``.  This will generate
-an html page with the D3 renderings beside corresponding matplotlib renderings.
+an HTML page with the D3 renderings beside corresponding matplotlib renderings.
 
 Features
 --------

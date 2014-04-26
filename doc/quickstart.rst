@@ -34,7 +34,7 @@ and D3js. See some examples of these being used in the :ref:`example-gallery`.
 
 :func:`fig_to_html`
     This is the core routine which takes a figure and constructs a string of
-    html and JavaScript which can be embedded in any webpage.
+    HTML and JavaScript which can be embedded in any webpage.
 
 :func:`fig_to_dict`
     This routine converts a matplotlib image to a JSON-serializable dictionary,
@@ -44,8 +44,8 @@ and D3js. See some examples of these being used in the :ref:`example-gallery`.
 
 :func:`show`
     This function is mpld3's equivalent of matplotlib's ``plt.show`` function.
-    It will convert the current figure to html using :func:`fig_to_d3`, start
-    a local webserver which serves this html, and (if the operating system
+    It will convert the current figure to HTML using :func:`fig_to_d3`, start
+    a local webserver which serves this HTML, and (if the operating system
     allows it) automatically open this page in the web browser.
 
 
