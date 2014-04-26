@@ -14,7 +14,7 @@ mpld3
 =====
 The mpld3 project brings together `Matplotlib <http://www.matplotlib.org>`_,
 the popular Python-based graphing library, and `D3js <http://d3js.org>`_,
-the popular Javascript library for creating interactive data visualizations
+the popular JavaScript library for creating interactive data visualizations
 for the web.  The result is a simple API for exporting your matplotlib
 graphics to HTML code which can be used within the browser, within standard
 web pages, blogs, or tools such as the

@@ -34,12 +34,12 @@ and D3js. See some examples of these being used in the :ref:`example-gallery`.
 
 :func:`fig_to_html`
     This is the core routine which takes a figure and constructs a string of
-    html and javascript which can be embedded in any webpage.
+    html and JavaScript which can be embedded in any webpage.
 
 :func:`fig_to_dict`
     This routine converts a matplotlib image to a JSON-serializable dictionary,
     which can be loaded into an appropriate HTML page and rendered via the
-    mpld3 Javascript library.  Note that custom plugins which are not built
+    mpld3 JavaScript library.  Note that custom plugins which are not built
     into mpld3 will not be part of the JSON serialization.
 
 :func:`show`
@@ -66,7 +66,7 @@ See some examples of these being used in the :ref:`notebook-examples`.
     This function will adjust the IPython notebook display properties so that
     mpld3 will be used to display every figure, without having to call
     :func:`display` each time. This is useful if you want every figure to be
-    automatically embedded in the notebook as an interactive javascript figure.
+    automatically embedded in the notebook as an interactive JavaScript figure.
     This function should be called *after* setting ``%matplotlib inline``
     mode within the notebook: see the `IPython documentation
     <http://ipython.org/ipython-doc/dev/interactive/notebook.html#plotting>`_

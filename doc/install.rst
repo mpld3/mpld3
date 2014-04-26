@@ -27,10 +27,10 @@ When installing from the gihub source, use::
     [~]$ python setup.py submodule
     [~]$ python setup.py install
 
-Building Javascript Sources
+Building JavaScript Sources
 ---------------------------
-A core piece of the mpld3 package are the javascript libraries, which are located in the package in the ``mpld3/js/`` directory.
-The ``mpld3.*.js`` is automatically constructed from a number of source javascript files; if you modify these sources, the libraries must be re-built before mpld3 is installed. For more information, please refer to ``CONTRIBUTING.md``, found in the project repository.
+A core piece of the mpld3 package are the JavaScript libraries, which are located in the package in the ``mpld3/js/`` directory.
+The ``mpld3.*.js`` is automatically constructed from a number of source JavaScript files; if you modify these sources, the libraries must be re-built before mpld3 is installed. For more information, please refer to ``CONTRIBUTING.md``, found in the project repository.
 
 Dependencies
 ------------
