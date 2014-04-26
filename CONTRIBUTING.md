@@ -1,12 +1,12 @@
 # Contributing
 
 The [mpld3](https://mpld3.github.io) project welcomes new contributors.
-The package contains both javascript code and Python code, which require slightly different development setups. Details are described below.
+The package contains both JavaScript code and Python code, which require slightly different development setups. Details are described below.
 
 ## General guidelines
 
 Code contribution is done via github. You can fork and clone the source from the [mpld3 github page](http://github.com/jakevdp/mpld3).
-Whether you are working on the Javascript side, the Python side, or both, we recommend doing the following (for information about how to use GitHub, please see the [GitHub help page](https://help.github.com/)):
+Whether you are working on the JavaScript side, the Python side, or both, we recommend doing the following (for information about how to use GitHub, please see the [GitHub help page](https://help.github.com/)):
 
 1. Register for a GitHub account.
 
@@ -16,11 +16,11 @@ Whether you are working on the Javascript side, the Python side, or both, we rec
 
          [~]$ git checkout -b my-feature-name
 
-4. Modify the Python and/or Javascript code to implement your new feature
+4. Modify the Python and/or JavaScript code to implement your new feature
 
 5. Add tests and/or examples for your feature if applicable (see instructions below)
 
-6. Run javascript and/or Python unit tests and make sure they pass (see instructions below)
+6. Run JavaScript and/or Python unit tests and make sure they pass (see instructions below)
 
 7. Push your new branch to your fork on GitHub: e.g.
 
@@ -52,37 +52,37 @@ Once the submodule is fetched, it needs to be synced from its location at ``./mp
 Because mpld3 is a pure Python package, there are no compiled extensions to build, and it can be built and used locally.
 
 
-## Building the Javascript code
+## Building the JavaScript code
 
-The javascript portion of mpld3 is built from source using the ``smash`` and ``uglify`` tools that are part of [node.js](http://nodejs.org/).
-The benefit of this approach is that the code can be organized, validated, and tested before being automatically formatted and compiled into the final javascript library.
+The JavaScript portion of mpld3 is built from source using the ``smash`` and ``uglify`` tools that are part of [node.js](http://nodejs.org/).
+The benefit of this approach is that the code can be organized, validated, and tested before being automatically formatted and compiled into the final JavaScript library.
 
-Because of this build process, any modification of the javascript source requires the installation of [npm](https://www.npmjs.org/).
+Because of this build process, any modification of the JavaScript source requires the installation of [npm](https://www.npmjs.org/).
 Once the npm executable is installed on your system, run
 
     [~]$ npm install
 
 in the main directory to set up the development environment.
-This install command will parse the file ``package.json``, and from this information, create a directory ``node_modules`` which contains the tools for building and testing the javascript side of mpld3.
+This install command will parse the file ``package.json``, and from this information, create a directory ``node_modules`` which contains the tools for building and testing the JavaScript side of mpld3.
 
-Though you may be tempted to modify the javascript in ``mpld3/js/`` directly, **this is not a good idea** because these files are overwritten in the build process.
+Though you may be tempted to modify the JavaScript in ``mpld3/js/`` directly, **this is not a good idea** because these files are overwritten in the build process.
 Instead, modify the sources in the ``src/`` directory, and then run
 
     [~]$ python setup.py buildjs
 
 The built libraries will be saved to ``mpld3/js/mpld3.v($VERSION).js`` and ``mpld3/js/mpld3.v($VERSION).min.js``, where ``($VERSION)`` is replaced by the current version defined in ``mpld3/__about__.py``. The mpld3 Python package will link to the matching mpld3 version.
 
-When contributing a javascript patch or enhancement, please include **both the javascript sources and the built ``mpld3/js/*.js`` libraries**.
-This is important so that users who don't wish to modify the javascript can install the package without needing ``npm`` and ``nodejs``.
-Additionally, if possible please add javascript unit tests of your new functionality to the ``test`` directory (see details below).
+When contributing a JavaScript patch or enhancement, please include **both the JavaScript sources and the built ``mpld3/js/*.js`` libraries**.
+This is important so that users who don't wish to modify the JavaScript can install the package without needing ``npm`` and ``nodejs``.
+Additionally, if possible please add JavaScript unit tests of your new functionality to the ``test`` directory (see details below).
 
 
 ## Testing the package
 Currently, mpld3 has three different levels of testing, though we hope to streamline this in the future:
 
-- There are automated Javascript tests using [vows](https://www.npmjs.org/package/vows). These should be run if you modify the javascript code.
+- There are automated JavaScript tests using [vows](https://www.npmjs.org/package/vows). These should be run if you modify the JavaScript code.
 - There are automated Python tests using [nose](http://nose.readthedocs.org). These should be run if you modify the Python code.
-- There are manual plot tests using the ``visualize_tests.py`` script in the repository. These should be run if either the Python or Javascript code is modified.
+- There are manual plot tests using the ``visualize_tests.py`` script in the repository. These should be run if either the Python or JavaScript code is modified.
 
 
 ### Testing Python with nose
@@ -99,15 +99,15 @@ These tests are in various directories within the Python source tree, for exampl
 In addition to running nosetests, you should check any Python modifications using the ``visualize_tests.py`` script, described below.
 
 
-### Testing Javascript with vows
-Like the Python nosetests, there is a minimal test suite for the mpld3 javascript which is controlled with ``npm`` using the ``vows`` package.
+### Testing JavaScript with vows
+Like the Python nosetests, there is a minimal test suite for the mpld3 JavaScript which is controlled with ``npm`` using the ``vows`` package.
 The tests can be executed via
 
     [~]$ npm test
 
 This requires installation of ``npm``, which is described above.
 The tests are located in the ``test`` subdirectory of the main repository.
-In addition to running the vows tests, before submitting any javascript change, you should examine the output of ``visualize_tests.py``, as described below.
+In addition to running the vows tests, before submitting any JavaScript change, you should examine the output of ``visualize_tests.py``, as described below.
 
 
 ### Comprehensive JS/Python Test: ``visualize_tests.py``
@@ -119,7 +119,7 @@ These test plots can be viewed by running
 
 This will generate a file ``test_plots.html`` containing embedded pngs and mpld3 scripts.
 If your system allows it, the command will finish by automatically opening this file in a web browser.
-It is important to open the javascript console (see your browser documentation) and check for errors in the javascript execution as you interact with the plots.
+It is important to open the JavaScript console (see your browser documentation) and check for errors in the JavaScript execution as you interact with the plots.
 
-Note that the ``--local`` argument in the above command assures that the local copies of the javascript libraries are used (i.e. the versions in ``mpld3/js/*.js``).
+Note that the ``--local`` argument in the above command assures that the local copies of the JavaScript libraries are used (i.e. the versions in ``mpld3/js/*.js``).
 If you omit this argument, the test plots will be run using the mpld3/d3 library versions available on the web at http://mpld3.github.io.
