@@ -12,7 +12,7 @@ javascript: $(GENERATED_FILES)
 test:
 	@npm test
 
-src/version.js: 
+src/version.js: mpld3/__about__.py
 	@node bin/version $(VERSION) > $@
 
 mpld3/js/mpld3.v$(VERSION).js: $(shell node_modules/.bin/smash --ignore-missing --list src/mpld3.js) package.json
