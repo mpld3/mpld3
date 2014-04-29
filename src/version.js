@@ -1,1 +1,1 @@
-mpld3.version = '0.2git';
+mpld3.version = '0.2';
