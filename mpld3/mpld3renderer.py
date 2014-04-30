@@ -165,7 +165,7 @@ class MPLD3Renderer(Renderer):
         # Some browsers do not accept dasharray="10,0"
         # This should probably be addressed in mplexporter.
         if line['dasharray'] == "10,0":
-            line['dasharray'] = None
+            line['dasharray'] = "none"
 
         self.axes_json['lines'].append(line)
 
@@ -186,7 +186,7 @@ class MPLD3Renderer(Renderer):
         # Some browsers do not accept dasharray="10,0"
         # This should probably be addressed in mplexporter.
         if path['dasharray'] == "10,0":
-            path['dasharray'] = None
+            path['dasharray'] = "none"
 
         self.axes_json['paths'].append(path)
 
