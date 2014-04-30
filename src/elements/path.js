@@ -15,7 +15,7 @@ mpld3_Path.prototype.defaultProps = {
     facecolor: "green",
     edgecolor: "black",
     edgewidth: 1,
-    dasharray: "10,0",
+    dasharray: "none",
     pathcodes: null,
     offset: null,
     offsetcoordinates: "data",
