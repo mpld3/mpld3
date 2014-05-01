@@ -19,6 +19,7 @@ except:
 
 SUBMODULES = ['mplexporter']
 SUBMODULE_SYNC_PATHS = [('mplexporter/mplexporter', 'mpld3/')]
+SUBMODULE_INSTALL_PATHS = ['mpld3/mplexporter']
 
 
 def get_version():
@@ -83,6 +84,13 @@ def check_submodule_status(root=None):
     return 'clean'
 
 
+def rm_submodules(repo_dir):
+    for module in SUBMODULE_INSTALL_PATHS:
+        path = os.path.join(repo_dir, module)
+        print("rm -r {0} ".format(path,))
+        subprocess.check_call(["rm", "-r", path])
+
+
 def update_submodules(repo_dir):
     """update submodules in a repo"""
     subprocess.check_call("git submodule init", cwd=repo_dir, shell=True)
@@ -128,6 +136,10 @@ def require_clean_submodules(repo_dir, argv):
             "or commit any submodule changes you have made."
         ]))
         sys.exit(1)
+
+    for module in SUBMODULE_INSTALL_PATHS:
+        if os.path.exists(os.path.join(repo_dir, module)):
+            rm_submodules(repo_dir)
 
     sync_submodules(repo_dir)
 
