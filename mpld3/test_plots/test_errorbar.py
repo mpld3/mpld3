@@ -17,7 +17,8 @@ def create_plot():
 
     fig, ax = plt.subplots()
     ax.plot(x, y, lw=2, alpha=0.5)
-    ax.errorbar(xdata, ydata, dy, fmt='ok', ecolor='gray')
+    ax.errorbar(xdata, ydata, dy, fmt='ok', ecolor='gray', label='errors')
+    ax.legend()
 
     return fig
 
