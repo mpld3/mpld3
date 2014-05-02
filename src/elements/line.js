@@ -13,7 +13,7 @@ mpld3_Line.prototype.defaultProps = {
     coordinates: "data",
     color: "salmon",
     linewidth: 2,
-    dasharray: "10,0",
+    dasharray: "none",
     alpha: 1.0,
     zorder: 2
 };

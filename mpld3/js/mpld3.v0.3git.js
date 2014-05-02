@@ -399,7 +399,7 @@
     facecolor: "green",
     edgecolor: "black",
     edgewidth: 1,
-    dasharray: "10,0",
+    dasharray: "none",
     pathcodes: null,
     offset: null,
     offsetcoordinates: "data",
@@ -530,7 +530,7 @@
     coordinates: "data",
     color: "salmon",
     linewidth: 2,
-    dasharray: "10,0",
+    dasharray: "none",
     alpha: 1,
     zorder: 2
   };

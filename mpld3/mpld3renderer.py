@@ -161,6 +161,12 @@ class MPLD3Renderer(Renderer):
         line['id'] = get_id(mplobj)
         for key in ['color', 'linewidth', 'dasharray', 'alpha', 'zorder']:
             line[key] = style[key]
+        
+        # Some browsers do not accept dasharray="10,0"
+        # This should probably be addressed in mplexporter.
+        if line['dasharray'] == "10,0":
+            line['dasharray'] = "none"
+
         self.axes_json['lines'].append(line)
 
     def draw_path(self, data, coordinates, pathcodes, style,
@@ -176,6 +182,12 @@ class MPLD3Renderer(Renderer):
         for key in ['dasharray', 'alpha', 'facecolor',
                     'edgecolor', 'edgewidth', 'zorder']:
             path[key] = style[key]
+        
+        # Some browsers do not accept dasharray="10,0"
+        # This should probably be addressed in mplexporter.
+        if path['dasharray'] == "10,0":
+            path['dasharray'] = "none"
+
         self.axes_json['paths'].append(path)
 
     # If draw_markers is not implemented, it will be delegated to draw_path
