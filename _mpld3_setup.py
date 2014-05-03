@@ -9,7 +9,7 @@ import os
 import subprocess
 import sys
 import warnings
-
+import shutil
 
 try:
     from setuptools import Command
@@ -18,8 +18,7 @@ except:
 
 
 SUBMODULES = ['mplexporter']
-SUBMODULE_SYNC_PATHS = [('mplexporter/mplexporter', 'mpld3/')]
-SUBMODULE_INSTALL_PATHS = ['mpld3/mplexporter']
+SUBMODULE_SYNC_PATHS = [('mplexporter/mplexporter', 'mpld3/mplexporter')]
 
 
 def get_version():
@@ -84,13 +83,6 @@ def check_submodule_status(root=None):
     return 'clean'
 
 
-def rm_submodules(repo_dir):
-    for module in SUBMODULE_INSTALL_PATHS:
-        path = os.path.join(repo_dir, module)
-        print("rm -r {0} ".format(path,))
-        subprocess.check_call(["rm", "-r", path])
-
-
 def update_submodules(repo_dir):
     """update submodules in a repo"""
     subprocess.check_call("git submodule init", cwd=repo_dir, shell=True)
@@ -102,8 +94,15 @@ def sync_submodules(repo_dir):
     for source, dest in SUBMODULE_SYNC_PATHS:
         source = os.path.join(repo_dir, source)
         dest = os.path.join(repo_dir, dest)
-        print("rsync -r {0} {1}".format(source, dest))
-        subprocess.check_call(["rsync", "-r", source, dest])
+        try:
+            print("Remove {0}".format(dest))
+            shutil.rmtree(dest)
+        except Exception:
+            # Directory doesn't exist
+            pass
+
+        print("Copying {0} to {1}".format(source, dest))
+        shutil.copytree(source, dest)
 
 
 def require_clean_submodules(repo_dir, argv):
@@ -136,10 +135,6 @@ def require_clean_submodules(repo_dir, argv):
             "or commit any submodule changes you have made."
         ]))
         sys.exit(1)
-
-    for module in SUBMODULE_INSTALL_PATHS:
-        if os.path.exists(os.path.join(repo_dir, module)):
-            rm_submodules(repo_dir)
 
     sync_submodules(repo_dir)
 
