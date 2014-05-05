@@ -4,10 +4,11 @@ import matplotlib.pyplot as plt
 import mpld3
 from mpld3 import plugins
 
+
 def create_plot():
     fig, ax = plt.subplots()
     line, = ax.plot([0, 1, 3, 8, 5], '-', lw=5)
-    label = '<h1>Line {}</h1>'.format('A') 
+    label = '<h1>Line {}</h1>'.format('A')
     plugins.connect(fig, plugins.LineHTMLTooltip(line, label))
     ax.set_title('Line with HTML Tooltip')
     return fig
