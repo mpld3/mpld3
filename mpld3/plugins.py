@@ -350,4 +350,79 @@ class PointHTMLTooltip(PluginBase):
                       "voffset": voffset}
 
 
+class LineHTMLTooltip(PluginBase):
+    """A Plugin to enable an HTML tooltip:
+    formated text which hovers over points.
+
+    Parameters
+    ----------
+    points : matplotlib Line2D object
+        The figure element to apply the tooltip to
+    label : string
+        The label for the line, as strings of unescaped HTML.
+    hoffset, voffset : integer, optional
+        The number of pixels to offset the tooltip text.  Default is
+        hoffset = 0, voffset = 10
+    css : str, optional
+        css to be included, for styling the label html if desired
+    Examples
+    --------
+    >>> import matplotlib.pyplot as plt
+    >>> from mpld3 import fig_to_html, plugins
+    >>> fig, ax = plt.subplots()
+    >>> lines = ax.plot(range(10))
+    >>> label = '<h1>line {title}</h1>'.format(title='A') 
+    >>> plugins.connect(fig, LineHTMLTooltip(lines[0], label))
+    >>> fig_to_html(fig)
+    """
+
+    JAVASCRIPT = """
+    mpld3.register_plugin("linehtmltooltip", LineHTMLTooltip);
+    LineHTMLTooltip.prototype = Object.create(mpld3.Plugin.prototype);
+    LineHTMLTooltip.prototype.constructor = LineHTMLTooltip;
+    LineHTMLTooltip.prototype.requiredProps = ["id"];
+    LineHTMLTooltip.prototype.defaultProps = {label:null, hoffset:0, voffset:10};
+    function LineHTMLTooltip(fig, props){
+        mpld3.Plugin.call(this, fig, props);
+    };
+
+    LineHTMLTooltip.prototype.draw = function(){
+        var obj = mpld3.get_element(this.props.id, this.fig);     
+        var label = this.props.label
+        var tooltip = d3.select("body").append("div")
+                    .attr("class", "mpld3-tooltip")
+                    .style("position", "absolute")
+                    .style("z-index", "10")
+                    .style("visibility", "hidden");
+        
+        obj.elements()
+           .on("mouseover", function(d, i){
+                               tooltip.html(label)
+                                      .style("visibility", "visible");
+                                     })
+            .on("mousemove", function(d, i){
+                    tooltip
+                       .style("top", d3.event.pageY + this.props.voffset + "px")
+                      .style("left",d3.event.pageX + this.props.hoffset + "px");
+                 }.bind(this))
+           .on("mouseout",  function(d, i){
+                           tooltip.style("visibility", "hidden");})
+    };
+    """
+
+    def __init__(self, line, label=None,
+                 hoffset=0, voffset=10, 
+                 css=None):
+        self.line = line
+        self.label = label
+        self.voffset = voffset
+        self.hoffset = hoffset
+        self.css_ = css or ""
+        self.dict_ = {"type": "linehtmltooltip",
+                      "id": get_id(line),
+                      "label": label,
+                      "hoffset": hoffset,
+                      "voffset": voffset}
+
+
 DEFAULT_PLUGINS = [Reset(), Zoom(), BoxZoom()]
