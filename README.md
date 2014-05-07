@@ -66,7 +66,7 @@ will create a set of plots and launch a browser window showing interactive
 views of these plots.
 
 For a more comprehensive set of examples, see the
-[IPython notebook examples](http://nbviewer.ipython.org/github/jakevdp/mpld3/tree/master/examples/) available in the ``examples`` directory.
+[IPython notebook examples](http://nbviewer.ipython.org/github/jakevdp/mpld3/tree/master/notebooks/) available in the ``examples`` directory.
 
 Test Plots
 ----------
@@ -84,7 +84,6 @@ following is a non-exhausive list of features that are yet to be supported:
 - some legend features
 - blended transforms, such as those required by ``axvlines`` and ``axhlines``
 - twin axes (i.e. multiple scales on one plot) tied together
-- additional interactivity tools, such as brushing and box-zoom.
 
 If any of these look like something you'd like to tackle, feel free to submit
 a pull request!
