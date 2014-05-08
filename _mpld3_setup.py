@@ -102,9 +102,9 @@ def sync_files(source, dest):
             shutil.rmtree(dest)
         except OSError as e:
             # An error occured tyring to remove directory
-            print e.errno
-            print e.filename
-            print e.strerror
+            print(e.errno)
+            print(e.filename)
+            print(e.strerror)
 
     print("Copying {0} to {1}".format(source, dest))
     shutil.copytree(source, dest)
