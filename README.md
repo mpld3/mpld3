@@ -66,7 +66,7 @@ will create a set of plots and launch a browser window showing interactive
 views of these plots.
 
 For a more comprehensive set of examples, see the
-[IPython notebook examples](http://nbviewer.ipython.org/github/jakevdp/mpld3/tree/master/notebooks/) available in the ``examples`` directory.
+[IPython notebook examples](http://nbviewer.ipython.org/github/jakevdp/mpld3/tree/master/notebooks/) available in the ``notebooks`` directory.
 
 Test Plots
 ----------
