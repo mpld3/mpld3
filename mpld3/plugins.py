@@ -497,7 +497,13 @@ class InteractiveLegendPlugin(PluginBase):
             mpld3_elements = [];
             for(var j=0; j<element_id.length; j++){
                 var mpld3_element = mpld3.get_element(element_id[j], this.fig);
-                mpld3_elements.push(mpld3_element);
+
+                // mpld3_element might be null in case of Line2D instances
+                // for we pass the id for both the line and the markers. Either
+                // one might not exist on the D3 side
+                if(mpld3_element){
+                    mpld3_elements.push(mpld3_element);
+                }
             }
 
             obj.mpld3_elements = mpld3_elements;
@@ -557,7 +563,8 @@ class InteractiveLegendPlugin(PluginBase):
                     d3.select(d.mpld3_elements[i].path[0][0])
                         .style("stroke-opacity",
                                 d.visible ? alpha_sel : alpha_unsel);
-                } else if(type=="mpld3_PathCollection"){
+                } else if((type=="mpld3_PathCollection")||
+                         (type=="mpld3_Markers")){
                     d3.selectAll(d.mpld3_elements[i].pathsobj[0])
                         .style("stroke-opacity",
                                 d.visible ? alpha_sel : alpha_unsel)
@@ -575,7 +582,8 @@ class InteractiveLegendPlugin(PluginBase):
             var color = "black";
             if(type =="mpld3_Line"){
                 color = d.mpld3_elements[0].props.edgecolor;
-            } else if(type=="mpld3_PathCollection"){
+            } else if((type=="mpld3_PathCollection")||
+                      (type=="mpld3_Markers")){
                 color = d.mpld3_elements[0].props.facecolors[0];
             } else{
                 console.log(type + " not yet supported");
@@ -615,11 +623,29 @@ class InteractiveLegendPlugin(PluginBase):
         """
         mpld3_element_ids = []
 
+        # There are two things being done here. First,
+        # we make sure that we have a list of lists, where
+        # each inner list is associated with a single legend
+        # item. Second, in case of Line2D object we pass
+        # the id for both the marker and the line.
+        # on the javascript side we filter out the nulls in
+        # case either the line or the marker has no equivalent
+        # D3 representation.
         for entry in plot_elements:
+            ids = []
             if isinstance(entry, collections.Iterable):
-                mpld3_element_ids.append([get_id(e) for e in entry])
+                for element in entry:
+                    mpld3_id = get_id(element)
+                    ids.append(mpld3_id)
+                    if isinstance(element, matplotlib.lines.Line2D):
+                        mpld3_id = get_id(element, 'pts')
+                        ids.append(mpld3_id)
             else:
-                mpld3_element_ids.append([get_id(entry)])
+                ids.append(get_id(entry))
+                if isinstance(entry, matplotlib.lines.Line2D):
+                    mpld3_id = get_id(entry, 'pts')
+                    ids.append(mpld3_id)
+            mpld3_element_ids.append(ids)
 
         return mpld3_element_ids
 
