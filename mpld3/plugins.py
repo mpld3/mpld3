@@ -443,6 +443,7 @@ class InteractiveLegendPlugin(PluginBase):
         The labels for each legend element
     ax :  matplotlib axes instance, optional
         the ax to which the legend belongs. Default is the first
+        axes. The legend will be plotted to the right of the specified
         axes
     alpha_sel : float, optional
         the alpha value to apply to the plot_element(s) associated
