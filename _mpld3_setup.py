@@ -96,7 +96,7 @@ def sync_files(source, dest):
     directory exists, if so, the directory is removed to provide
     a clean install.
     """
-    if os.path.isdir(dest):
+    if os.path.isdir(source) and os.path.isdir(dest):
         try:
             print("Remove {0}".format(dest))
             shutil.rmtree(dest)
