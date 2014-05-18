@@ -485,7 +485,6 @@ class InteractiveLegendPlugin(PluginBase):
     };
 
     InteractiveLegend.prototype.draw = function(){
-        console.log(this);
         var alpha_sel = this.props.alpha_sel;
         var alpha_unsel = this.props.alpha_unsel;
 
@@ -511,7 +510,6 @@ class InteractiveLegendPlugin(PluginBase):
             obj.visible = false; // should become be setable from python side
             legendItems.push(obj);
         }
-        console.log(legendItems);
 
         // determine the axes with which this legend is associated
         var ax = this.props.ax

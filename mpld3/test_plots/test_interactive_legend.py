@@ -4,7 +4,6 @@ import numpy as np
 import mpld3
 from mpld3 import plugins
 
-
 def create_plot():
     fig, ax = plt.subplots()
 
