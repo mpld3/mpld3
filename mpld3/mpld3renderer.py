@@ -132,6 +132,8 @@ class MPLD3Renderer(Renderer):
                               axes=props['axes'],
                               axesbg=props['axesbg'],
                               axesbgalpha=props['axesbgalpha'],
+                              axison=props['axison'],
+                              frame_on=props['frame_on'],
                               zoomable=bool(props['dynamic']),
                               id=get_id(ax),
                               lines=[],

@@ -669,6 +669,8 @@
     ydomain: null,
     xscale: "linear",
     yscale: "linear",
+    axison: true,
+    frame_on: true,
     zoomable: true,
     axes: [ {
       position: "left"
@@ -686,6 +688,7 @@
   };
   function mpld3_Axes(fig, props) {
     mpld3_PlotElement.call(this, fig, props);
+    console.log(this);
     this.axnum = this.fig.axes.length;
     this.axid = this.fig.figid + "_ax" + (this.axnum + 1);
     this.clipid = this.axid + "_clip";
@@ -769,7 +772,9 @@
     this.baseaxes = this.fig.canvas.append("g").attr("transform", "translate(" + this.position[0] + "," + this.position[1] + ")").attr("width", this.width).attr("height", this.height).attr("class", "mpld3-baseaxes");
     this.clip = this.baseaxes.append("svg:clipPath").attr("id", this.clipid).append("svg:rect").attr("x", 0).attr("y", 0).attr("width", this.width).attr("height", this.height);
     this.axes = this.baseaxes.append("g").attr("class", "mpld3-axes").attr("clip-path", "url(#" + this.clipid + ")");
-    this.axesbg = this.axes.append("svg:rect").attr("width", this.width).attr("height", this.height).attr("class", "mpld3-axesbg").style("fill", this.props.axesbg).style("fill-opacity", this.props.axesbgalpha);
+    if (this.props.frame_on) {
+      this.axesbg = this.axes.append("svg:rect").attr("width", this.width).attr("height", this.height).attr("class", "mpld3-axesbg").style("fill", this.props.axesbg).style("fill-opacity", this.props.axesbgalpha);
+    }
     for (var i = 0; i < this.elements.length; i++) {
       this.elements[i].draw();
     }
