@@ -42,14 +42,7 @@ IPython Notebook
 
   Long answer: like matplotlib's :func:`plt.show` function, :func:`mpld3.show` does not play well with the IPython notebook. :func:`mpld3.show` generates an HTML representation of a figure, then launches a local web server and attempts to open a browser page to display it. This behavior is nice when running a stand-alone script, but is generally not what you want within the IPython notebook, which is already in a browser window! Try :func:`mpld3.display` or :func:`mpld3.enable_notebook` instead; these are specifically designed for embedding figures within the IPython notebook.
 
-  If you accidentally use :func:`mpld3.show` within the notebook, you will have to interrupt the kernel (Kernel->Interrupt) to be able to continue.
-
-- **I'm using SSL to have a secure connection and/or make a remote IPython notebook play nice with Windows 8. How do I get mpld3 to work?**
-
-  Default browser security settings do not allow secure web pages to load JavaScript libraries from an insecure server. To work around this, simply specify alternative urls for d3 and mpld3 when you call :func:`mpld3.enable_notebook`. For example::
-
-    mpld3.enable_notebook(d3_url='//mpld3.github.io/js/d3.v3.min.js',
-                          mpld3_url='//mpld3.github.io/js/mpld3.v0.1.js')
+  If you accidentally use :func:`mpld3.show` within the notebook, you will have to interrupt the kernel (Kernel → Interrupt) to be able to continue.
 
 
 JavaScript
@@ -57,7 +50,7 @@ JavaScript
 
 - **Where is the mpld3 JavaScript library located?**
 
-  There is a local copy of the mpld3 library bundled with the package, which you can find in ``mpld3/js/mpld3.v0.2.js`` where ``v0.2`` indicates the library version, and matches the version of the mpld3 Python package. This local copy is used with the command ``mpld3.show``, so that no internet connection is needed. Online copies of the library can be found at, e.g. http://mpld3.github.io/js/mpld3.v0.2.js. This is automatically used within the IPython notebook, and commands like :func:`mpld3.save_html`, :func:`mpld3.fig_to_html`, etc.
+  There is a local copy of the mpld3 library bundled with the package, which you can find in ``mpld3/js/mpld3.v0.2.js`` where ``v0.2`` indicates the library version, and matches the version of the mpld3 Python package. This local copy is used with the command ``mpld3.show``, so that no internet connection is needed. Online copies of the library can be found at https://mpld3.github.io/js/mpld3.v0.2.js. This is automatically used within the IPython notebook, and commands like :func:`mpld3.save_html`, :func:`mpld3.fig_to_html`, etc.
 
 - **How can I use mpld3 without an internet connection?**
 
@@ -73,7 +66,7 @@ Troubleshooting
 
   Short answer: you must make sure that your notebook is pointing to the correct JavaScript libraries. The best way to do this is to follow the following steps:
 
-  1. Clear all the output in the notebook (This can be done via the toolbar, with Cell -> All Output -> Clear)
+  1. Clear all the output in the notebook (This can be done via the toolbar, with Cell → All Output → Clear)
   2. Save your notebook
   3. Close the notebook window
   4. Re-open the notebook window
