@@ -9,7 +9,7 @@ import os
 import subprocess
 import sys
 import warnings
-
+import shutil
 
 try:
     from setuptools import Command
@@ -18,7 +18,7 @@ except:
 
 
 SUBMODULES = ['mplexporter']
-SUBMODULE_SYNC_PATHS = [('mplexporter/mplexporter', 'mpld3/')]
+SUBMODULE_SYNC_PATHS = [('mplexporter/mplexporter', 'mpld3/mplexporter')]
 
 
 def get_version():
@@ -90,12 +90,31 @@ def update_submodules(repo_dir):
                           cwd=repo_dir, shell=True)
 
 
+def sync_files(source, dest):
+    """Syncs files copies files from `source` directory to the
+    `dest` directory.  A check is first done to see if the `dest`
+    directory exists, if so, the directory is removed to provide
+    a clean install.
+    """
+    if os.path.isdir(source) and os.path.isdir(dest):
+        try:
+            print("Remove {0}".format(dest))
+            shutil.rmtree(dest)
+        except OSError as e:
+            # An error occured tyring to remove directory
+            print(e.errno)
+            print(e.filename)
+            print(e.strerror)
+
+    print("Copying {0} to {1}".format(source, dest))
+    shutil.copytree(source, dest)
+
+
 def sync_submodules(repo_dir):
     for source, dest in SUBMODULE_SYNC_PATHS:
         source = os.path.join(repo_dir, source)
         dest = os.path.join(repo_dir, dest)
-        print("rsync -r {0} {1}".format(source, dest))
-        subprocess.check_call(["rsync", "-r", source, dest])
+        sync_files(source, dest)
 
 
 def require_clean_submodules(repo_dir, argv):
