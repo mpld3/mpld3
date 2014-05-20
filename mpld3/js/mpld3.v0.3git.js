@@ -688,7 +688,6 @@
   };
   function mpld3_Axes(fig, props) {
     mpld3_PlotElement.call(this, fig, props);
-    console.log(this);
     this.axnum = this.fig.axes.length;
     this.axid = this.fig.figid + "_ax" + (this.axnum + 1);
     this.clipid = this.axid + "_clip";
@@ -720,6 +719,15 @@
     }
     if (this.props.yscale === "date") {
       this.x = mpld3.multiscale(d3.scale.linear().domain(this.props.ylim).range(this.props.ydomain.map(Number)), this.ydom);
+    }
+    this.twin_axes = [];
+    if (!this.props.frame_on) {
+      for (var i = 0; i < this.fig.axes.length; i++) {
+        var ax = this.fig.axes[i];
+        if (ax != this && this.position[0] == ax.position[0] && this.position[1] == ax.position[1]) {
+          this.twin_axes.push(ax);
+        }
+      }
     }
     var axes = this.props.axes;
     for (var i = 0; i < axes.length; i++) {
@@ -774,6 +782,20 @@
     this.axes = this.baseaxes.append("g").attr("class", "mpld3-axes").attr("clip-path", "url(#" + this.clipid + ")");
     if (this.props.frame_on) {
       this.axesbg = this.axes.append("svg:rect").attr("width", this.width).attr("height", this.height).attr("class", "mpld3-axesbg").style("fill", this.props.axesbg).style("fill-opacity", this.props.axesbgalpha);
+    } else {
+      console.log(this);
+      for (var i = 0; i < this.twin_axes.length; i++) {
+        var ax = this.fig.axes[i];
+        if (ax.props.frame_on) {
+          if (this.sharex.indexOf(ax) == -1) {
+            ax.sharex.push(this);
+          } else if (this.sharey.indexOf(ax) == -1) {
+            ax.sharey.push(this);
+          } else {
+            console.log("this should not be possible");
+          }
+        }
+      }
     }
     for (var i = 0; i < this.elements.length; i++) {
       this.elements[i].draw();
@@ -841,12 +863,28 @@
       return transition;
     });
     if (propagate) {
+      console.log("in box zoom propage");
+      console.log(this);
       this.sharex.forEach(function(ax) {
         ax.set_axlim(xlim, null, duration, false);
       });
       this.sharey.forEach(function(ax) {
         ax.set_axlim(null, ylim, duration, false);
       });
+      for (var i = 0; i < this.twin_axes.length; i++) {
+        ax = this.twin_axes[i];
+        if (this.sharex.indexOf(ax) == -1) {
+          var test_scale = d3.scale.linear().domain(this.xdom.domain()).range(ax.xdom.domain());
+          new_xlim = [ test_scale(xlim[0]), test_scale(xlim[1]) ];
+          ax.set_axlim(new_xlim, null, duration, false);
+        } else if (this.sharey.indexOf(ax) == -1) {
+          var test_scale = d3.scale.linear().domain(this.ydom.domain()).range(ax.ydom.domain());
+          new_ylim = [ test_scale(ylim[0]), test_scale(ylim[1]) ];
+          ax.set_axlim(null, new_ylim, duration, false);
+        } else {
+          console.log("this should not be possible");
+        }
+      }
     }
     this.zoom.scale(1).translate([ 0, 0 ]);
     this.zoom.last_t = this.zoom.translate();
