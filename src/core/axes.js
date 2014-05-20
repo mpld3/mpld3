@@ -39,8 +39,6 @@ mpld3_Axes.prototype.defaultProps = {
 function mpld3_Axes(fig, props) {
     mpld3_PlotElement.call(this, fig, props);
     
-    console.log(this);
-    
     this.axnum = this.fig.axes.length;
     this.axid = this.fig.figid + '_ax' + (this.axnum + 1)
     this.clipid = this.axid + '_clip'
@@ -49,6 +47,7 @@ function mpld3_Axes(fig, props) {
 
     this.sharex = [];
     this.sharey = [];
+    
 
     this.elements = [];
 
@@ -111,7 +110,25 @@ function mpld3_Axes(fig, props) {
                                     .range(this.props.ydomain.map(Number)),
                                   this.ydom);
     }
-
+    
+    
+    //used in handling twinx, twiny
+    // the responsibility for being informed of zoom events
+    // rests with the axes for which frame_on is False
+    this.twin_axes = []; 
+    if(!this.props.frame_on){
+    	for (var i = 0; i < this.fig.axes.length; i++) {
+	    	var ax = this.fig.axes[i];
+	    	// if the axes is different but the position is the same
+	    	// the axes are on top of each other.
+	    	if ((ax != this)&&
+	    		(this.position[0]==ax.position[0])&&
+	    		(this.position[1]==ax.position[1])){
+	    		this.twin_axes.push(ax)
+	    	}
+	    }    	
+    }
+    
     // Add axes and grids
     var axes = this.props.axes;
     for (var i = 0; i < axes.length; i++) {
@@ -207,6 +224,28 @@ mpld3_Axes.prototype.draw = function() {
 	        .attr("class", "mpld3-axesbg")
 	        .style("fill", this.props.axesbg)
 	        .style("fill-opacity", this.props.axesbgalpha);
+    } else{
+	    for (var i = 0; i < this.twin_axes.length; i++) {
+	    	var ax = this.fig.axes[i];
+	    	// if the axes is different but the position is the same
+	    	// the axes are on top of each other. Since we can stack
+	    	// more then two axes, we need to find the bottom one. That
+	    	// is, the one with the frame being on. 
+	    	if (ax.props.frame_on){
+	    		// there is no need to duplicate axes, if sharex, then add 
+	    		// to sharey and vice versa. 
+	    		
+	    		if(this.sharex.indexOf(ax)==-1){
+	    			ax.sharex.push(this); // the bottom axes get the pan events
+	    		} else if(this.sharey.indexOf(ax)==-1){
+	    			ax.sharey.push(this); // the bottom axes get the pan events
+	    		}else{
+	    			// this should probably be replaced with a 
+	    			// throw clause
+	    			console.log("this should not be possible")
+	    		}
+	    	}
+	    }
 	}
 	    
     for (var i = 0; i < this.elements.length; i++) {
@@ -241,7 +280,7 @@ mpld3_Axes.prototype.zoomed = function(propagate) {
         var dt0 = this.zoom.translate()[0] - this.zoom.last_t[0];
         var dt1 = this.zoom.translate()[1] - this.zoom.last_t[1];
         var ds = this.zoom.scale() / this.zoom.last_s;
-
+        
         this.zoom_x.translate([this.zoom_x.translate()[0] + dt0, 0]);
         this.zoom_x.scale(this.zoom_x.scale() * ds)
 
@@ -283,7 +322,7 @@ mpld3_Axes.prototype.reset = function(duration, propagate) {
 
 mpld3_Axes.prototype.set_axlim = function(xlim, ylim,
                                           duration, propagate) {
-    xlim = isUndefinedOrNull(xlim) ? this.xdom.domain() : xlim;
+	xlim = isUndefinedOrNull(xlim) ? this.xdom.domain() : xlim;
     ylim = isUndefinedOrNull(ylim) ? this.ydom.domain() : ylim;
     duration = isUndefinedOrNull(duration) ? 750 : duration;
     propagate = isUndefined(propagate) ? true : propagate;
@@ -313,12 +352,39 @@ mpld3_Axes.prototype.set_axlim = function(xlim, ylim,
 
     // propagate axis limits to shared axes
     if (propagate) {
-        this.sharex.forEach(function(ax) {
+    	this.sharex.forEach(function(ax) {
             ax.set_axlim(xlim, null, duration, false);
         });
         this.sharey.forEach(function(ax) {
             ax.set_axlim(null, ylim, duration, false);
         });
+        
+        // propagating box_zoom events to twin axes
+        for(var i = 0; i < this.twin_axes.length; i++){
+        	ax = this.twin_axes[i]
+        	
+        	if(this.sharex.indexOf(ax)==-1){
+        		// we need to map x coordinates of the current axes
+        		// to the x coordinates of the twin axes
+        		var test_scale = d3.scale.linear()
+										.domain(this.xdom.domain())
+										.range(ax.xdom.domain())        		
+        		new_xlim = [test_scale(xlim[0]), test_scale(xlim[1])]
+        		ax.set_axlim(new_xlim, null, duration, false);
+    		} else if(this.sharey.indexOf(ax)==-1){
+    			// we need to map y coordinates of the current axes
+        		// to the x coordinates of the twin axes
+    			var test_scale = d3.scale.linear()
+									.domain(this.ydom.domain())
+									.range(ax.ydom.domain())    			
+    			new_ylim = [test_scale(ylim[0]), test_scale(ylim[1])]
+    			ax.set_axlim(null, new_ylim, duration, false);
+    		}else{
+    			// this should probably be replaced with a 
+    			// throw clause
+    			console.log("this should not be possible")
+    		}
+        };
     }
 
     // finalize the reset operation.

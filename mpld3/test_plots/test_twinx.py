@@ -12,14 +12,15 @@ def create_plot():
     ax1.plot(t, s1, 'b-')
     ax1.set_xlabel('time (s)')
     # Make the y-axis label and tick labels match the line color.
-    ax1.set_ylabel('exp', color='b')
+    ax1.set_ylabel('original data', color='b')
     for tl in ax1.get_yticklabels():
         tl.set_color('b')
     
     ax2 = ax1.twinx()
     s2 = np.sin(2*np.pi*t)
     ax2.plot(t, s2, 'r.')
-    ax2.set_ylabel('sin', color='r')
+    ax2.set_ylabel('twin', color='r')
+    ax2.xaxis.tick_top()
     for tl in ax2.get_yticklabels():
         tl.set_color('r')
     
