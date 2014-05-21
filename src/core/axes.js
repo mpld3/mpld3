@@ -38,7 +38,7 @@ mpld3_Axes.prototype.defaultProps = {
 
 function mpld3_Axes(fig, props) {
     mpld3_PlotElement.call(this, fig, props);
-    
+
     this.axnum = this.fig.axes.length;
     this.axid = this.fig.figid + '_ax' + (this.axnum + 1)
     this.clipid = this.axid + '_clip'
@@ -225,8 +225,11 @@ mpld3_Axes.prototype.draw = function() {
 	        .style("fill", this.props.axesbg)
 	        .style("fill-opacity", this.props.axesbgalpha);
     } else{
+    	
+    	
+    	
 	    for (var i = 0; i < this.twin_axes.length; i++) {
-	    	var ax = this.fig.axes[i];
+	    	var ax = this.twin_axes[i];
 	    	// if the axes is different but the position is the same
 	    	// the axes are on top of each other. Since we can stack
 	    	// more then two axes, we need to find the bottom one. That
@@ -236,9 +239,9 @@ mpld3_Axes.prototype.draw = function() {
 	    		// to sharey and vice versa. 
 	    		
 	    		if(this.sharex.indexOf(ax)==-1){
-	    			ax.sharex.push(this); // the bottom axes get the pan events
+	    			ax.sharex.push(this);
 	    		} else if(this.sharey.indexOf(ax)==-1){
-	    			ax.sharey.push(this); // the bottom axes get the pan events
+	    			ax.sharey.push(this);
 	    		}else{
 	    			// this should probably be replaced with a 
 	    			// throw clause
@@ -370,15 +373,17 @@ mpld3_Axes.prototype.set_axlim = function(xlim, ylim,
 										.domain(this.xdom.domain())
 										.range(ax.xdom.domain())        		
         		new_xlim = [test_scale(xlim[0]), test_scale(xlim[1])]
-        		ax.set_axlim(new_xlim, null, duration, false);
+        		ax.set_axlim(new_xlim, ylim, duration, false);
+        		
+
     		} else if(this.sharey.indexOf(ax)==-1){
     			// we need to map y coordinates of the current axes
-        		// to the x coordinates of the twin axes
+        		// to the y coordinates of the twin axes
     			var test_scale = d3.scale.linear()
 									.domain(this.ydom.domain())
 									.range(ax.ydom.domain())    			
     			new_ylim = [test_scale(ylim[0]), test_scale(ylim[1])]
-    			ax.set_axlim(null, new_ylim, duration, false);
+    			ax.set_axlim(xlim, new_ylim, duration, false);
     		}else{
     			// this should probably be replaced with a 
     			// throw clause

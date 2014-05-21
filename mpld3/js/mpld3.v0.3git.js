@@ -783,9 +783,8 @@
     if (this.props.frame_on) {
       this.axesbg = this.axes.append("svg:rect").attr("width", this.width).attr("height", this.height).attr("class", "mpld3-axesbg").style("fill", this.props.axesbg).style("fill-opacity", this.props.axesbgalpha);
     } else {
-      console.log(this);
       for (var i = 0; i < this.twin_axes.length; i++) {
-        var ax = this.fig.axes[i];
+        var ax = this.twin_axes[i];
         if (ax.props.frame_on) {
           if (this.sharex.indexOf(ax) == -1) {
             ax.sharex.push(this);
@@ -863,8 +862,6 @@
       return transition;
     });
     if (propagate) {
-      console.log("in box zoom propage");
-      console.log(this);
       this.sharex.forEach(function(ax) {
         ax.set_axlim(xlim, null, duration, false);
       });
@@ -876,11 +873,11 @@
         if (this.sharex.indexOf(ax) == -1) {
           var test_scale = d3.scale.linear().domain(this.xdom.domain()).range(ax.xdom.domain());
           new_xlim = [ test_scale(xlim[0]), test_scale(xlim[1]) ];
-          ax.set_axlim(new_xlim, null, duration, false);
+          ax.set_axlim(new_xlim, ylim, duration, false);
         } else if (this.sharey.indexOf(ax) == -1) {
           var test_scale = d3.scale.linear().domain(this.ydom.domain()).range(ax.ydom.domain());
           new_ylim = [ test_scale(ylim[0]), test_scale(ylim[1]) ];
-          ax.set_axlim(null, new_ylim, duration, false);
+          ax.set_axlim(xlim, new_ylim, duration, false);
         } else {
           console.log("this should not be possible");
         }
