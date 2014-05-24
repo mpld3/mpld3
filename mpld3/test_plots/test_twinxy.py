@@ -7,7 +7,7 @@ import mpld3
 def create_plot():
     fig = plt.figure()
     ax1 = fig.add_subplot(2, 1, 1)
-    
+
     # twinx test
     t = np.arange(0.01, 10.0, 0.01)
     s1 = np.exp(t)
@@ -25,11 +25,11 @@ def create_plot():
     ax2.xaxis.tick_top()
     for tl in ax2.get_yticklabels():
         tl.set_color('r')
-    
-    #twiny test   
+
+    #twiny test
     ax3 = fig.add_subplot(2, 1, 2)
     ax3.plot(t, s2)
-    
+
     ax4 = ax3.twiny()
     t2 = np.arange(0.01, 20, 0.02)
     s3 = np.sin(2*np.pi*t2)
