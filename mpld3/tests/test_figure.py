@@ -35,8 +35,8 @@ def test_axes():
     axrep = rep['axes'][0]
 
     assert_equal(list(sorted(axrep.keys())),
-                 ['axes', 'axesbg', 'axesbgalpha', 'bbox', 'collections',
-                  'id', 'images', 'lines', 'markers', 'paths', 'sharex',
+                 ['axes', 'axesbg', 'axesbgalpha', 'axison','bbox', 'collections',
+                  'frame_on','id', 'images', 'lines', 'markers', 'paths', 'sharex',
                   'sharey', 'texts', 'xdomain', 'xlim', 'xscale', 'ydomain',
                   'ylim', 'yscale', 'zoomable'])
 
