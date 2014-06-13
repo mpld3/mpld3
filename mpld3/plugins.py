@@ -437,7 +437,7 @@ class InteractiveLegendPlugin(PluginBase):
 
     Parameters
     ----------
-    plot_elements : iterable of matplotliblib elements
+    plot_elements : iterable of matplotlib elements
         the elements to associate with a given legend items
     labels : iterable of strings
         The labels for each legend element
