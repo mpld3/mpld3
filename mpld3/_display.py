@@ -2,6 +2,7 @@ import warnings
 import random
 import json
 import jinja2
+import numpy
 import re
 import os
 from ._server import serve_and_open
@@ -123,6 +124,20 @@ TEMPLATE_DICT = {"simple": SIMPLE_HTML,
                  "general": GENERAL_HTML}
 
 
+class NumpyEncoder(json.JSONEncoder):
+    """ Special json encoder for numpy types """
+
+    def default(self, obj):
+        if isinstance(obj, (numpy.int_, numpy.intc, numpy.intp, numpy.int8,
+            numpy.int16, numpy.int32, numpy.int64, numpy.uint8,
+            numpy.uint16,numpy.uint32, numpy.uint64)):
+            return int(obj)
+        elif isinstance(obj, (numpy.float_, numpy.float16, numpy.float32, 
+            numpy.float64)):
+            return float(obj)
+        return json.JSONEncoder.default(self, obj)
+
+
 def fig_to_dict(fig, **kwargs):
     """Output json-serializable dictionary representation of the figure
 
@@ -233,7 +248,7 @@ def fig_to_html(fig, d3_url=None, mpld3_url=None, no_extras=False,
     return template.render(figid=json.dumps(figid),
                            d3_url=d3_url,
                            mpld3_url=mpld3_url,
-                           figure_json=json.dumps(figure_json),
+                           figure_json=json.dumps(figure_json, cls=NumpyEncoder),
                            extra_css=extra_css,
                            extra_js=extra_js)
 
