@@ -206,11 +206,16 @@ mpld3_Axes.prototype.draw = function() {
     }
 };
 
-mpld3_Axes.prototype.enable_zoom = function() {
+mpld3_Axes.prototype.enable_zoom = function(zoom_props) {
+    var ax = this.axes;
     if (this.props.zoomable) {
+        this.props.zoom = zoom_props;
         this.zoom.on("zoom", this.zoomed.bind(this, true));
-        this.axes.call(this.zoom);
-        this.axes.style("cursor", 'move');
+        ax.call(this.zoom);
+
+        ax.style("cursor", zoom_props.hover_cursor);
+        this.zoom.on("zoomstart", function () { ax.style("cursor", zoom_props.drag_cursor); });
+        this.zoom.on("zoomend", function () { ax.style("cursor", zoom_props.hover_cursor); });
     }
 };
 
@@ -228,17 +233,61 @@ mpld3_Axes.prototype.zoomed = function(propagate) {
     propagate = (typeof propagate == 'undefined') ? true : propagate;
 
     if (propagate) {
+	// set cursor for zooming or panning
+	if (ds < 1) {
+	    this.axes.style("cursor", this.props.zoom.zoom_out_cursor);
+        } else if (ds > 1) {
+	    this.axes.style("cursor", this.props.zoom.zoom_in_cursor);
+        } else {
+            this.axes.style("cursor", this.props.zoom.drag_cursor);
+        }
+
         // update scale and translation of zoom_x and zoom_y,
         // based on change in this.zoom scale and translation values
         var dt0 = this.zoom.translate()[0] - this.zoom.last_t[0];
         var dt1 = this.zoom.translate()[1] - this.zoom.last_t[1];
         var ds = this.zoom.scale() / this.zoom.last_s;
 
-        this.zoom_x.translate([this.zoom_x.translate()[0] + dt0, 0]);
-        this.zoom_x.scale(this.zoom_x.scale() * ds)
+	// limit zoom and pan offset if necessary
+	if (this.zoom_x.scale()*ds <= this.props.zoom.x_scale_limits[0]) {
+	    this.zoom_x.scale(this.props.zoom.x_scale_limits[0]);
+	    //dt0 = 0;  // do not translate if scale has hit limit
+	} else if (this.zoom_x.scale()*ds >= this.props.zoom.x_scale_limits[1]) {
+	    this.zoom_x.scale(this.props.zoom.x_scale_limits[1]);
+	    //dt0 = 0;
+        } else {
+	    this.zoom_x.scale(this.zoom_x.scale() * ds);
+	}
+
+	if (this.zoom_y.scale()*ds <= this.props.zoom.y_scale_limits[0]) {
+	    this.zoom_y.scale(this.props.zoom.y_scale_limits[0]);
+	    // dt1 = 0;
+	} else if (this.zoom_y.scale()*ds >= this.props.zoom.y_scale_limits[1]) {
+	    this.zoom_y.scale(this.props.zoom.y_scale_limits[1]);
+	    // dt1 = 0;
+        } else {
+	    this.zoom_y.scale(this.zoom_y.scale() * ds);
+	}
+
+	this.zoom_x.translate([this.zoom_x.translate()[0] + dt0, 0]);
+	if (this.x(this.props.zoom.x_offset_limits[0]) >= this.x.range()[0]) {
+	    this.zoom_x.translate([0, 0]);  // translate to 0 so that this.x scales correctly
+	    this.zoom_x.translate([-this.x(this.props.zoom.x_offset_limits[0]), 0]);
+	} else if (this.x(this.props.zoom.x_offset_limits[1] - (this.x.domain()[1]-this.x.domain()[0])) <= this.x.range()[0]) {
+	    this.zoom_x.translate([0, 0]);  // translate to 0 so that this.x scales correctly
+	    this.zoom_x.translate([-this.x(this.props.zoom.x_offset_limits[1] - (this.x.domain()[1]-this.x.domain()[0])), 0]);
+	}
+	this.zoom.translate([this.zoom_x.translate()[0], this.zoom.translate()[1]]);  // only necess if hit limits, but doesn't hurt if not
 
         this.zoom_y.translate([0, this.zoom_y.translate()[1] + dt1]);
-        this.zoom_y.scale(this.zoom_y.scale() * ds)
+	if (this.y(this.props.zoom.y_offset_limits[0] - (this.y.domain()[0] - this.y.domain()[1])) <= this.y.range()[1]) {
+	    this.zoom_y.translate([0, 0]);
+	    this.zoom_y.translate([0, -this.y(this.props.zoom.y_offset_limits[0] - (this.y.domain()[0] - this.y.domain()[1]))]);
+	} else if (this.y(this.props.zoom.y_offset_limits[1]) >= this.y.range()[1]) {
+	    this.zoom_y.translate([0, 0]);
+	    this.zoom_y.translate([0, -this.y(this.props.zoom.y_offset_limits[1])]);
+	}
+	this.zoom.translate([this.zoom.translate()[0], this.zoom_y.translate()[1]]);  // only necess if hit limits, but doesn't hurt if not
 
         // update last translate and scale values for future use
         this.zoom.last_t = this.zoom.translate();

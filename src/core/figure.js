@@ -156,9 +156,9 @@ mpld3_Figure.prototype.reset = function(duration) {
     });
 };
 
-mpld3_Figure.prototype.enable_zoom = function() {
+mpld3_Figure.prototype.enable_zoom = function(zoom_props) {
     for (var i = 0; i < this.axes.length; i++) {
-        this.axes[i].enable_zoom();
+        this.axes[i].enable_zoom(zoom_props);
     }
     this.zoom_on = true;
 };
@@ -168,14 +168,6 @@ mpld3_Figure.prototype.disable_zoom = function() {
         this.axes[i].disable_zoom();
     }
     this.zoom_on = false;
-};
-
-mpld3_Figure.prototype.toggle_zoom = function() {
-    if (this.zoom_on) {
-        this.disable_zoom();
-    } else {
-        this.enable_zoom();
-    }
 };
 
 mpld3_Figure.prototype.get_data = function(data) {
