@@ -208,25 +208,26 @@ class MPLD3Renderer(Renderer):
     def draw_path_collection(self, paths, path_coordinates, path_transforms,
                              offsets, offset_coordinates, offset_order,
                              styles, mplobj=None):
-        styles = dict(alphas=[styles['alpha']],
-                      edgecolors=[color_to_hex(ec)
-                                  for ec in styles['edgecolor']],
-                      facecolors=[color_to_hex(fc)
-                                  for fc in styles['facecolor']],
-                      edgewidths=styles['linewidth'],
-                      offsetcoordinates=offset_coordinates,
-                      pathcoordinates=path_coordinates,
-                      zorder=styles['zorder'])
+        if len(paths) != 0:
+            styles = dict(alphas=[styles['alpha']],
+                          edgecolors=[color_to_hex(ec)
+                                      for ec in styles['edgecolor']],
+                          facecolors=[color_to_hex(fc)
+                                      for fc in styles['facecolor']],
+                          edgewidths=styles['linewidth'],
+                          offsetcoordinates=offset_coordinates,
+                          pathcoordinates=path_coordinates,
+                          zorder=styles['zorder'])
 
-        pathsdict = self.add_data(offsets, "offsets")
-        pathsdict['paths'] = [(v.tolist(), p) for (v, p) in paths]
-        pathsdict['pathtransforms'] = [(t[0, :2].tolist()
-                                        + t[1, :2].tolist()
-                                        + t[2, :2].tolist())
-                                       for t in path_transforms]
-        pathsdict.update(styles)
-        pathsdict['id'] = get_id(mplobj)
-        self.axes_json['collections'].append(pathsdict)
+            pathsdict = self.add_data(offsets, "offsets")
+            pathsdict['paths'] = [(v.tolist(), p) for (v, p) in paths]
+            pathsdict['pathtransforms'] = [(t[0, :2].tolist()
+                                            + t[1, :2].tolist()
+                                            + t[2, :2].tolist())
+                                           for t in path_transforms]
+            pathsdict.update(styles)
+            pathsdict['id'] = get_id(mplobj)
+            self.axes_json['collections'].append(pathsdict)
 
     def draw_text(self, text, position, coordinates, style,
                   text_type=None, mplobj=None):
