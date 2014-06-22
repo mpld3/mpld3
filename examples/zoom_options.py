@@ -37,4 +37,4 @@ plugins.connect(plt.gcf(), plugins.Reset(),
                              y_scale_limits=[1,5],
                              ))
 
-print mpld3.fig_to_html(plt.gcf(), mpld3_url='/mpld3/js/mpld3.v0.3git.js')
+print(mpld3.fig_to_html(plt.gcf(), mpld3_url='/mpld3/js/mpld3.v0.3git.js'))

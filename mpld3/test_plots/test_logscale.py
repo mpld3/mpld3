@@ -29,5 +29,4 @@ def test_logscale():
 
 
 if __name__ == "__main__":
-
-    print mpld3.fig_to_html(create_plot(), mpld3_url='/mpld3/js/mpld3.v0.3git.js')
+    mpld3.show(create_plot())
