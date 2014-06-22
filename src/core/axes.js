@@ -251,20 +251,16 @@ mpld3_Axes.prototype.zoomed = function(propagate) {
 	// limit zoom and pan offset if necessary
 	if (this.zoom_x.scale()*ds <= this.props.zoom.x_scale_limits[0]) {
 	    this.zoom_x.scale(this.props.zoom.x_scale_limits[0]);
-	    //dt0 = 0;  // do not translate if scale has hit limit
 	} else if (this.zoom_x.scale()*ds >= this.props.zoom.x_scale_limits[1]) {
 	    this.zoom_x.scale(this.props.zoom.x_scale_limits[1]);
-	    //dt0 = 0;
         } else {
 	    this.zoom_x.scale(this.zoom_x.scale() * ds);
 	}
 
 	if (this.zoom_y.scale()*ds <= this.props.zoom.y_scale_limits[0]) {
 	    this.zoom_y.scale(this.props.zoom.y_scale_limits[0]);
-	    // dt1 = 0;
 	} else if (this.zoom_y.scale()*ds >= this.props.zoom.y_scale_limits[1]) {
 	    this.zoom_y.scale(this.props.zoom.y_scale_limits[1]);
-	    // dt1 = 0;
         } else {
 	    this.zoom_y.scale(this.zoom_y.scale() * ds);
 	}
@@ -277,17 +273,15 @@ mpld3_Axes.prototype.zoomed = function(propagate) {
 	    this.zoom_x.translate([0, 0]);  // translate to 0 so that this.x scales correctly
 	    this.zoom_x.translate([-this.x(this.props.zoom.x_offset_limits[1] - (this.x.domain()[1]-this.x.domain()[0])), 0]);
 	}
-	this.zoom.translate([this.zoom_x.translate()[0], this.zoom.translate()[1]]);  // only necess if hit limits, but doesn't hurt if not
 
         this.zoom_y.translate([0, this.zoom_y.translate()[1] + dt1]);
 	if (this.y(this.props.zoom.y_offset_limits[0] - (this.y.domain()[0] - this.y.domain()[1])) <= this.y.range()[1]) {
-	    this.zoom_y.translate([0, 0]);
+	    this.zoom_y.translate([0, 0]);  // translate to 0 so that this.y scales correctly
 	    this.zoom_y.translate([0, -this.y(this.props.zoom.y_offset_limits[0] - (this.y.domain()[0] - this.y.domain()[1]))]);
 	} else if (this.y(this.props.zoom.y_offset_limits[1]) >= this.y.range()[1]) {
-	    this.zoom_y.translate([0, 0]);
+	    this.zoom_y.translate([0, 0]);  // translate to 0 so that this.y scales correctly
 	    this.zoom_y.translate([0, -this.y(this.props.zoom.y_offset_limits[1])]);
 	}
-	this.zoom.translate([this.zoom.translate()[0], this.zoom_y.translate()[1]]);  // only necess if hit limits, but doesn't hurt if not
 
         // update last translate and scale values for future use
         this.zoom.last_t = this.zoom.translate();

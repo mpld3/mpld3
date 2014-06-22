@@ -831,7 +831,6 @@
         this.zoom_x.translate([ 0, 0 ]);
         this.zoom_x.translate([ -this.x(this.props.zoom.x_offset_limits[1] - (this.x.domain()[1] - this.x.domain()[0])), 0 ]);
       }
-      this.zoom.translate([ this.zoom_x.translate()[0], this.zoom.translate()[1] ]);
       this.zoom_y.translate([ 0, this.zoom_y.translate()[1] + dt1 ]);
       if (this.y(this.props.zoom.y_offset_limits[0] - (this.y.domain()[0] - this.y.domain()[1])) <= this.y.range()[1]) {
         this.zoom_y.translate([ 0, 0 ]);
@@ -840,7 +839,6 @@
         this.zoom_y.translate([ 0, 0 ]);
         this.zoom_y.translate([ 0, -this.y(this.props.zoom.y_offset_limits[1]) ]);
       }
-      this.zoom.translate([ this.zoom.translate()[0], this.zoom_y.translate()[1] ]);
       this.zoom.last_t = this.zoom.translate();
       this.zoom.last_s = this.zoom.scale();
       this.sharex.forEach(function(ax) {
