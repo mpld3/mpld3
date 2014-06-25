@@ -773,13 +773,19 @@
     for (var i = 0; i < this.elements.length; i++) {
       this.elements[i].draw();
     }
+    this.zoombox_x = this.baseaxes.append("svg:rect").attr("width", this.width).attr("height", 20).attr("class", "mpld3-zoom x").attr("transform", "translate(" + [ 0, this.height - 10 ] + ")").style("visibility", "hidden").attr("pointer-events", "all");
+    this.zoombox_y = this.baseaxes.append("svg:rect").attr("width", 20).attr("height", this.height).attr("class", "mpld3-zoom y").attr("transform", "translate(" + [ -10, 0 ] + ")").style("visibility", "hidden").attr("pointer-events", "all");
   };
   mpld3_Axes.prototype.enable_zoom = function(zoom_props) {
     var ax = this.axes;
     if (this.props.zoomable) {
       this.props.zoom = zoom_props;
       this.zoom.on("zoom", this.zoomed.bind(this, true));
+      this.zoom_x.on("zoom", this.zoomed.bind(this, true));
+      this.zoom_y.on("zoom", this.zoomed.bind(this, true));
       ax.call(this.zoom);
+      this.zoombox_x.call(this.zoom_x);
+      this.zoombox_y.call(this.zoom_y);
       ax.style("cursor", zoom_props.hover_cursor);
       this.zoom.on("zoomstart", function() {
         ax.style("cursor", zoom_props.drag_cursor);
@@ -787,13 +793,21 @@
       this.zoom.on("zoomend", function() {
         ax.style("cursor", zoom_props.hover_cursor);
       });
+      this.zoombox_x.style("cursor", "ew-resize");
+      this.zoombox_y.style("cursor", "ns-resize");
     }
   };
   mpld3_Axes.prototype.disable_zoom = function() {
     if (this.props.zoomable) {
       this.zoom.on("zoom", null);
+      this.zoom_x.on("zoom", null);
+      this.zoom_y.on("zoom", null);
       this.axes.on(".zoom", null);
+      this.zoombox_x.on(".zoom", null);
+      this.zoombox_y.on(".zoom", null);
       this.axes.style("cursor", null);
+      this.zoombox_x.style("cursor", null);
+      this.zoombox_y.style("cursor", null);
     }
   };
   mpld3_Axes.prototype.zoomed = function(propagate) {

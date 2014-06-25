@@ -32,9 +32,9 @@ plugins.connect(plt.gcf(), plugins.Reset(),
                              zoom_in_cursor="-webkit-zoom-in",
                              zoom_out_cursor="-webkit-zoom-out",
                              x_offset_limits=[0,2],
-                             x_scale_limits=[1,5],
+                             x_scale_limits=[1,2],
                              y_offset_limits=[-1.,1.],
-                             y_scale_limits=[1,5],
+                             y_scale_limits=[1,1],
                              ))
 
 print(mpld3.fig_to_html(plt.gcf(), mpld3_url='/mpld3/js/mpld3.v0.3git.js'))
