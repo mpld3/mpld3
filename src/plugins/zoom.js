@@ -11,7 +11,15 @@ mpld3_ZoomPlugin.prototype.constructor = mpld3_ZoomPlugin;
 mpld3_ZoomPlugin.prototype.requiredProps = [];
 mpld3_ZoomPlugin.prototype.defaultProps = {
     button: true,
-    enabled: null
+    enabled: null,
+    hover_cursor: "default",
+    drag_cursor: "default",
+    zoom_in_cursor: "default",
+    zoom_out_cursor: "default",
+    x_scale_limits: [0, Infinity],
+    x_offset_limits: [-Infinity, Infinity],
+    y_scale_limits: [0, Infinity],
+    y_offset_limits: [-Infinity, Infinity]
 };
 
 function mpld3_ZoomPlugin(fig, props) {
@@ -39,7 +47,7 @@ function mpld3_ZoomPlugin(fig, props) {
 }
 
 mpld3_ZoomPlugin.prototype.activate = function(){
-    this.fig.enable_zoom();
+    this.fig.enable_zoom(this.props);
 };
 
 mpld3_ZoomPlugin.prototype.deactivate = function(){
@@ -48,7 +56,7 @@ mpld3_ZoomPlugin.prototype.deactivate = function(){
 
 mpld3_ZoomPlugin.prototype.draw = function(){
     if(this.props.enabled)
-      this.fig.enable_zoom();
+      this.fig.enable_zoom(this.props);
     else
       this.fig.disable_zoom();
 }

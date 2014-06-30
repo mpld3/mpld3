@@ -16,6 +16,7 @@ import collections
 import json
 import uuid
 import matplotlib
+from numpy import inf
 
 from .utils import get_id
 
@@ -113,18 +114,33 @@ class Zoom(PluginBase):
     enabled : boolean, optional
         specify whether the zoom should be enabled by default. By default,
         zoom is enabled if button == False, and disabled if button == True.
+    hover_cursor : str, optional
+    drag_cursor  : str, optional
+    zoom_in_cursor : str, optional
+    zoom_out_cursor : str, optional
+        cursor css property for corresponding interaction
+    x_scale_limits, y_scale_limits : list-like, optional
+        minimum and maximum values for scale factor when zooming.  Use
+        (1,1) to disable zoom.
+    x_offset_limits, y_offset_limits : like-like, optional
+        minimum and maximum values for panning.
 
     Notes
     -----
     Even if ``enabled`` is specified, other plugins may modify this state.
     """
-    def __init__(self, button=True, enabled=None):
+    def __init__(self, button=True, enabled=None,
+                 hover_cursor="move", drag_cursor="move",
+                 zoom_in_cursor="move", zoom_out_cursor="move",
+                 x_scale_limits=(0,inf), x_offset_limits=(-inf,inf),
+                 y_scale_limits=(0,inf), y_offset_limits=(-inf,inf)):
         if enabled is None:
             enabled = not button
-        self.dict_ = {"type": "zoom",
-                      "button": button,
-                      "enabled": enabled}
+        self.dict_ = locals()
+        self.dict_.pop('self')
+            
 
+        self.dict_["type"] = "zoom"
 
 class BoxZoom(PluginBase):
     """A Plugin to add box-zoom behavior to the plot
