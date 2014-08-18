@@ -14,8 +14,6 @@ import matplotlib.pyplot as plt
 from .. import show
 
 
-
-
 def test_show():
     """Test mpld3.show() using a mock server"""
 
