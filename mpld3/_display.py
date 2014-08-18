@@ -306,7 +306,7 @@ def display(fig=None, closefig=True, local=False, **kwargs):
 
 
 def show(fig=None, ip='127.0.0.1', port=8888, n_retries=50,
-         local=True, open_browser=True, **kwargs):
+         local=True, open_browser=True, http_server=None, **kwargs):
     """Open figure in a web browser
 
     Similar behavior to plt.show().  This opens the D3 visualization of the
@@ -330,6 +330,9 @@ def show(fig=None, ip='127.0.0.1', port=8888, n_retries=50,
         js/ folder.  If False, use the standard urls.
     open_browser : bool (optional)
         if True (default), then open a web browser to the given HTML
+    http_server : class (optional)
+        optionally specify an HTTPServer class to use for showing the
+        figure. The default is Python's basic HTTPServer.
     **kwargs :
         additional keyword arguments are passed through to :func:`fig_to_html`
 
@@ -353,7 +356,8 @@ def show(fig=None, ip='127.0.0.1', port=8888, n_retries=50,
         import matplotlib.pyplot as plt
         fig = plt.gcf()
     html = fig_to_html(fig, **kwargs)
-    serve(html, ip=ip, port=port, n_retries=n_retries, files=files, open_browser=open_browser)
+    serve(html, ip=ip, port=port, n_retries=n_retries, files=files,
+          open_browser=open_browser, http_server=http_server)
 
 
 def enable_notebook(local=False, **kwargs):
