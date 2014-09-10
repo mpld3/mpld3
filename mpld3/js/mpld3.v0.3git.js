@@ -774,11 +774,19 @@
       this.elements[i].draw();
     }
   };
-  mpld3_Axes.prototype.enable_zoom = function() {
+  mpld3_Axes.prototype.enable_zoom = function(zoom_props) {
+    var ax = this.axes;
     if (this.props.zoomable) {
+      this.props.zoom = zoom_props;
       this.zoom.on("zoom", this.zoomed.bind(this, true));
-      this.axes.call(this.zoom);
-      this.axes.style("cursor", "move");
+      ax.call(this.zoom);
+      ax.style("cursor", zoom_props.hover_cursor);
+      this.zoom.on("zoomstart", function() {
+        ax.style("cursor", zoom_props.drag_cursor);
+      });
+      this.zoom.on("zoomend", function() {
+        ax.style("cursor", zoom_props.hover_cursor);
+      });
     }
   };
   mpld3_Axes.prototype.disable_zoom = function() {
@@ -791,13 +799,46 @@
   mpld3_Axes.prototype.zoomed = function(propagate) {
     propagate = typeof propagate == "undefined" ? true : propagate;
     if (propagate) {
+      if (ds < 1) {
+        this.axes.style("cursor", this.props.zoom.zoom_out_cursor);
+      } else if (ds > 1) {
+        this.axes.style("cursor", this.props.zoom.zoom_in_cursor);
+      } else {
+        this.axes.style("cursor", this.props.zoom.drag_cursor);
+      }
       var dt0 = this.zoom.translate()[0] - this.zoom.last_t[0];
       var dt1 = this.zoom.translate()[1] - this.zoom.last_t[1];
       var ds = this.zoom.scale() / this.zoom.last_s;
+      if (this.zoom_x.scale() * ds <= this.props.zoom.x_scale_limits[0]) {
+        this.zoom_x.scale(this.props.zoom.x_scale_limits[0]);
+      } else if (this.zoom_x.scale() * ds >= this.props.zoom.x_scale_limits[1]) {
+        this.zoom_x.scale(this.props.zoom.x_scale_limits[1]);
+      } else {
+        this.zoom_x.scale(this.zoom_x.scale() * ds);
+      }
+      if (this.zoom_y.scale() * ds <= this.props.zoom.y_scale_limits[0]) {
+        this.zoom_y.scale(this.props.zoom.y_scale_limits[0]);
+      } else if (this.zoom_y.scale() * ds >= this.props.zoom.y_scale_limits[1]) {
+        this.zoom_y.scale(this.props.zoom.y_scale_limits[1]);
+      } else {
+        this.zoom_y.scale(this.zoom_y.scale() * ds);
+      }
       this.zoom_x.translate([ this.zoom_x.translate()[0] + dt0, 0 ]);
-      this.zoom_x.scale(this.zoom_x.scale() * ds);
+      if (this.x(this.props.zoom.x_offset_limits[0]) >= this.x.range()[0]) {
+        this.zoom_x.translate([ 0, 0 ]);
+        this.zoom_x.translate([ -this.x(this.props.zoom.x_offset_limits[0]), 0 ]);
+      } else if (this.x(this.props.zoom.x_offset_limits[1] - (this.x.domain()[1] - this.x.domain()[0])) <= this.x.range()[0]) {
+        this.zoom_x.translate([ 0, 0 ]);
+        this.zoom_x.translate([ -this.x(this.props.zoom.x_offset_limits[1] - (this.x.domain()[1] - this.x.domain()[0])), 0 ]);
+      }
       this.zoom_y.translate([ 0, this.zoom_y.translate()[1] + dt1 ]);
-      this.zoom_y.scale(this.zoom_y.scale() * ds);
+      if (this.y(this.props.zoom.y_offset_limits[0] - (this.y.domain()[0] - this.y.domain()[1])) <= this.y.range()[1]) {
+        this.zoom_y.translate([ 0, 0 ]);
+        this.zoom_y.translate([ 0, -this.y(this.props.zoom.y_offset_limits[0] - (this.y.domain()[0] - this.y.domain()[1])) ]);
+      } else if (this.y(this.props.zoom.y_offset_limits[1]) >= this.y.range()[1]) {
+        this.zoom_y.translate([ 0, 0 ]);
+        this.zoom_y.translate([ 0, -this.y(this.props.zoom.y_offset_limits[1]) ]);
+      }
       this.zoom.last_t = this.zoom.translate();
       this.zoom.last_s = this.zoom.scale();
       this.sharex.forEach(function(ax) {
@@ -1008,7 +1049,15 @@
   mpld3_ZoomPlugin.prototype.requiredProps = [];
   mpld3_ZoomPlugin.prototype.defaultProps = {
     button: true,
-    enabled: null
+    enabled: null,
+    hover_cursor: "default",
+    drag_cursor: "default",
+    zoom_in_cursor: "default",
+    zoom_out_cursor: "default",
+    x_scale_limits: [ 0, Infinity ],
+    x_offset_limits: [ -Infinity, Infinity ],
+    y_scale_limits: [ 0, Infinity ],
+    y_offset_limits: [ -Infinity, Infinity ]
   };
   function mpld3_ZoomPlugin(fig, props) {
     mpld3_Plugin.call(this, fig, props);
@@ -1034,13 +1083,13 @@
     }
   }
   mpld3_ZoomPlugin.prototype.activate = function() {
-    this.fig.enable_zoom();
+    this.fig.enable_zoom(this.props);
   };
   mpld3_ZoomPlugin.prototype.deactivate = function() {
     this.fig.disable_zoom();
   };
   mpld3_ZoomPlugin.prototype.draw = function() {
-    if (this.props.enabled) this.fig.enable_zoom(); else this.fig.disable_zoom();
+    if (this.props.enabled) this.fig.enable_zoom(this.props); else this.fig.disable_zoom();
   };
   mpld3.BoxZoomPlugin = mpld3_BoxZoomPlugin;
   mpld3.register_plugin("boxzoom", mpld3_BoxZoomPlugin);
@@ -1406,9 +1455,9 @@
       ax.reset(duration, false);
     });
   };
-  mpld3_Figure.prototype.enable_zoom = function() {
+  mpld3_Figure.prototype.enable_zoom = function(zoom_props) {
     for (var i = 0; i < this.axes.length; i++) {
-      this.axes[i].enable_zoom();
+      this.axes[i].enable_zoom(zoom_props);
     }
     this.zoom_on = true;
   };
@@ -1417,13 +1466,6 @@
       this.axes[i].disable_zoom();
     }
     this.zoom_on = false;
-  };
-  mpld3_Figure.prototype.toggle_zoom = function() {
-    if (this.zoom_on) {
-      this.disable_zoom();
-    } else {
-      this.enable_zoom();
-    }
   };
   mpld3_Figure.prototype.get_data = function(data) {
     if (data === null || typeof data === "undefined") {
