@@ -43,6 +43,9 @@ Source and Development
 ======================
 The source code for mpld3 can be found on
 `GitHub <http://github.com/jakevdp/mpld3>`_.
+Please direct questions
+about how to do specific plots or interactions to `Stack Overflow <http://stackoverflow.com/questions/ask>`_
+and tag them with *mpld3* to make sure we see them.
 Pull requests, feature requests, and other ideas can be submitted via the
 GitHub page.
 
