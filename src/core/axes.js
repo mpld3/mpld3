@@ -216,7 +216,6 @@ mpld3_Axes.prototype.draw = function() {
         .attr("class", "mpld3-axes")
         .attr("clip-path", "url(#" + this.clipid + ")");
 
-    
     if(this.props.frame_on){
 	    this.axesbg = this.axes.append("svg:rect")
 	        .attr("width", this.width)
@@ -225,10 +224,7 @@ mpld3_Axes.prototype.draw = function() {
 	        .style("fill", this.props.axesbg)
 	        .style("fill-opacity", this.props.axesbgalpha);
     } else{
-    	
-    	
-    	
-	    for (var i = 0; i < this.twin_axes.length; i++) {
+    	for (var i = 0; i < this.twin_axes.length; i++) {
 	    	var ax = this.twin_axes[i];
 	    	// if the axes is different but the position is the same
 	    	// the axes are on top of each other. Since we can stack
