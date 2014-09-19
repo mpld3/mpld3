@@ -290,6 +290,7 @@
     fontcolor: "black",
     axiscolor: "black",
     scale: "linear",
+    visible: true,
     grid: {},
     zorder: 0
   };
@@ -671,6 +672,7 @@
     yscale: "linear",
     axison: true,
     frame_on: true,
+    patch_visible: true,
     zoomable: true,
     axes: [ {
       position: "left"
@@ -721,7 +723,7 @@
       this.x = mpld3.multiscale(d3.scale.linear().domain(this.props.ylim).range(this.props.ydomain.map(Number)), this.ydom);
     }
     this.twin_axes = [];
-    if (!this.props.frame_on) {
+    if (!this.props.patch_visible) {
       for (var i = 0; i < this.fig.axes.length; i++) {
         var ax = this.fig.axes[i];
         if (ax != this && this.position[0] == ax.position[0] && this.position[1] == ax.position[1]) {
@@ -780,13 +782,13 @@
     this.baseaxes = this.fig.canvas.append("g").attr("transform", "translate(" + this.position[0] + "," + this.position[1] + ")").attr("width", this.width).attr("height", this.height).attr("class", "mpld3-baseaxes");
     this.clip = this.baseaxes.append("svg:clipPath").attr("id", this.clipid).append("svg:rect").attr("x", 0).attr("y", 0).attr("width", this.width).attr("height", this.height);
     this.axes = this.baseaxes.append("g").attr("class", "mpld3-axes").attr("clip-path", "url(#" + this.clipid + ")");
-    console.log(this);
-    if (this.props.frame_on) {
+    if (this.props.patch_visible) {
       this.axesbg = this.axes.append("svg:rect").attr("width", this.width).attr("height", this.height).attr("class", "mpld3-axesbg").style("fill", this.props.axesbg).style("fill-opacity", this.props.axesbgalpha);
+      console.log(this.axesbg);
     } else {
       for (var i = 0; i < this.twin_axes.length; i++) {
         var ax = this.twin_axes[i];
-        if (ax.props.frame_on) {
+        if (ax.props.patch_visible) {
           if (this.sharex.indexOf(ax) == -1) {
             ax.sharex.push(this);
           } else if (this.sharey.indexOf(ax) == -1) {

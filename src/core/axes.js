@@ -20,6 +20,7 @@ mpld3_Axes.prototype.defaultProps = {
     "yscale": "linear",
     "axison": true,
     "frame_on": true,
+    "patch_visible":true,
     "zoomable": true,
     "axes": [{
         position: "left"
@@ -48,7 +49,6 @@ function mpld3_Axes(fig, props) {
     this.sharex = [];
     this.sharey = [];
     
-
     this.elements = [];
 
     var bbox = this.props.bbox;
@@ -114,10 +114,10 @@ function mpld3_Axes(fig, props) {
     
     //used in handling twinx, twiny
     // the responsibility for being informed of zoom events
-    // rests with the axes for which frame_on is False
+    // rests with the axes for which patch_visible is False
     this.twin_axes = []; 
-    if(!this.props.frame_on){
-    	for (var i = 0; i < this.fig.axes.length; i++) {
+    if(!this.props.patch_visible){
+        for (var i = 0; i < this.fig.axes.length; i++) {
 	    	var ax = this.fig.axes[i];
 	    	// if the axes is different but the position is the same
 	    	// the axes are on top of each other.
@@ -216,8 +216,8 @@ mpld3_Axes.prototype.draw = function() {
         .attr("class", "mpld3-axes")
         .attr("clip-path", "url(#" + this.clipid + ")");
 
-    if(this.props.frame_on){
-	    this.axesbg = this.axes.append("svg:rect")
+    if(this.props.patch_visible){
+    	this.axesbg = this.axes.append("svg:rect")
 	        .attr("width", this.width)
 	        .attr("height", this.height)
 	        .attr("class", "mpld3-axesbg")
@@ -230,7 +230,7 @@ mpld3_Axes.prototype.draw = function() {
 	    	// the axes are on top of each other. Since we can stack
 	    	// more then two axes, we need to find the bottom one. That
 	    	// is, the one with the frame being on. 
-	    	if (ax.props.frame_on){
+	    	if (ax.props.patch_visible){
 	    		// there is no need to duplicate axes, if sharex, then add 
 	    		// to sharey and vice versa. 
 	    		
