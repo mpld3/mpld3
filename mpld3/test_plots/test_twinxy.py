@@ -13,8 +13,7 @@ def create_plot():
     s1 = np.exp(t)
     ax1.plot(t, s1, 'b-')
     
-    print ax1.get_frame_on()
-
+    print ax1.patch.get_visible()
     # Make the y-axis label and tick labels match the line color.
     ax1.set_ylabel('original data', color='b')
     for tl in ax1.get_yticklabels():
@@ -27,23 +26,20 @@ def create_plot():
     ax2.xaxis.tick_top()
     for tl in ax2.get_yticklabels():
         tl.set_color('r')
-    print ax2.get_frame_on()
-
+    print ax2.patch.get_visible()
 
     #twiny test
     ax3 = fig.add_subplot(2, 1, 2)
     ax3.plot(t, s2)
-    print ax3.get_frame_on()
-
+    print ax3.patch.get_visible()
 
     ax4 = ax3.twiny()
     t2 = np.arange(0.01, 20, 0.02)
     s3 = np.sin(2*np.pi*t2)
     ax4.plot(t2, s3, 'r.')
     ax4.yaxis.tick_right()
-    print ax4.get_frame_on()
-
-
+    print ax4.patch.get_visible()
+    
     return fig
 
 

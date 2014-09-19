@@ -16,6 +16,7 @@ mpld3_Axis.prototype.defaultProps = {
     fontcolor: "black",
     axiscolor: "black",
     scale: "linear",
+    visible:true,
     grid: {},
     zorder: 0
 };
