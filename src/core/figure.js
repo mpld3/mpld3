@@ -74,6 +74,7 @@ mpld3_Figure.prototype.getBrush = function() {
 mpld3_Figure.prototype.showBrush = function(extentClass) {
     extentClass = (typeof extentClass === "undefined") ? "" : extentClass;
     var brush = this.getBrush();
+    
     brush.on("brushstart", function(d){brush.x(d.xdom).y(d.ydom);});
     this.canvas.selectAll("rect.background")
         .style("cursor", "crosshair")

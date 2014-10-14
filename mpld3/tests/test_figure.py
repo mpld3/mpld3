@@ -33,12 +33,12 @@ def test_axes():
 
     rep = fig_to_dict(fig)
     axrep = rep['axes'][0]
-
+    
     assert_equal(list(sorted(axrep.keys())),
-                 ['axes', 'axesbg', 'axesbgalpha', 'bbox', 'collections',
-                  'id', 'images', 'lines', 'markers', 'paths', 'sharex',
-                  'sharey', 'texts', 'xdomain', 'xlim', 'xscale', 'ydomain',
-                  'ylim', 'yscale', 'zoomable'])
+                 ['axes', 'axesbg', 'axesbgalpha', 'axison','bbox', 'collections',
+                  'frame_on','id', 'images', 'lines', 'markers', 'patch_visible',
+                  'paths', 'sharex', 'sharey', 'texts', 'xdomain', 'xlim',
+                  'xscale', 'ydomain', 'ylim', 'yscale', 'zoomable'])
 
     for key in ['collections', 'images', 'lines', 'markers', 'paths', 'texts']:
         assert_equal(axrep[key], [])

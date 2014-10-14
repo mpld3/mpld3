@@ -290,6 +290,7 @@
     fontcolor: "black",
     axiscolor: "black",
     scale: "linear",
+    visible: true,
     grid: {},
     zorder: 0
   };
@@ -327,12 +328,7 @@
     return new mpld3_Grid(this.ax, gridprop);
   };
   mpld3_Axis.prototype.draw = function() {
-    if (this.props.tickvalues) {
-      tick_labels = d3.scale.threshold().domain(this.props.tickvalues.slice(1)).range(this.props.tickformat);
-    } else {
-      tick_labels = null;
-    }
-    this.axis = d3.svg.axis().scale(this.scale).orient(this.props.position).ticks(this.props.nticks).tickValues(this.props.tickvalues).tickFormat(tick_labels);
+    this.axis = d3.svg.axis().scale(this.scale).orient(this.props.position).ticks(this.props.nticks).tickValues(this.props.tickvalues).tickFormat(this.props.tickformat);
     this.elem = this.ax.baseaxes.append("g").attr("transform", this.transform).attr("class", this.cssclass).call(this.axis);
     mpld3.insert_css("div#" + this.ax.fig.figid + " ." + this.cssclass + " line, " + " ." + this.cssclass + " path", {
       "shape-rendering": "crispEdges",
@@ -347,12 +343,6 @@
     });
   };
   mpld3_Axis.prototype.zoomed = function() {
-    var d = this.axis.scale().domain();
-    if (this.props.tickvalues != null) {
-      this.axis.tickValues(this.props.tickvalues.filter(function(v) {
-        return v >= d[0] && v <= d[1];
-      }));
-    }
     this.elem.call(this.axis);
   };
   mpld3.Coordinates = mpld3_Coordinates;
@@ -680,6 +670,9 @@
     ydomain: null,
     xscale: "linear",
     yscale: "linear",
+    axison: true,
+    frame_on: true,
+    patch_visible: true,
     zoomable: true,
     axes: [ {
       position: "left"
@@ -728,6 +721,15 @@
     }
     if (this.props.yscale === "date") {
       this.x = mpld3.multiscale(d3.scale.linear().domain(this.props.ylim).range(this.props.ydomain.map(Number)), this.ydom);
+    }
+    this.twin_axes = [];
+    if (!this.props.patch_visible) {
+      for (var i = 0; i < this.fig.axes.length; i++) {
+        var ax = this.fig.axes[i];
+        if (ax != this && this.position[0] == ax.position[0] && this.position[1] == ax.position[1]) {
+          this.twin_axes.push(ax);
+        }
+      }
     }
     var axes = this.props.axes;
     for (var i = 0; i < axes.length; i++) {
@@ -780,7 +782,23 @@
     this.baseaxes = this.fig.canvas.append("g").attr("transform", "translate(" + this.position[0] + "," + this.position[1] + ")").attr("width", this.width).attr("height", this.height).attr("class", "mpld3-baseaxes");
     this.clip = this.baseaxes.append("svg:clipPath").attr("id", this.clipid).append("svg:rect").attr("x", 0).attr("y", 0).attr("width", this.width).attr("height", this.height);
     this.axes = this.baseaxes.append("g").attr("class", "mpld3-axes").attr("clip-path", "url(#" + this.clipid + ")");
-    this.axesbg = this.axes.append("svg:rect").attr("width", this.width).attr("height", this.height).attr("class", "mpld3-axesbg").style("fill", this.props.axesbg).style("fill-opacity", this.props.axesbgalpha);
+    if (this.props.patch_visible) {
+      this.axesbg = this.axes.append("svg:rect").attr("width", this.width).attr("height", this.height).attr("class", "mpld3-axesbg").style("fill", this.props.axesbg).style("fill-opacity", this.props.axesbgalpha);
+      console.log(this.axesbg);
+    } else {
+      for (var i = 0; i < this.twin_axes.length; i++) {
+        var ax = this.twin_axes[i];
+        if (ax.props.patch_visible) {
+          if (this.sharex.indexOf(ax) == -1) {
+            ax.sharex.push(this);
+          } else if (this.sharey.indexOf(ax) == -1) {
+            ax.sharey.push(this);
+          } else {
+            console.log("this should not be possible");
+          }
+        }
+      }
+    }
     for (var i = 0; i < this.elements.length; i++) {
       this.elements[i].draw();
     }
@@ -853,6 +871,20 @@
       this.sharey.forEach(function(ax) {
         ax.set_axlim(null, ylim, duration, false);
       });
+      for (var i = 0; i < this.twin_axes.length; i++) {
+        ax = this.twin_axes[i];
+        if (this.sharex.indexOf(ax) == -1) {
+          var test_scale = d3.scale.linear().domain(this.xdom.domain()).range(ax.xdom.domain());
+          new_xlim = [ test_scale(xlim[0]), test_scale(xlim[1]) ];
+          ax.set_axlim(new_xlim, ylim, duration, false);
+        } else if (this.sharey.indexOf(ax) == -1) {
+          var test_scale = d3.scale.linear().domain(this.ydom.domain()).range(ax.ydom.domain());
+          new_ylim = [ test_scale(ylim[0]), test_scale(ylim[1]) ];
+          ax.set_axlim(xlim, new_ylim, duration, false);
+        } else {
+          console.log("this should not be possible");
+        }
+      }
     }
     this.zoom.scale(1).translate([ 0, 0 ]);
     this.zoom.last_t = this.zoom.translate();

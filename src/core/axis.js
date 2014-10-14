@@ -16,6 +16,7 @@ mpld3_Axis.prototype.defaultProps = {
     fontcolor: "black",
     axiscolor: "black",
     scale: "linear",
+    visible:true,
     grid: {},
     zorder: 0
 };
@@ -58,22 +59,12 @@ mpld3_Axis.prototype.getGrid = function() {
 };
 
 mpld3_Axis.prototype.draw = function() {
-    if (this.props.tickvalues) { // FIXME: store the tick format type explicitly
-	tick_labels = d3.scale.threshold()
-	                  .domain(this.props.tickvalues.slice(1))
-	                  .range(this.props.tickformat);
-    } else {
-	tick_labels = null;
-    }
-
     this.axis = d3.svg.axis()
         .scale(this.scale)
         .orient(this.props.position)
         .ticks(this.props.nticks)
         .tickValues(this.props.tickvalues)
-        .tickFormat(tick_labels);
-
-// good tips: http://bl.ocks.org/mbostock/3048166 in response to http://stackoverflow.com/questions/11286872/how-do-i-make-a-custom-axis-formatter-for-hours-minutes-in-d3-js
+        .tickFormat(this.props.tickformat);
 
     this.elem = this.ax.baseaxes.append('g')
         .attr("transform", this.transform)
@@ -96,13 +87,5 @@ mpld3_Axis.prototype.draw = function() {
 };
 
 mpld3_Axis.prototype.zoomed = function() {
-    // if we set tickValues for the axis, we are responsible for
-    // updating them when they pan or zoom off of the chart
-    if (this.props.tickvalues != null) {
-	var d = this.axis.scale().domain();
-	this.axis.tickValues(this.props.tickvalues.filter(
-	    function (v) { return (v >= d[0]) && (v <= d[1]); }));
-    }
-
     this.elem.call(this.axis);
 };
