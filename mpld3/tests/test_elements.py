@@ -139,18 +139,13 @@ def test_image():
 def test_ticks():
     plt.xticks([1,2,3])
     rep = fig_to_html(plt.gcf())
-<<<<<<< HEAD
-=======
     # TODO: use casperjs here if available to confirm that the xticks
     # are rendeder as expected
->>>>>>> FETCH_HEAD
 
     # pandas tslib generates ticks with unusual dtypes
     # test that they are converted to html successfully
     plt.xticks(np.array([1,2,3], dtype=np.int32))
     rep = fig_to_html(plt.gcf())
-<<<<<<< HEAD
-=======
 
     # custom ticks should appear in the correct place, with the
     # correct text
@@ -158,4 +153,3 @@ def test_ticks():
     rep = fig_to_html(plt.gcf())
     # TODO: use casperjs here if available to confirm that the xticks
     # are rendeder as expected
->>>>>>> FETCH_HEAD
