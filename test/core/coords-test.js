@@ -36,7 +36,7 @@ suite.addBatch({
 	    },
 	    "transforms to the correct display coordinates": function(coords){
                 assert.equal(coords.xy([0.3, 0.4])[0], 208);
-                assert.equal(coords.xy([0.3, 0.4])[1], 72);
+                assert.equal(Math.round(coords.xy([0.3, 0.4])[1]*1000), Math.round(72*1000));
 	    }
 	},
 	"A Coordinates('axes') object": {
