@@ -347,8 +347,8 @@
     });
   };
   mpld3_Axis.prototype.zoomed = function() {
-    var d = this.axis.scale().domain();
     if (this.props.tickvalues != null) {
+      var d = this.axis.scale().domain();
       this.axis.tickValues(this.props.tickvalues.filter(function(v) {
         return v >= d[0] && v <= d[1];
       }));

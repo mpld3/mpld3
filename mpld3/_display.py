@@ -5,7 +5,7 @@ import jinja2
 import numpy
 import re
 import os
-from ._server import serve_and_open
+from ._server import serve
 from .utils import deprecated, get_id, write_ipynb_local_js
 from .mplexporter import Exporter
 from .mpld3renderer import MPLD3Renderer
@@ -306,7 +306,7 @@ def display(fig=None, closefig=True, local=False, **kwargs):
 
 
 def show(fig=None, ip='127.0.0.1', port=8888, n_retries=50,
-         local=True, **kwargs):
+         local=True, open_browser=True, http_server=None, **kwargs):
     """Open figure in a web browser
 
     Similar behavior to plt.show().  This opens the D3 visualization of the
@@ -328,6 +328,11 @@ def show(fig=None, ip='127.0.0.1', port=8888, n_retries=50,
     local : bool, default = True
         if True, use the local d3 & mpld3 javascript versions, within the
         js/ folder.  If False, use the standard urls.
+    open_browser : bool (optional)
+        if True (default), then open a web browser to the given HTML
+    http_server : class (optional)
+        optionally specify an HTTPServer class to use for showing the
+        figure. The default is Python's basic HTTPServer.
     **kwargs :
         additional keyword arguments are passed through to :func:`fig_to_html`
 
@@ -351,7 +356,8 @@ def show(fig=None, ip='127.0.0.1', port=8888, n_retries=50,
         import matplotlib.pyplot as plt
         fig = plt.gcf()
     html = fig_to_html(fig, **kwargs)
-    serve_and_open(html, ip=ip, port=port, n_retries=n_retries, files=files)
+    serve(html, ip=ip, port=port, n_retries=n_retries, files=files,
+          open_browser=open_browser, http_server=http_server)
 
 
 def enable_notebook(local=False, **kwargs):

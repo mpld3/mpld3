@@ -66,9 +66,10 @@ def find_open_port(ip, port, n=50):
     raise ValueError("no open ports found")
 
 
-def serve_and_open(html, ip='127.0.0.1', port=8888, n_retries=50, files=None,
-                   ipython_warning=True):
-    """Start a server serving the given HTML, and open a browser
+def serve(html, ip='127.0.0.1', port=8888, n_retries=50, files=None,
+          ipython_warning=True, open_browser=True, http_server=None):
+    """Start a server serving the given HTML, and (optionally) open a
+    browser
 
     Parameters
     ----------
@@ -84,10 +85,19 @@ def serve_and_open(html, ip='127.0.0.1', port=8888, n_retries=50, files=None,
         dictionary of extra content to serve
     ipython_warning : bool (optional)
         if True (default), then print a warning if this is used within IPython
+    open_browser : bool (optional)
+        if True (default), then open a web browser to the given HTML
+    http_server : class (optional)
+        optionally specify an HTTPServer class to use for showing the
+        figure. The default is Python's basic HTTPServer.
     """
     port = find_open_port(ip, port, n_retries)
     Handler = generate_handler(html, files)
-    srvr = server.HTTPServer((ip, port), Handler)
+
+    if http_server is None:
+        srvr = server.HTTPServer((ip, port), Handler)
+    else:
+        srvr = http_server((ip, port), Handler)
 
     if ipython_warning:
         try:
@@ -101,9 +111,10 @@ def serve_and_open(html, ip='127.0.0.1', port=8888, n_retries=50, files=None,
     print("Serving to http://{0}:{1}/    [Ctrl-C to exit]".format(ip, port))
     sys.stdout.flush()
 
-    # Use a thread to open a web browser pointing to the server
-    b = lambda: webbrowser.open('http://{0}:{1}'.format(ip, port))
-    threading.Thread(target=b).start()
+    if open_browser:
+        # Use a thread to open a web browser pointing to the server
+        b = lambda: webbrowser.open('http://{0}:{1}'.format(ip, port))
+        threading.Thread(target=b).start()
 
     try:
         srvr.serve_forever()
