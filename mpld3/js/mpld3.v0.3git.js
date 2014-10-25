@@ -347,8 +347,8 @@
     });
   };
   mpld3_Axis.prototype.zoomed = function() {
-    var d = this.axis.scale().domain();
     if (this.props.tickvalues != null) {
+      var d = this.axis.scale().domain();
       this.axis.tickValues(this.props.tickvalues.filter(function(v) {
         return v >= d[0] && v <= d[1];
       }));
@@ -425,11 +425,11 @@
     this.offsetcoords = new mpld3_Coordinates(this.props.offsetcoordinates, this.ax);
     this.datafunc = mpld3_path();
   }
-  mpld3_Path.prototype.nanFilter = function(d, i) {
-    return !isNaN(d[this.props.xindex]) && !isNaN(d[this.props.yindex]);
+  mpld3_Path.prototype.finiteFilter = function(d, i) {
+    return isFinite(this.pathcoords.x(d[this.props.xindex])) && isFinite(this.pathcoords.y(d[this.props.yindex]));
   };
   mpld3_Path.prototype.draw = function() {
-    this.datafunc.defined(this.nanFilter.bind(this)).x(function(d) {
+    this.datafunc.defined(this.finiteFilter.bind(this)).x(function(d) {
       return this.pathcoords.x(d[this.props.xindex]);
     }).y(function(d) {
       return this.pathcoords.y(d[this.props.yindex]);
@@ -516,9 +516,16 @@
     }
     return ret;
   };
+  mpld3_PathCollection.prototype.allFinite = function(d) {
+    if (d instanceof Array) {
+      return d.length == d.filter(isFinite).length;
+    } else {
+      return true;
+    }
+  };
   mpld3_PathCollection.prototype.draw = function() {
     this.group = this.ax.axes.append("svg:g");
-    this.pathsobj = this.group.selectAll("paths").data(this.offsets).enter().append("svg:path").attr("d", this.pathFunc.bind(this)).attr("class", "mpld3-path").attr("transform", this.transformFunc.bind(this)).attr("style", this.styleFunc.bind(this)).attr("vector-effect", "non-scaling-stroke");
+    this.pathsobj = this.group.selectAll("paths").data(this.offsets.filter(this.allFinite)).enter().append("svg:path").attr("d", this.pathFunc.bind(this)).attr("class", "mpld3-path").attr("transform", this.transformFunc.bind(this)).attr("style", this.styleFunc.bind(this)).attr("vector-effect", "non-scaling-stroke");
   };
   mpld3_PathCollection.prototype.elements = function(d) {
     return this.group.selectAll("path");

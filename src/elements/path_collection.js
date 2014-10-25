@@ -92,10 +92,18 @@ mpld3_PathCollection.prototype.styleFunc = function(d, i) {
     return ret
 };
 
+mpld3_PathCollection.prototype.allFinite = function(d) {
+    if (d instanceof Array) {
+	return (d.length == d.filter(isFinite).length);
+    } else {
+	return true;
+    }
+}
+
 mpld3_PathCollection.prototype.draw = function() {
     this.group = this.ax.axes.append("svg:g");
     this.pathsobj = this.group.selectAll("paths")
-        .data(this.offsets)
+    .data(this.offsets.filter(this.allFinite))
         .enter().append("svg:path")
         .attr("d", this.pathFunc.bind(this))
         .attr("class", "mpld3-path")
