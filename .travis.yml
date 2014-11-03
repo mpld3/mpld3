@@ -25,6 +25,9 @@ before_install:
   - export PATH=/home/travis/anaconda/bin:$PATH
   # Learned the hard way: miniconda is not always up-to-date with conda.
   - conda update --yes conda
+  # start Virtual X, so default matplotlib backend works
+  - "export DISPLAY=:99.0"
+  - "sh -e /etc/init.d/xvfb start"
 
 script:
   - nosetests mpld3
