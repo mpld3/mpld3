@@ -341,7 +341,7 @@
     });
     mpld3.insert_css("div#" + this.ax.fig.figid + " ." + this.cssclass + " text", {
       "font-family": "sans-serif",
-      "font-size": this.props.fontsize,
+      "font-size": this.props.fontsize + "px",
       fill: this.props.fontcolor,
       stroke: "none"
     });
