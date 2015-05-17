@@ -507,7 +507,7 @@ class InteractiveLegendPlugin(PluginBase):
             }
 
             obj.mpld3_elements = mpld3_elements;
-            obj.visible = false; // should become be setable from python side
+            obj.visible = true; // should become be setable from python side
             legendItems.push(obj);
         }
 
