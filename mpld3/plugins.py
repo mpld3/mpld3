@@ -323,7 +323,7 @@ class PointHTMLTooltip(PluginBase):
 
        obj.elements()
            .on("mouseover", function(d, i){
-			      if ($(objs[0][0]).css( "fill-opacity" ) > 0) {
+			      if ($(obj.elements()[0][0]).css( "fill-opacity" ) > 0 || $(obj.elements()[0][0]).css( "stroke-opacity" ) > 0) {
                               tooltip.html(labels[i])
                                      .style("visibility", "visible");} })
            .on("mousemove", function(d, i){
