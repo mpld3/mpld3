@@ -323,8 +323,9 @@ class PointHTMLTooltip(PluginBase):
 
        obj.elements()
            .on("mouseover", function(d, i){
+			      if ($(obj.elements()[0][0]).css( "fill-opacity" ) > 0 || $(obj.elements()[0][0]).css( "stroke-opacity" ) > 0) {
                               tooltip.html(labels[i])
-                                     .style("visibility", "visible");})
+                                     .style("visibility", "visible");} })
            .on("mousemove", function(d, i){
                   tooltip
                     .style("top", d3.event.pageY + this.props.voffset + "px")
@@ -507,7 +508,7 @@ class InteractiveLegendPlugin(PluginBase):
             }
 
             obj.mpld3_elements = mpld3_elements;
-            obj.visible = false; // should become be setable from python side
+            obj.visible = true; // should become be setable from python side
             legendItems.push(obj);
         }
 

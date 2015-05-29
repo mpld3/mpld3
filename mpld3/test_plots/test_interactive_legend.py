@@ -8,10 +8,10 @@ def create_plot():
     fig, ax = plt.subplots()
 
     x = np.linspace(0, 10, 100)
-    l1 = ax.plot(x, np.sin(x), label='sin', lw=3, alpha=0.2)
-    l2 = ax.plot(x, np.cos(x), label='cos', lw=3, alpha=0.2)
+    l1 = ax.plot(x, np.sin(x), label='sin', lw=3, alpha=1.0)
+    l2 = ax.plot(x, np.cos(x), label='cos', lw=3, alpha=1.0)
     l3 = ax.plot(x[::5], 0.5 * np.sin(x[::5] + 2), 'ob', label='dots',
-                 alpha=0.2)
+                 alpha=1.0)
 
     labels = ['sin', 'cos', 'dots']
     interactive_legend = plugins.InteractiveLegendPlugin([l1, l2, l3], labels)
