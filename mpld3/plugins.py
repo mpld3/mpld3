@@ -474,13 +474,15 @@ class InteractiveLegendPlugin(PluginBase):
     InteractiveLegend.prototype.constructor = InteractiveLegend;
     InteractiveLegend.prototype.requiredProps = ["element_ids", "labels"];
     InteractiveLegend.prototype.defaultProps = {"ax":null,
-                                                "alpha_unsel":1.0,}
+                                                "alpha_unsel":1.0,
+                                                "start_visible":true}
     function InteractiveLegend(fig, props){
         mpld3.Plugin.call(this, fig, props);
     };
 
     InteractiveLegend.prototype.draw = function(){
         var alpha_unsel = this.props.alpha_unsel;
+        var start_visible = this.props.start_visible;
 
         var legendItems = new Array();
         for(var i=0; i<this.props.labels.length; i++){
@@ -501,7 +503,7 @@ class InteractiveLegendPlugin(PluginBase):
             }
 
             obj.mpld3_elements = mpld3_elements;
-            obj.visible = true; // should become be setable from python side
+            obj.visible = start_visible; // should become be setable from python side
             legendItems.push(obj);
         }
 
@@ -598,7 +600,7 @@ class InteractiveLegendPlugin(PluginBase):
     """
 
     def __init__(self, plot_elements, labels, ax=None,
-                 alpha_unsel=0.2):
+                 alpha_unsel=0.2, start_visible=True):
 
         self.ax = ax
 
@@ -611,7 +613,8 @@ class InteractiveLegendPlugin(PluginBase):
                       "element_ids": mpld3_element_ids,
                       "labels": labels,
                       "ax": ax,
-                      "alpha_unsel": alpha_unsel}
+                      "alpha_unsel": alpha_unsel,
+                      "start_visible": start_visible}
 
     def _determine_mpld3ids(self, plot_elements):
         """
