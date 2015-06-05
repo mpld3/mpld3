@@ -449,6 +449,10 @@ class InteractiveLegendPlugin(PluginBase):
         the alpha value to multiply the plot_element(s) associated alpha
         with the legend item when the legend item is unselected.
         Default is 0.2
+    alpha_over : float, optional
+        the alpha value to multiply the plot_element(s) associated alpha
+        with the legend item when the legend item is overlaid.
+        Default is 1 (no effect), 1.5 works nicely !
     Examples
     --------
     >>> import matplotlib.pyplot as plt
@@ -460,10 +464,11 @@ class InteractiveLegendPlugin(PluginBase):
     >>> y = y.cumsum(1)
     >>> fig, ax = plt.subplots()
     >>> labels = ["a", "b", "c", "d", "e"]
-    >>> line_collections = ax.plot(x, y.T, lw=4, alpha=0.1)
+    >>> line_collections = ax.plot(x, y.T, lw=4, alpha=0.6)
     >>> interactive_legend = plugins.InteractiveLegendPlugin(line_collections,
     ...                                                      labels,
-    ...                                                      alpha_unsel=0.1)
+    ...                                                      alpha_unsel=0.2,
+    ...                                                      alpha_over=1.5)
     >>> plugins.connect(fig, interactive_legend)
     >>> fig_to_html(fig)
     """
