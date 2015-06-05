@@ -474,7 +474,8 @@ class InteractiveLegendPlugin(PluginBase):
     InteractiveLegend.prototype.constructor = InteractiveLegend;
     InteractiveLegend.prototype.requiredProps = ["element_ids", "labels"];
     InteractiveLegend.prototype.defaultProps = {"ax":null,
-                                                "alpha_unsel":1.0,
+                                                "alpha_unsel":0.2,
+                                                "alpha_over":1.0,
                                                 "start_visible":true}
     function InteractiveLegend(fig, props){
         mpld3.Plugin.call(this, fig, props);
@@ -482,6 +483,7 @@ class InteractiveLegendPlugin(PluginBase):
 
     InteractiveLegend.prototype.draw = function(){
         var alpha_unsel = this.props.alpha_unsel;
+        var alpha_over = this.props.alpha_over;
         var start_visible = this.props.start_visible;
 
         var legendItems = new Array();
@@ -522,7 +524,7 @@ class InteractiveLegendPlugin(PluginBase):
         // add the rectangles
         legend.selectAll("rect")
                 .data(legendItems)
-             .enter().append("rect")
+                .enter().append("rect")
                 .attr("height",10)
                 .attr("width", 25)
                 .attr("x",ax.width+10+ax.position[0])
@@ -532,7 +534,7 @@ class InteractiveLegendPlugin(PluginBase):
                 .attr("class", "legend-box")
                 .style("fill", function(d, i) {
                             return d.visible ? get_color(d) : "white";})
-                .on("click", click);
+                .on("click", click).on('mouseover', over).on('mouseout', out);
 
         // add the labels
         legend.selectAll("text")
@@ -560,7 +562,7 @@ class InteractiveLegendPlugin(PluginBase):
                     var current_alpha_unsel= current_alpha * alpha_unsel;
                     d3.select(d.mpld3_elements[i].path[0][0])
                         .style("stroke-opacity",
-                                d.visible ? current_alpha  : current_alpha_unsel);
+                                d.visible ? current_alpha : current_alpha_unsel);
                 } else if((type=="mpld3_PathCollection")||
                          (type=="mpld3_Markers")){
                     var current_alpha = d.mpld3_elements[i].props.alphas[0];
@@ -575,6 +577,63 @@ class InteractiveLegendPlugin(PluginBase):
                 }
             }
         };
+
+       // specify the action on legend overlay 
+       function over(d,i){
+
+                for(var i=0; i<d.mpld3_elements.length; i++){
+                    var type = d.mpld3_elements[i].constructor.name;
+
+                    if(type =="mpld3_Line"){
+                        var current_alpha = d.mpld3_elements[i].props.alpha;
+                        var current_alpha_over= current_alpha * alpha_over;
+                        d3.select(d.mpld3_elements[i].path[0][0])
+                            .style("stroke-opacity",
+                                    d.visible ? current_alpha_over : current_alpha)
+                        .style("stroke-width", alpha_over * d.mpld3_elements[i].props.edgewidth);
+                    } else if((type=="mpld3_PathCollection")||
+                             (type=="mpld3_Markers")){
+                        var current_alpha = d.mpld3_elements[i].props.alphas[0];
+                        var current_alpha_over = current_alpha * alpha_over;
+                        d3.selectAll(d.mpld3_elements[i].pathsobj[0])
+                            .style("stroke-opacity",
+                                    d.visible ? current_alpha_over : current_alpha)
+                            .style("fill-opacity",
+                                    d.visible ? current_alpha_over : current_alpha);
+                    } else{
+                        console.log(type + " not yet supported");
+                    }
+                }
+        };
+
+       // specify the action on legend overlay 
+       function out(d,i){
+
+                for(var i=0; i<d.mpld3_elements.length; i++){
+                    var type = d.mpld3_elements[i].constructor.name;
+
+                    if(type =="mpld3_Line"){
+                        var current_alpha = d.mpld3_elements[i].props.alpha;
+                        var current_alpha_unsel = current_alpha * alpha_unsel;
+                        d3.select(d.mpld3_elements[i].path[0][0])
+                            .style("stroke-opacity",
+                                    d.visible ? current_alpha : current_alpha_unsel)
+                        .style("stroke-width", d.mpld3_elements[i].props.edgewidth);
+                    } else if((type=="mpld3_PathCollection")||
+                             (type=="mpld3_Markers")){
+                        var current_alpha = d.mpld3_elements[i].props.alphas[0];
+                        var current_alpha_over = current_alpha * alpha_unsel;
+                        d3.selectAll(d.mpld3_elements[i].pathsobj[0])
+                            .style("stroke-opacity",
+                                    d.visible ? current_alpha : current_alpha_unsel)
+                            .style("fill-opacity",
+                                    d.visible ? current_alpha : current_alpha_unsel);
+                    } else{
+                        console.log(type + " not yet supported");
+                    }
+                }
+        };
+
 
         // helper function for determining the color of the rectangles
         function get_color(d){
@@ -600,7 +659,7 @@ class InteractiveLegendPlugin(PluginBase):
     """
 
     def __init__(self, plot_elements, labels, ax=None,
-                 alpha_unsel=0.2, start_visible=True):
+                 alpha_unsel=0.2, alpha_over=1., start_visible=True):
 
         self.ax = ax
 
@@ -614,6 +673,7 @@ class InteractiveLegendPlugin(PluginBase):
                       "labels": labels,
                       "ax": ax,
                       "alpha_unsel": alpha_unsel,
+                      "alpha_over": alpha_over,
                       "start_visible": start_visible}
 
     def _determine_mpld3ids(self, plot_elements):
