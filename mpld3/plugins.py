@@ -445,12 +445,8 @@ class InteractiveLegendPlugin(PluginBase):
         the ax to which the legend belongs. Default is the first
         axes. The legend will be plotted to the right of the specified
         axes
-    alpha_sel : float, optional
-        the alpha value to apply to the plot_element(s) associated
-        with the legend item when the legend item is selected.
-        Default is 1.0
     alpha_unsel : float, optional
-        the alpha value to apply to the plot_element(s) associated
+        the alpha value to multiply the plot_element(s) associated alpha
         with the legend item when the legend item is unselected.
         Default is 0.2
     Examples
@@ -478,14 +474,12 @@ class InteractiveLegendPlugin(PluginBase):
     InteractiveLegend.prototype.constructor = InteractiveLegend;
     InteractiveLegend.prototype.requiredProps = ["element_ids", "labels"];
     InteractiveLegend.prototype.defaultProps = {"ax":null,
-                                                "alpha_sel":1.0,
-                                                "alpha_unsel":0}
+                                                "alpha_unsel":1.0,}
     function InteractiveLegend(fig, props){
         mpld3.Plugin.call(this, fig, props);
     };
 
     InteractiveLegend.prototype.draw = function(){
-        var alpha_sel = this.props.alpha_sel;
         var alpha_unsel = this.props.alpha_unsel;
 
         var legendItems = new Array();
@@ -507,7 +501,7 @@ class InteractiveLegendPlugin(PluginBase):
             }
 
             obj.mpld3_elements = mpld3_elements;
-            obj.visible = false; // should become be setable from python side
+            obj.visible = true; // should become be setable from python side
             legendItems.push(obj);
         }
 
@@ -558,17 +552,22 @@ class InteractiveLegendPlugin(PluginBase):
 
             for(var i=0; i<d.mpld3_elements.length; i++){
                 var type = d.mpld3_elements[i].constructor.name;
+
                 if(type =="mpld3_Line"){
+                    var current_alpha = d.mpld3_elements[i].props.alpha;
+                    var current_alpha_unsel= current_alpha * alpha_unsel;
                     d3.select(d.mpld3_elements[i].path[0][0])
                         .style("stroke-opacity",
-                                d.visible ? alpha_sel : alpha_unsel);
+                                d.visible ? current_alpha  : current_alpha_unsel);
                 } else if((type=="mpld3_PathCollection")||
                          (type=="mpld3_Markers")){
+                    var current_alpha = d.mpld3_elements[i].props.alphas[0];
+                    var current_alpha_unsel = current_alpha * alpha_unsel;
                     d3.selectAll(d.mpld3_elements[i].pathsobj[0])
                         .style("stroke-opacity",
-                                d.visible ? alpha_sel : alpha_unsel)
+                                d.visible ? current_alpha : current_alpha_unsel)
                         .style("fill-opacity",
-                                d.visible ? alpha_sel : alpha_unsel);
+                                d.visible ? current_alpha : current_alpha_unsel);
                 } else{
                     console.log(type + " not yet supported");
                 }
@@ -599,7 +598,7 @@ class InteractiveLegendPlugin(PluginBase):
     """
 
     def __init__(self, plot_elements, labels, ax=None,
-                 alpha_sel=1, alpha_unsel=0.2):
+                 alpha_unsel=0.2):
 
         self.ax = ax
 
@@ -612,7 +611,6 @@ class InteractiveLegendPlugin(PluginBase):
                       "element_ids": mpld3_element_ids,
                       "labels": labels,
                       "ax": ax,
-                      "alpha_sel": alpha_sel,
                       "alpha_unsel": alpha_unsel}
 
     def _determine_mpld3ids(self, plot_elements):
