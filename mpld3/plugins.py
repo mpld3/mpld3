@@ -513,6 +513,7 @@ class InteractiveLegendPlugin(PluginBase):
             obj.mpld3_elements = mpld3_elements;
             obj.visible = start_visible; // should become be setable from python side
             legendItems.push(obj);
+            set_alphas(obj, false);
         }
 
         // determine the axes with which this legend is associated
@@ -544,13 +545,14 @@ class InteractiveLegendPlugin(PluginBase):
 
         // add the labels
         legend.selectAll("text")
-                .data(legendItems)
-            .enter().append("text")
+              .data(legendItems)
+              .enter().append("text")
               .attr("x", function (d) {
                             return ax.width+10+ax.position[0] + 40;})
               .attr("y", function(d,i) {
                             return ax.position[1]+ i * 25;})
               .text(function(d) { return d.label });
+
 
         // specify the action on click
         function click(d,i){
@@ -559,85 +561,48 @@ class InteractiveLegendPlugin(PluginBase):
               .style("fill",function(d, i) {
                 return d.visible ? get_color(d) : "white";
               })
+            set_alphas(d, false);
 
+        };
+
+        // specify the action on legend overlay 
+        function over(d,i){
+             set_alphas(d, true);
+        };
+
+        // specify the action on legend overlay 
+        function out(d,i){
+             set_alphas(d, false);
+        };
+
+        // helper function for setting alphas
+        function set_alphas(d, is_over){
             for(var i=0; i<d.mpld3_elements.length; i++){
                 var type = d.mpld3_elements[i].constructor.name;
 
                 if(type =="mpld3_Line"){
                     var current_alpha = d.mpld3_elements[i].props.alpha;
-                    var current_alpha_unsel= current_alpha * alpha_unsel;
+                    var current_alpha_unsel = current_alpha * alpha_unsel;
+                    var current_alpha_over = current_alpha * alpha_over;
                     d3.select(d.mpld3_elements[i].path[0][0])
-                        .style("stroke-opacity",
-                                d.visible ? current_alpha : current_alpha_unsel);
+                        .style("stroke-opacity", is_over ? current_alpha_over :
+                                                (d.visible ? current_alpha : current_alpha_unsel))
+                        .style("stroke-width", is_over ? 
+                                alpha_over * d.mpld3_elements[i].props.edgewidth : d.mpld3_elements[i].props.edgewidth);
                 } else if((type=="mpld3_PathCollection")||
                          (type=="mpld3_Markers")){
                     var current_alpha = d.mpld3_elements[i].props.alphas[0];
                     var current_alpha_unsel = current_alpha * alpha_unsel;
+                    var current_alpha_over = current_alpha * alpha_over;
                     d3.selectAll(d.mpld3_elements[i].pathsobj[0])
-                        .style("stroke-opacity",
-                                d.visible ? current_alpha : current_alpha_unsel)
-                        .style("fill-opacity",
-                                d.visible ? current_alpha : current_alpha_unsel);
+                        .style("stroke-opacity", is_over ? current_alpha_over :
+                                                (d.visible ? current_alpha : current_alpha_unsel))
+                        .style("fill-opacity", is_over ? current_alpha_over :
+                                                (d.visible ? current_alpha : current_alpha_unsel));
                 } else{
                     console.log(type + " not yet supported");
                 }
             }
-        };
-
-       // specify the action on legend overlay 
-       function over(d,i){
-
-                for(var i=0; i<d.mpld3_elements.length; i++){
-                    var type = d.mpld3_elements[i].constructor.name;
-
-                    if(type =="mpld3_Line"){
-                        var current_alpha = d.mpld3_elements[i].props.alpha;
-                        var current_alpha_over= current_alpha * alpha_over;
-                        d3.select(d.mpld3_elements[i].path[0][0])
-                            .style("stroke-opacity",
-                                    d.visible ? current_alpha_over : current_alpha)
-                        .style("stroke-width", alpha_over * d.mpld3_elements[i].props.edgewidth);
-                    } else if((type=="mpld3_PathCollection")||
-                             (type=="mpld3_Markers")){
-                        var current_alpha = d.mpld3_elements[i].props.alphas[0];
-                        var current_alpha_over = current_alpha * alpha_over;
-                        d3.selectAll(d.mpld3_elements[i].pathsobj[0])
-                            .style("stroke-opacity",
-                                    d.visible ? current_alpha_over : current_alpha)
-                            .style("fill-opacity",
-                                    d.visible ? current_alpha_over : current_alpha);
-                    } else{
-                        console.log(type + " not yet supported");
-                    }
-                }
-        };
-
-       // specify the action on legend overlay 
-       function out(d,i){
-
-                for(var i=0; i<d.mpld3_elements.length; i++){
-                    var type = d.mpld3_elements[i].constructor.name;
-
-                    if(type =="mpld3_Line"){
-                        var current_alpha = d.mpld3_elements[i].props.alpha;
-                        var current_alpha_unsel = current_alpha * alpha_unsel;
-                        d3.select(d.mpld3_elements[i].path[0][0])
-                            .style("stroke-opacity",
-                                    d.visible ? current_alpha : current_alpha_unsel)
-                        .style("stroke-width", d.mpld3_elements[i].props.edgewidth);
-                    } else if((type=="mpld3_PathCollection")||
-                             (type=="mpld3_Markers")){
-                        var current_alpha = d.mpld3_elements[i].props.alphas[0];
-                        var current_alpha_over = current_alpha * alpha_unsel;
-                        d3.selectAll(d.mpld3_elements[i].pathsobj[0])
-                            .style("stroke-opacity",
-                                    d.visible ? current_alpha : current_alpha_unsel)
-                            .style("fill-opacity",
-                                    d.visible ? current_alpha : current_alpha_unsel);
-                    } else{
-                        console.log(type + " not yet supported");
-                    }
-                }
         };
 
 
