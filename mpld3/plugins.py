@@ -454,6 +454,8 @@ class InteractiveLegendPlugin(PluginBase):
         the alpha value to multiply the plot_element(s) associated alpha
         with the legend item when the legend item is overlaid.
         Default is 1 (no effect), 1.5 works nicely !
+    start_visible : boolean, optional
+        defines if objects should start selected on not.
     Examples
     --------
     >>> import matplotlib.pyplot as plt
@@ -469,7 +471,8 @@ class InteractiveLegendPlugin(PluginBase):
     >>> interactive_legend = plugins.InteractiveLegendPlugin(line_collections,
     ...                                                      labels,
     ...                                                      alpha_unsel=0.2,
-    ...                                                      alpha_over=1.5)
+    ...                                                      alpha_over=1.5,
+    ...                                                      start_visible=True)
     >>> plugins.connect(fig, interactive_legend)
     >>> fig_to_html(fig)
     """
@@ -532,15 +535,15 @@ class InteractiveLegendPlugin(PluginBase):
         legend.selectAll("rect")
                 .data(legendItems)
                 .enter().append("rect")
-                .attr("height",10)
+                .attr("height", 10)
                 .attr("width", 25)
-                .attr("x",ax.width+10+ax.position[0])
+                .attr("x", ax.width + ax.position[0] + 25)
                 .attr("y",function(d,i) {
-                            return ax.position[1]+ i * 25 - 10;})
+                           return ax.position[1] + i * 25 + 10;})
                 .attr("stroke", get_color)
                 .attr("class", "legend-box")
                 .style("fill", function(d, i) {
-                            return d.visible ? get_color(d) : "white";})
+                           return d.visible ? get_color(d) : "white";})
                 .on("click", click).on('mouseover', over).on('mouseout', out);
 
         // add the labels
@@ -548,9 +551,9 @@ class InteractiveLegendPlugin(PluginBase):
               .data(legendItems)
               .enter().append("text")
               .attr("x", function (d) {
-                            return ax.width+10+ax.position[0] + 40;})
+                           return ax.width + ax.position[0] + 25 + 40;})
               .attr("y", function(d,i) {
-                            return ax.position[1]+ i * 25;})
+                           return ax.position[1] + i * 25 + 10 + 10 - 1;})
               .text(function(d) { return d.label });
 
 
