@@ -323,8 +323,9 @@ class PointHTMLTooltip(PluginBase):
 
        obj.elements()
            .on("mouseover", function(d, i){
+			      if ($(obj.elements()[0][0]).css( "fill-opacity" ) > 0 || $(obj.elements()[0][0]).css( "stroke-opacity" ) > 0) {
                               tooltip.html(labels[i])
-                                     .style("visibility", "visible");})
+                                     .style("visibility", "visible");} })
            .on("mousemove", function(d, i){
                   tooltip
                     .style("top", d3.event.pageY + this.props.voffset + "px")
@@ -445,14 +446,16 @@ class InteractiveLegendPlugin(PluginBase):
         the ax to which the legend belongs. Default is the first
         axes. The legend will be plotted to the right of the specified
         axes
-    alpha_sel : float, optional
-        the alpha value to apply to the plot_element(s) associated
-        with the legend item when the legend item is selected.
-        Default is 1.0
     alpha_unsel : float, optional
-        the alpha value to apply to the plot_element(s) associated
+        the alpha value to multiply the plot_element(s) associated alpha
         with the legend item when the legend item is unselected.
         Default is 0.2
+    alpha_over : float, optional
+        the alpha value to multiply the plot_element(s) associated alpha
+        with the legend item when the legend item is overlaid.
+        Default is 1 (no effect), 1.5 works nicely !
+    start_visible : boolean, optional
+        defines if objects should start selected on not.
     Examples
     --------
     >>> import matplotlib.pyplot as plt
@@ -464,10 +467,12 @@ class InteractiveLegendPlugin(PluginBase):
     >>> y = y.cumsum(1)
     >>> fig, ax = plt.subplots()
     >>> labels = ["a", "b", "c", "d", "e"]
-    >>> line_collections = ax.plot(x, y.T, lw=4, alpha=0.1)
+    >>> line_collections = ax.plot(x, y.T, lw=4, alpha=0.6)
     >>> interactive_legend = plugins.InteractiveLegendPlugin(line_collections,
     ...                                                      labels,
-    ...                                                      alpha_unsel=0.1)
+    ...                                                      alpha_unsel=0.2,
+    ...                                                      alpha_over=1.5,
+    ...                                                      start_visible=True)
     >>> plugins.connect(fig, interactive_legend)
     >>> fig_to_html(fig)
     """
@@ -478,15 +483,17 @@ class InteractiveLegendPlugin(PluginBase):
     InteractiveLegend.prototype.constructor = InteractiveLegend;
     InteractiveLegend.prototype.requiredProps = ["element_ids", "labels"];
     InteractiveLegend.prototype.defaultProps = {"ax":null,
-                                                "alpha_sel":1.0,
-                                                "alpha_unsel":0}
+                                                "alpha_unsel":0.2,
+                                                "alpha_over":1.0,
+                                                "start_visible":true}
     function InteractiveLegend(fig, props){
         mpld3.Plugin.call(this, fig, props);
     };
 
     InteractiveLegend.prototype.draw = function(){
-        var alpha_sel = this.props.alpha_sel;
         var alpha_unsel = this.props.alpha_unsel;
+        var alpha_over = this.props.alpha_over;
+        var start_visible = this.props.start_visible;
 
         var legendItems = new Array();
         for(var i=0; i<this.props.labels.length; i++){
@@ -507,8 +514,9 @@ class InteractiveLegendPlugin(PluginBase):
             }
 
             obj.mpld3_elements = mpld3_elements;
-            obj.visible = false; // should become be setable from python side
+            obj.visible = start_visible; // should become be setable from python side
             legendItems.push(obj);
+            set_alphas(obj, false);
         }
 
         // determine the axes with which this legend is associated
@@ -526,27 +534,28 @@ class InteractiveLegendPlugin(PluginBase):
         // add the rectangles
         legend.selectAll("rect")
                 .data(legendItems)
-             .enter().append("rect")
-                .attr("height",10)
+                .enter().append("rect")
+                .attr("height", 10)
                 .attr("width", 25)
-                .attr("x",ax.width+10+ax.position[0])
+                .attr("x", ax.width + ax.position[0] + 25)
                 .attr("y",function(d,i) {
-                            return ax.position[1]+ i * 25 - 10;})
+                           return ax.position[1] + i * 25 + 10;})
                 .attr("stroke", get_color)
                 .attr("class", "legend-box")
                 .style("fill", function(d, i) {
-                            return d.visible ? get_color(d) : "white";})
-                .on("click", click);
+                           return d.visible ? get_color(d) : "white";})
+                .on("click", click).on('mouseover', over).on('mouseout', out);
 
         // add the labels
         legend.selectAll("text")
-                .data(legendItems)
-            .enter().append("text")
+              .data(legendItems)
+              .enter().append("text")
               .attr("x", function (d) {
-                            return ax.width+10+ax.position[0] + 40;})
+                           return ax.width + ax.position[0] + 25 + 40;})
               .attr("y", function(d,i) {
-                            return ax.position[1]+ i * 25;})
+                           return ax.position[1] + i * 25 + 10 + 10 - 1;})
               .text(function(d) { return d.label });
+
 
         // specify the action on click
         function click(d,i){
@@ -555,25 +564,50 @@ class InteractiveLegendPlugin(PluginBase):
               .style("fill",function(d, i) {
                 return d.visible ? get_color(d) : "white";
               })
+            set_alphas(d, false);
 
+        };
+
+        // specify the action on legend overlay 
+        function over(d,i){
+             set_alphas(d, true);
+        };
+
+        // specify the action on legend overlay 
+        function out(d,i){
+             set_alphas(d, false);
+        };
+
+        // helper function for setting alphas
+        function set_alphas(d, is_over){
             for(var i=0; i<d.mpld3_elements.length; i++){
                 var type = d.mpld3_elements[i].constructor.name;
+
                 if(type =="mpld3_Line"){
+                    var current_alpha = d.mpld3_elements[i].props.alpha;
+                    var current_alpha_unsel = current_alpha * alpha_unsel;
+                    var current_alpha_over = current_alpha * alpha_over;
                     d3.select(d.mpld3_elements[i].path[0][0])
-                        .style("stroke-opacity",
-                                d.visible ? alpha_sel : alpha_unsel);
+                        .style("stroke-opacity", is_over ? current_alpha_over :
+                                                (d.visible ? current_alpha : current_alpha_unsel))
+                        .style("stroke-width", is_over ? 
+                                alpha_over * d.mpld3_elements[i].props.edgewidth : d.mpld3_elements[i].props.edgewidth);
                 } else if((type=="mpld3_PathCollection")||
                          (type=="mpld3_Markers")){
+                    var current_alpha = d.mpld3_elements[i].props.alphas[0];
+                    var current_alpha_unsel = current_alpha * alpha_unsel;
+                    var current_alpha_over = current_alpha * alpha_over;
                     d3.selectAll(d.mpld3_elements[i].pathsobj[0])
-                        .style("stroke-opacity",
-                                d.visible ? alpha_sel : alpha_unsel)
-                        .style("fill-opacity",
-                                d.visible ? alpha_sel : alpha_unsel);
+                        .style("stroke-opacity", is_over ? current_alpha_over :
+                                                (d.visible ? current_alpha : current_alpha_unsel))
+                        .style("fill-opacity", is_over ? current_alpha_over :
+                                                (d.visible ? current_alpha : current_alpha_unsel));
                 } else{
                     console.log(type + " not yet supported");
                 }
             }
         };
+
 
         // helper function for determining the color of the rectangles
         function get_color(d){
@@ -599,7 +633,7 @@ class InteractiveLegendPlugin(PluginBase):
     """
 
     def __init__(self, plot_elements, labels, ax=None,
-                 alpha_sel=1, alpha_unsel=0.2):
+                 alpha_unsel=0.2, alpha_over=1., start_visible=True):
 
         self.ax = ax
 
@@ -612,8 +646,9 @@ class InteractiveLegendPlugin(PluginBase):
                       "element_ids": mpld3_element_ids,
                       "labels": labels,
                       "ax": ax,
-                      "alpha_sel": alpha_sel,
-                      "alpha_unsel": alpha_unsel}
+                      "alpha_unsel": alpha_unsel,
+                      "alpha_over": alpha_over,
+                      "start_visible": start_visible}
 
     def _determine_mpld3ids(self, plot_elements):
         """
