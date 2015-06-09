@@ -12,6 +12,7 @@ import numpy as np
 import pandas as pd
 import mpld3
 from mpld3 import plugins
+np.random.seed(9615)
 
 # generate df
 N = 100
@@ -29,8 +30,10 @@ for key, val in df.iteritems():
                     color=l.get_color(), alpha=.4)
 
 # define interactive legend
+
 handles, labels = ax.get_legend_handles_labels() # return lines and labels
-interactive_legend = plugins.InteractiveLegendPlugin(zip(handles, ax.collections),
+interactive_legend = plugins.InteractiveLegendPlugin(zip(handles,
+                                                         ax.collections),
                                                      labels,
                                                      alpha_unsel=0.5,
                                                      alpha_over=1.5, 
