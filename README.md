@@ -13,7 +13,7 @@ available in the ``notebooks`` directory of this repository.
 
 [![version status](https://pypip.in/v/mpld3/badge.png)](https://pypi.python.org/pypi/mpld3)
 [![downloads](https://pypip.in/d/mpld3/badge.png)](https://pypi.python.org/pypi/mpld3)
-[![build status](https://travis-ci.org/jakevdp/mpld3.png?branch=master)](https://travis-ci.org/jakevdp/mpld3)
+[![build status](https://travis-ci.org/jakevdp/mpld3.svg?branch=master)](https://travis-ci.org/jakevdp/mpld3)
 
 
 About
