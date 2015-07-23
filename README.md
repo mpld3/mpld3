@@ -11,9 +11,9 @@ You may also see the [blog post](http://jakevdp.github.io/blog/2013/12/19/a-d3-v
 [IPython notebook examples](http://nbviewer.ipython.org/github/jakevdp/mpld3/tree/master/notebooks/)
 available in the ``notebooks`` directory of this repository.
 
-[![version status](https://pypip.in/v/mpld3/badge.png)](https://pypi.python.org/pypi/mpld3)
-[![downloads](https://pypip.in/d/mpld3/badge.png)](https://pypi.python.org/pypi/mpld3)
-[![build status](https://travis-ci.org/jakevdp/mpld3.png?branch=master)](https://travis-ci.org/jakevdp/mpld3)
+[![version status](https://img.shields.io/pypi/v/mpld3.svg)](https://pypi.python.org/pypi/mpld3)
+[![downloads](https://img.shields.io/pypi/dm/mpld3.svg)](https://pypi.python.org/pypi/mpld3)
+[![build status](https://travis-ci.org/jakevdp/mpld3.svg?branch=master)](https://travis-ci.org/jakevdp/mpld3)
 
 
 About
