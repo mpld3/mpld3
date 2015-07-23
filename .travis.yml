@@ -1,3 +1,4 @@
+sudo: false
 language: python
 
 python:
@@ -15,7 +16,6 @@ install:
 
 before_install:
   # install npm packages first, to use system python
-  - sudo apt-get install npm
   - npm config set python python2.7
   - npm install d3 vows smash jsdom
   # then install python version to test
