@@ -91,6 +91,18 @@ For concreteness, we'll assume we're releasing version 0.3
     ```
     and make sure everything looks as expected.
 
+11. Update the website documentation:
+    ```
+    $ cd doc
+    $ make clean
+    $ make html
+    $ cp -r _build/html/* ../../mpld3.github.io/
+    $ cd ../../mpld3.github.io/
+    $ git add .
+    $ git commit -m "Update website for version 0.3"
+    $ git push origin master
+    ```
+
 11. Now we need to switch the development version.
 
     - Open ``mpld3/__about__.py`` and change the version to ``0.4.dev1``.
