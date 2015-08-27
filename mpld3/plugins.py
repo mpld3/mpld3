@@ -454,7 +454,7 @@ class InteractiveLegendPlugin(PluginBase):
         the alpha value to multiply the plot_element(s) associated alpha
         with the legend item when the legend item is overlaid.
         Default is 1 (no effect), 1.5 works nicely !
-    start_visible : boolean, optional
+    start_visible : boolean, optional (could be a list of booleans)
         defines if objects should start selected on not.
     Examples
     --------
@@ -493,7 +493,6 @@ class InteractiveLegendPlugin(PluginBase):
     InteractiveLegend.prototype.draw = function(){
         var alpha_unsel = this.props.alpha_unsel;
         var alpha_over = this.props.alpha_over;
-        var start_visible = this.props.start_visible;
 
         var legendItems = new Array();
         for(var i=0; i<this.props.labels.length; i++){
@@ -514,7 +513,7 @@ class InteractiveLegendPlugin(PluginBase):
             }
 
             obj.mpld3_elements = mpld3_elements;
-            obj.visible = start_visible; // should become be setable from python side
+            obj.visible = this.props.start_visible[i]; // should become be setable from python side
             legendItems.push(obj);
             set_alphas(obj, false);
         }
@@ -639,6 +638,13 @@ class InteractiveLegendPlugin(PluginBase):
 
         if ax:
             ax = get_id(ax)
+
+        # start_visible could be a list
+        if isinstance(start_visible, bool):
+            start_visible = [start_visible] * len(labels)
+        elif not len(start_visible) == len(labels):
+            raise ValueError("{} out of {} visible params has been set"
+                             .format(len(start_visible), len(labels)))     
 
         mpld3_element_ids = self._determine_mpld3ids(plot_elements)
         self.mpld3_element_ids = mpld3_element_ids
