@@ -688,4 +688,104 @@ class InteractiveLegendPlugin(PluginBase):
 
         return mpld3_element_ids
 
+
+class PointClickableHTMLTooltip(PluginBase):
+    """A plugin for pop-up windows with data with rich HTML
+
+    Parameters
+    ----------
+    points : matplotlib Collection object
+        The figure element to apply the tooltip to
+    labels : list
+        The labels for each point in points, as strings of unescaped HTML.
+    targets : list
+        The target data or rich HTML to be displayed when each collection element is clicked
+    hoffset, voffset : integer, optional
+        The number of pixels to offset the tooltip text.  Default is
+        hoffset = 0, voffset = 10
+    css : str, optional
+        css to be included, for styling the label html and target data/tables, if desired
+    Examples
+    --------
+    >>> import matplotlib.pyplot as plt
+    >>> from mpld3 import plugins
+    >>> fig, ax = plt.subplots(1,1)
+    >>> xx = yy = range(10)
+    >>> scat = ax.scatter(xx, range(10))
+    >>> targets = map(lambda (x, y): "<marquee>It works!<br><h1>{}, {}</h1></marquee>".format(x, y),
+    >>>               zip(xx, yy))
+    >>> labels = map(lambda (x, y): "{}, {}".format(x,y), zip(xx, yy))
+    >>> from mpld3.plugins import PointClickableHTMLTooltip
+    >>> plugins.connect(fig, PointClickableHTMLTooltip(scat, labels=labels, targets=targets))
+
+    """
+
+    JAVASCRIPT="""
+    mpld3.register_plugin("clickablehtmltooltip", PointClickableHTMLTooltip);
+    PointClickableHTMLTooltip.prototype = Object.create(mpld3.Plugin.prototype);
+    PointClickableHTMLTooltip.prototype.constructor = PointClickableHTMLTooltip;
+    PointClickableHTMLTooltip.prototype.requiredProps = ["id"];
+    PointClickableHTMLTooltip.prototype.defaultProps = {labels:null,
+                                                 targets:null,
+                                                 hoffset:0,
+                                                 voffset:10};
+    function PointClickableHTMLTooltip(fig, props){
+        mpld3.Plugin.call(this, fig, props);
+    };
+
+    PointClickableHTMLTooltip.prototype.draw = function(){
+       var obj = mpld3.get_element(this.props.id);
+       var labels = this.props.labels;
+       var targets = this.props.targets;
+
+       var tooltip = d3.select("body").append("div")
+                    .attr("class", "mpld3-tooltip")
+                    .style("position", "absolute")
+                    .style("z-index", "10")
+                    .style("visibility", "hidden");
+
+       obj.elements()
+           .on("mouseover", function(d, i){
+                  if ($(obj.elements()[0][0]).css( "fill-opacity" ) > 0 || $(obj.elements()[0][0]).css( "stroke-opacity" ) > 0) {
+                              tooltip.html(labels[i])
+                                     .style("visibility", "visible");
+                              } })
+
+           .on("mousedown", function(d, i){
+                              window.open().document.write(targets[i]);
+                               })
+           .on("mousemove", function(d, i){
+                  tooltip
+                    .style("top", d3.event.pageY + this.props.voffset + "px")
+                    .style("left",d3.event.pageX + this.props.hoffset + "px");
+                 }.bind(this))
+           .on("mouseout",  function(d, i){
+                           tooltip.style("visibility", "hidden");});
+    };
+    """
+    def __init__(self, points, labels=None, targets=None,
+                 hoffset=2, voffset=-6, css=None):
+        self.points = points
+        self.labels = labels
+        self.targets = targets
+        self.voffset = voffset
+        self.hoffset = hoffset
+        self.css_ = css or ""
+        if targets is not None:
+            styled_targets = map(lambda x: self.css_ + x, targets)
+        else:
+            styled_targets = None
+
+
+        if isinstance(points, matplotlib.lines.Line2D):
+            suffix = "pts"
+        else:
+            suffix = None
+        self.dict_ = {"type": "clickablehtmltooltip",
+                      "id": get_id(points, suffix),
+                      "labels": labels,
+                      "targets": styled_targets,
+                      "hoffset": hoffset,
+                      "voffset": voffset}
+
 DEFAULT_PLUGINS = [Reset(), Zoom(), BoxZoom()]
