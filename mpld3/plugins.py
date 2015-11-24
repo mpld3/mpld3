@@ -788,4 +788,54 @@ class PointClickableHTMLTooltip(PluginBase):
                       "hoffset": hoffset,
                       "voffset": voffset}
 
+
+class MouseXPosition(PluginBase):
+    """Like MousePosition, but only show the X coordinate"""
+
+    JAVASCRIPT="""
+  mpld3.register_plugin("mousexposition", MouseXPositionPlugin);
+  MouseXPositionPlugin.prototype = Object.create(mpld3.Plugin.prototype);
+  MouseXPositionPlugin.prototype.constructor = MouseXPositionPlugin;
+  MouseXPositionPlugin.prototype.requiredProps = [];
+  MouseXPositionPlugin.prototype.defaultProps = {
+    fontsize: 12,
+    fmt: "0d"
+  };
+  function MouseXPositionPlugin(fig, props) {
+    mpld3.Plugin.call(this, fig, props);
+  }
+  MouseXPositionPlugin.prototype.draw = function() {
+    var fig = this.fig;
+    var fmt = d3.format(this.props.fmt);
+    var coords = fig.canvas.append("text").attr("class", "mpld3-coordinates").style("text-anchor", "end").style("font-size", this.props.fontsize).attr("x", this.fig.width - 5).attr("y", this.fig.height - 5);
+    for (var i = 0; i < this.fig.axes.length; i++) {
+      var update_coords = function() {
+        var ax = fig.axes[i];
+        return function() {
+          var pos = d3.mouse(this), x = ax.x.invert(pos[0]), y = ax.y.invert(pos[1]);
+          coords.text(fmt(x));
+        };
+      }();
+      fig.axes[i].baseaxes.on("mousemove", update_coords).on("mouseout", function() {
+        coords.text("");
+      });
+    }
+  };"""
+    """A Plugin to display coordinates for the current mouse position
+
+    Example
+    -------
+    >>> import matplotlib.pyplot as plt
+    >>> from mpld3 import fig_to_html, plugins
+    >>> fig, ax = plt.subplots()
+    >>> points = ax.plot(range(10), 'o')
+    >>> plugins.connect(fig, plugins.MouseXPosition())
+    >>> fig_to_html(fig)
+    """
+
+    def __init__(self, fontsize=12, fmt="8.0f"):
+        self.dict_ = {"type": "mousexposition",
+                      "fontsize": fontsize,
+                      "fmt": fmt}
+
 DEFAULT_PLUGINS = [Reset(), Zoom(), BoxZoom()]
