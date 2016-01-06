@@ -101,7 +101,7 @@ function mpld3_Axes(fig, props) {
     }
 
     if (this.props.yscale === "date") {
-        this.x = mpld3.multiscale(d3.scale.linear()
+        this.y = mpld3.multiscale(d3.scale.linear()
                                     .domain(this.props.ylim)
                                     .range(this.props.ydomain.map(Number)),
                                   this.ydom);
