@@ -7,6 +7,7 @@ import mpld3
 
 def create_plot():
     positions, labels = [0, 1, 10], ['A','B','C']
+    plt.yticks(positions)
     plt.xticks(positions, labels)
     return plt.gcf()
 
