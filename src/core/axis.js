@@ -58,7 +58,7 @@ mpld3_Axis.prototype.getGrid = function() {
 };
 
 mpld3_Axis.prototype.draw = function() {
-    if (this.props.tickvalues) { // FIXME: store the tick format type explicitly
+    if (this.props.tickvalues && this.props.tickformat) { // FIXME: store the tick format type explicitly
 	tick_labels = d3.scale.threshold()
 	                  .domain(this.props.tickvalues.slice(1))
 	                  .range(this.props.tickformat);
