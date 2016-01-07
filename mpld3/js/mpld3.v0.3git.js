@@ -327,7 +327,7 @@
     return new mpld3_Grid(this.ax, gridprop);
   };
   mpld3_Axis.prototype.draw = function() {
-    if (this.props.tickvalues) {
+    if (this.props.tickvalues && this.props.tickformat) {
       tick_labels = d3.scale.threshold().domain(this.props.tickvalues.slice(1)).range(this.props.tickformat);
     } else {
       tick_labels = null;
