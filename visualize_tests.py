@@ -19,6 +19,7 @@ import matplotlib.pyplot as plt
 
 import mpld3
 from mpld3 import urls
+from mpld3._display import NumpyEncoder
 from mpld3.mpld3renderer import MPLD3Renderer
 from mpld3.mplexporter import Exporter
 
@@ -155,7 +156,7 @@ class ExecFile(object):
             renderer = MPLD3Renderer()
             Exporter(renderer, close_mpl=False).run(fig)
             fig, fig_json, extra_css, extra_js = renderer.finished_figures[0]
-            yield (json.dumps(fig_json), extra_js, extra_css)
+            yield (json.dumps(fig_json, cls=NumpyEncoder), extra_js, extra_css)
 
 
 def combine_testplots(wildcard='mpld3/test_plots/*.py',
