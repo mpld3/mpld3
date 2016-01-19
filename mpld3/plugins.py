@@ -566,12 +566,12 @@ class InteractiveLegendPlugin(PluginBase):
 
         };
 
-        // specify the action on legend overlay 
+        // specify the action on legend overlay
         function over(d,i){
              set_alphas(d, true);
         };
 
-        // specify the action on legend overlay 
+        // specify the action on legend overlay
         function out(d,i){
              set_alphas(d, false);
         };
@@ -588,7 +588,7 @@ class InteractiveLegendPlugin(PluginBase):
                     d3.select(d.mpld3_elements[i].path[0][0])
                         .style("stroke-opacity", is_over ? current_alpha_over :
                                                 (d.visible ? current_alpha : current_alpha_unsel))
-                        .style("stroke-width", is_over ? 
+                        .style("stroke-width", is_over ?
                                 alpha_over * d.mpld3_elements[i].props.edgewidth : d.mpld3_elements[i].props.edgewidth);
                 } else if((type=="mpld3_PathCollection")||
                          (type=="mpld3_Markers")){
@@ -643,7 +643,7 @@ class InteractiveLegendPlugin(PluginBase):
             start_visible = [start_visible] * len(labels)
         elif not len(start_visible) == len(labels):
             raise ValueError("{} out of {} visible params has been set"
-                             .format(len(start_visible), len(labels)))     
+                             .format(len(start_visible), len(labels)))
 
         mpld3_element_ids = self._determine_mpld3ids(plot_elements)
         self.mpld3_element_ids = mpld3_element_ids
@@ -687,5 +687,65 @@ class InteractiveLegendPlugin(PluginBase):
             mpld3_element_ids.append(ids)
 
         return mpld3_element_ids
+
+class MouseXYLabels(PluginBase):
+    """Show arbitrary labels derived from x,y coordinates."""
+
+    JAVASCRIPT="""
+  mpld3.register_plugin("mousexylabels", MouseXYLabelsPlugin);
+  MouseXYLabelsPlugin.prototype = Object.create(mpld3.Plugin.prototype);
+  MouseXYLabelsPlugin.prototype.constructor = MouseXYLabelsPlugin;
+  MouseXYLabelsPlugin.prototype.requiredProps = ["xlabels", "ylabels"];
+  MouseXYLabelsPlugin.prototype.defaultProps = {
+    fontsize: 12,
+  };
+  function MouseXYLabelsPlugin(fig, props) {
+    mpld3.Plugin.call(this, fig, props);
+  }
+  MouseXYLabelsPlugin.prototype.draw = function() {
+    var fig = this.fig;
+    var xlabels = this.props.xlabels;
+    var ylabels = this.props.ylabels;
+    var coordsx = fig.canvas.append("text").attr("class", "mpld3-coordinates").style("text-anchor", "end").style("font-size", this.props.fontsize).attr("x", this.fig.width - 5).attr("y", this.fig.height - 5 - 1.3*this.props.fontsize);
+    var coordsy = fig.canvas.append("text").attr("class", "mpld3-coordinates").style("text-anchor", "end").style("font-size", this.props.fontsize).attr("x", this.fig.width - 5).attr("y", this.fig.height - 5);
+    for (var i = 0; i < this.fig.axes.length; i++) {
+      var update_coords = function() {
+        var ax = fig.axes[i];
+        return function() {
+          var pos = d3.mouse(this), x = ax.x.invert(pos[0]), y = ax.y.invert(pos[1]);
+          coordsx.text(xlabels[Math.floor(x+0.5)]);
+          coordsy.text(ylabels[Math.floor(y+0.5)]);
+        };
+      }();
+      fig.axes[i].baseaxes.on("mousemove", update_coords).on("mouseout", function() {
+        coordsx.text("");
+        coordsy.text("");
+      });
+    }
+  };"""
+    """A Plugin to display arbitrary labels based on the mouse position
+
+    Example
+    -------
+    >>> import matplotlib.pyplot as plt
+    >>> import numpy as np
+    >>> from mpld3 import fig_to_html, plugins
+    >>> fig, ax = plt.subplots()
+    >>> mat = np.random.normal(size=(4, 5))
+    >>> img = ax.imshow(mat, interpolation='nearest')
+    >>> xlabels = ['a', 'b', 'c', 'd', 'e']
+    >>> ylabels = ['1', '2', '3', '4']
+    >>> plugins.connect(fig, plugins.MouseXYLabels(img, xlabels=xlabels, ylabels=ylabels))
+    >>> fig_to_html(fig)
+    """
+
+    def __init__(self, img, fontsize=12, xlabels=None, ylabels=None):
+        self.img = img
+        self.xlabels = xlabels
+        self.ylabels = ylabels
+        self.dict_ = {"type": "mousexylabels",
+                      "fontsize": fontsize,
+                      "xlabels": xlabels,
+                      "ylabels": ylabels}
 
 DEFAULT_PLUGINS = [Reset(), Zoom(), BoxZoom()]
