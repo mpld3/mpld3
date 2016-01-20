@@ -479,7 +479,7 @@ def save_json(fig, fileobj, **kwargs):
         fileobj = open(fileobj, 'w')
     if not hasattr(fileobj, 'write'):
         raise ValueError("fileobj should be a filename or a writable file")
-    json.dump(fig_to_dict(fig, **kwargs), fileobj)
+    json.dump(fig_to_dict(fig, **kwargs), fileobj, cls=NumpyEncoder)
 
 
 # Deprecated versions of these functions
