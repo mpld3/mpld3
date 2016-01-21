@@ -688,21 +688,21 @@ class InteractiveLegendPlugin(PluginBase):
 
         return mpld3_element_ids
 
-class MouseXYLabels(PluginBase):
+class MousePositionLabels(PluginBase):
     """Show arbitrary labels derived from x,y coordinates."""
 
     JAVASCRIPT="""
-  mpld3.register_plugin("mousexylabels", MouseXYLabelsPlugin);
-  MouseXYLabelsPlugin.prototype = Object.create(mpld3.Plugin.prototype);
-  MouseXYLabelsPlugin.prototype.constructor = MouseXYLabelsPlugin;
-  MouseXYLabelsPlugin.prototype.requiredProps = ["xlabels", "ylabels"];
-  MouseXYLabelsPlugin.prototype.defaultProps = {
+  mpld3.register_plugin("mousepositionlabels", MousePositionLabelsPlugin);
+  MousePositionLabelsPlugin.prototype = Object.create(mpld3.Plugin.prototype);
+  MousePositionLabelsPlugin.prototype.constructor = MousePositionLabelsPlugin;
+  MousePositionLabelsPlugin.prototype.requiredProps = ["xlabels", "ylabels"];
+  MousePositionLabelsPlugin.prototype.defaultProps = {
     fontsize: 12,
   };
-  function MouseXYLabelsPlugin(fig, props) {
+  function MousePositionLabelsPlugin(fig, props) {
     mpld3.Plugin.call(this, fig, props);
   }
-  MouseXYLabelsPlugin.prototype.draw = function() {
+  MousePositionLabelsPlugin.prototype.draw = function() {
     var fig = this.fig;
     var xlabels = this.props.xlabels;
     var ylabels = this.props.ylabels;
@@ -735,15 +735,14 @@ class MouseXYLabels(PluginBase):
     >>> img = ax.imshow(mat, interpolation='nearest')
     >>> xlabels = ['a', 'b', 'c', 'd', 'e']
     >>> ylabels = ['1', '2', '3', '4']
-    >>> plugins.connect(fig, plugins.MouseXYLabels(img, xlabels=xlabels, ylabels=ylabels))
+    >>> plugins.connect(fig, plugins.MousePositionLabels(img, xlabels=xlabels, ylabels=ylabels))
     >>> fig_to_html(fig)
     """
 
-    def __init__(self, img, fontsize=12, xlabels=None, ylabels=None):
-        self.img = img
+    def __init__(self, xlabels, ylabels, fontsize=12):
         self.xlabels = xlabels
         self.ylabels = ylabels
-        self.dict_ = {"type": "mousexylabels",
+        self.dict_ = {"type": "mousepositionlabels",
                       "fontsize": fontsize,
                       "xlabels": xlabels,
                       "ylabels": ylabels}
