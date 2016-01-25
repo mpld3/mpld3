@@ -197,7 +197,7 @@ def combine_testplots(wildcard='mpld3/test_plots/*.py',
                                       figure_json=figjson,
                                       extra_js=figjs)
                    for figid, (figjson, figjs, _) in enumerate(fig_json)]
-    right_col = ['<div class="fig"><img src="{0}"></div>\n'.format(fig)
+    right_col = ['<div>png version</div><div class="fig"><img src="{0}"></div>\n'.format(fig)
                  for fig in fig_png]
     extra_css = [tup[2] for tup in fig_json]
 
