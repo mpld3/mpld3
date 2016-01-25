@@ -123,3 +123,9 @@ It is important to open the JavaScript console (see your browser documentation) 
 
 Note that the ``--local`` argument in the above command assures that the local copies of the JavaScript libraries are used (i.e. the versions in ``mpld3/js/*.js``).
 If you omit this argument, the test plots will be run using the mpld3/d3 library versions available on the web at http://mpld3.github.io.
+
+It is sometimes helpful to specify the javascript paths directly, e.g. if building on remote machine and serving HTML separately:
+
+    [~]python visualize_tests.py --mpld3-url mpld3/js/mpld3.v0.3git.js --d3-url mpld3/js/d3.v3.min.js
+    [~]python -m SimpleHTTPServer
+

@@ -68,7 +68,7 @@ TEMPLATE = """
 """
 
 MPLD3_TEMPLATE = """
-<div class="fig" id="fig{figid:03d}"></div>
+<div>{fname}</div><div class="fig" id="fig{figid:03d}"></div>
 """
 
 JS_TEMPLATE = """
@@ -182,6 +182,7 @@ def combine_testplots(wildcard='mpld3/test_plots/*.py',
         filenames = glob.glob(wildcard)
     else:
         filenames = itertools.chain(*(glob.glob(w) for w in wildcard))
+    filenames = list(filenames)
 
     fig_png = []
     fig_json = []
@@ -190,7 +191,7 @@ def combine_testplots(wildcard='mpld3/test_plots/*.py',
         fig_png.extend(result.iter_png())
         fig_json.extend(result.iter_json())
 
-    left_col = [MPLD3_TEMPLATE.format(figid=i)
+    left_col = [MPLD3_TEMPLATE.format(figid=i, fname=filenames[i])
                 for i in range(len(fig_json))]
     js_commands = [JS_TEMPLATE.format(figid=figid,
                                       figure_json=figjson,
