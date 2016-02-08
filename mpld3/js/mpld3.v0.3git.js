@@ -364,13 +364,15 @@
     });
   };
   mpld3_Axis.prototype.zoomed = function() {
+    this.filter_ticks(this.axis.tickValues, this.axis.scale().domain());
+    this.elem.call(this.axis);
+  };
+  mpld3_Axis.prototype.filter_ticks = function(tickValues, domain) {
     if (this.props.tickvalues != null) {
-      var d = this.axis.scale().domain();
-      this.axis.tickValues(this.props.tickvalues.filter(function(v) {
-        return v >= d[0] && v <= d[1];
+      tickValues(this.props.tickvalues.filter(function(v) {
+        return v >= domain[0] && v <= domain[1];
       }));
     }
-    this.elem.call(this.axis);
   };
   mpld3.Coordinates = mpld3_Coordinates;
   function mpld3_Coordinates(trans, ax) {
