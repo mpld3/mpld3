@@ -106,6 +106,8 @@ mpld3_Axis.prototype.draw = function() {
         .tickValues(this.props.tickvalues)
         .tickFormat(tick_labels);
 
+    this.filter_ticks(this.axis.tickValues, this.axis.scale().domain());
+
 // good tips: http://bl.ocks.org/mbostock/3048166 in response to http://stackoverflow.com/questions/11286872/how-do-i-make-a-custom-axis-formatter-for-hours-minutes-in-d3-js
 
     this.elem = this.ax.baseaxes.append('g')
