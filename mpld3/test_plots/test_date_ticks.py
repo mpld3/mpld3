@@ -4,13 +4,15 @@ import matplotlib.pyplot as plt
 import mpld3
 
 def create_plot():
-    times = [datetime(2013, 12, i) for i in range(1,9)]
-    ticks = [times[2],times[3],times[-2]]
+    times = [datetime(2013, 12, i) for i in range(1,20)]
+    ticks = [times[0],times[1],times[2],times[6],times[-2],times[-1]]
     labels = [t.strftime("%Y-%m-%d") for t in ticks]
 
     plt.plot_date(times, times, xdate=True, ydate=True)
     plt.xticks(ticks,labels)
     plt.yticks(ticks)
+    plt.xlim([times[1],times[-2]])
+    plt.ylim([times[1],times[-2]])
 
     return plt.gcf()
 

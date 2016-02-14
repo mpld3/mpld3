@@ -106,6 +106,8 @@ mpld3_Axis.prototype.draw = function() {
         .tickValues(this.props.tickvalues)
         .tickFormat(tick_labels);
 
+    this.filter_ticks(this.axis.tickValues, this.axis.scale().domain());
+
 // good tips: http://bl.ocks.org/mbostock/3048166 in response to http://stackoverflow.com/questions/11286872/how-do-i-make-a-custom-axis-formatter-for-hours-minutes-in-d3-js
 
     this.elem = this.ax.baseaxes.append('g')
@@ -131,11 +133,14 @@ mpld3_Axis.prototype.draw = function() {
 mpld3_Axis.prototype.zoomed = function() {
     // if we set tickValues for the axis, we are responsible for
     // updating them when they pan or zoom off of the chart
-    if (this.props.tickvalues != null) {
-	var d = this.axis.scale().domain();
-	this.axis.tickValues(this.props.tickvalues.filter(
-	    function (v) { return (v >= d[0]) && (v <= d[1]); }));
-    }
-
+    this.filter_ticks(this.axis.tickValues, this.axis.scale().domain());
     this.elem.call(this.axis);
 };
+
+mpld3_Axis.prototype.filter_ticks = function(tickValues, domain) {
+    //Remove ticks outside axis limits.
+    if (this.props.tickvalues != null) {
+        tickValues(this.props.tickvalues.filter(
+            function (v) { return (v >= domain[0]) && (v <= domain[1]); }));
+    }
+}
