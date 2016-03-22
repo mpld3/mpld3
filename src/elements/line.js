@@ -15,7 +15,8 @@ mpld3_Line.prototype.defaultProps = {
     linewidth: 2,
     dasharray: "none",
     alpha: 1.0,
-    zorder: 2
+    zorder: 2,
+    drawstyle: "none"
 };
 
 function mpld3_Line(ax, props) {
@@ -28,11 +29,27 @@ function mpld3_Line(ax, props) {
     delete pathProps.color;
     pathProps.edgewidth = pathProps.linewidth;
     delete pathProps.linewidth;
+    
+    drawstyle = pathProps.drawstyle;
+    delete pathProps.drawstyle;
 
     // Process path properties
     this.defaultProps = mpld3_Path.prototype.defaultProps;
     mpld3_Path.call(this, ax, pathProps);
 
-    // This is optional, but is more efficient than relying on path
-    this.datafunc = d3.svg.line().interpolate("linear");
+    // Set interpolation type
+    switch (drawstyle)
+    {
+       case "steps": //fallthrough
+       case "steps-pre":
+           this.datafunc = d3.svg.line().interpolate("step-before");
+           break;
+       case "steps-post":
+           this.datafunc = d3.svg.line().interpolate("step-after");
+           break;
+       //steps-mid currently has no d3 equivalent - to be patched in d3
+       default: 
+           this.datafunc = d3.svg.line().interpolate("linear");
+    }
+    
 }
