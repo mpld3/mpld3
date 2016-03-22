@@ -161,6 +161,8 @@ class MPLD3Renderer(Renderer):
         line['id'] = get_id(mplobj)
         for key in ['color', 'linewidth', 'dasharray', 'alpha', 'zorder']:
             line[key] = style[key]
+        if 'drawstyle' in style:
+            line['drawstyle'] = style['drawstyle']
         
         # Some browsers do not accept dasharray="10,0"
         # This should probably be addressed in mplexporter.
