@@ -16,8 +16,9 @@ def test_line():
     line = axrep['lines'][0]
 
     assert_equal(list(sorted(line.keys())),
-                 ['alpha', 'color', 'coordinates', 'dasharray', 'data', 'id',
-                  'linewidth', 'xindex', 'yindex', 'zorder'])
+                 ['alpha', 'color', 'coordinates', 'dasharray', 'data',
+                  'drawstyle', 'id', 'linewidth', 'xindex', 'yindex',
+                  'zorder'])
     assert_equal(line['alpha'], 0.3)
     assert_equal(line['color'], "#000000")
     assert_equal(line['coordinates'], 'data')
