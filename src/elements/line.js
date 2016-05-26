@@ -47,7 +47,9 @@ function mpld3_Line(ax, props) {
        case "steps-post":
            this.datafunc = d3.svg.line().interpolate("step-after");
            break;
-       //steps-mid currently has no d3 equivalent - to be patched in d3
+       case "steps-mid":
+           this.datafunc = d3.svg.line().interpolate("step");
+           break;
        default: 
            this.datafunc = d3.svg.line().interpolate("linear");
     }

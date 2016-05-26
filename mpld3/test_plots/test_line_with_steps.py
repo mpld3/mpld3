@@ -10,7 +10,7 @@ def create_plot():
 
     ax.plot(range(5),range(9,4,-1),drawstyle='steps', marker='*')
     ax.plot(range(5),range(5,0,-1),drawstyle='steps-post', marker='*')
-    #ax.plot(range(5),range(7,2,-1),drawstyle='steps-mid', marker='*')
+    ax.plot(range(5),range(7,2,-1),drawstyle='steps-mid', marker='*')
     
     ax.set_ylim(0, 10)
     ax.set_xlim(0, 5)
