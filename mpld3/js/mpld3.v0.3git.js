@@ -585,7 +585,6 @@
     delete pathProps.drawstyle;
     this.defaultProps = mpld3_Path.prototype.defaultProps;
     mpld3_Path.call(this, ax, pathProps);
-    alert(drawstyle);
     switch (drawstyle) {
      case "steps":
      case "steps-pre":
@@ -594,6 +593,10 @@
 
      case "steps-post":
       this.datafunc = d3.svg.line().interpolate("step-after");
+      break;
+
+     case "steps-mid":
+      this.datafunc = d3.svg.line().interpolate("step");
       break;
 
      default:
