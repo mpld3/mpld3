@@ -570,7 +570,8 @@
     linewidth: 2,
     dasharray: "none",
     alpha: 1,
-    zorder: 2
+    zorder: 2,
+    drawstyle: "none"
   };
   function mpld3_Line(ax, props) {
     mpld3_PlotElement.call(this, ax, props);
@@ -580,9 +581,27 @@
     delete pathProps.color;
     pathProps.edgewidth = pathProps.linewidth;
     delete pathProps.linewidth;
+    drawstyle = pathProps.drawstyle;
+    delete pathProps.drawstyle;
     this.defaultProps = mpld3_Path.prototype.defaultProps;
     mpld3_Path.call(this, ax, pathProps);
-    this.datafunc = d3.svg.line().interpolate("linear");
+    switch (drawstyle) {
+     case "steps":
+     case "steps-pre":
+      this.datafunc = d3.svg.line().interpolate("step-before");
+      break;
+
+     case "steps-post":
+      this.datafunc = d3.svg.line().interpolate("step-after");
+      break;
+
+     case "steps-mid":
+      this.datafunc = d3.svg.line().interpolate("step");
+      break;
+
+     default:
+      this.datafunc = d3.svg.line().interpolate("linear");
+    }
   }
   mpld3.Markers = mpld3_Markers;
   mpld3_Markers.prototype = Object.create(mpld3_PathCollection.prototype);
