@@ -12,7 +12,7 @@ from functools import wraps
 from . import urls
 
 # Make sure that DeprecationWarning gets printed
-warnings.simplefilter("always", DeprecationWarning)
+warnings.filterwarnings('always', category=DeprecationWarning, module='mpld3')
 
 
 def html_id_ok(objid, html5=False):
@@ -109,8 +109,17 @@ def write_ipynb_local_js(location=None, d3_src=None, mpld3_src=None):
         # This will not work if a url prefix is added
         prefix = '/nbextensions/'
 
+        def _install_nbextension(extensions):
+            """Wrapper for IPython.html.install_nbextension."""
+            import IPython
+            if IPython.version_info[0] >= 3:
+                for extension in extensions:
+                    install_nbextension(extension)
+            else:
+                install_nbextension(extensions)
+
         try:
-            install_nbextension([d3_src, mpld3_src])
+            _install_nbextension([d3_src, mpld3_src])
         except IOError:
             # files may be read only. We'll try deleting them and re-installing
             from IPython.utils.path import get_ipython_dir
@@ -120,7 +129,7 @@ def write_ipynb_local_js(location=None, d3_src=None, mpld3_src=None):
                 dest = os.path.join(nbext, os.path.basename(src))
                 if os.path.exists(dest):
                     os.remove(dest)
-            install_nbextension([d3_src, mpld3_src])
+            _install_nbextension([d3_src, mpld3_src])
 
     else:
         # IPython < 2.0 or explicit path.

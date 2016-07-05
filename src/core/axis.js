@@ -58,12 +58,45 @@ mpld3_Axis.prototype.getGrid = function() {
 };
 
 mpld3_Axis.prototype.draw = function() {
-    if (this.props.tickvalues && this.props.tickformat) { // FIXME: store the tick format type explicitly
-	tick_labels = d3.scale.threshold()
-	                  .domain(this.props.tickvalues.slice(1))
-	                  .range(this.props.tickformat);
+
+    var scale = (this.props.xy === 'x') ?
+        this.parent.props.xscale : this.parent.props.yscale;
+
+    if (scale === 'linear' && this.props.tickvalues && this.props.tickformat) {
+        // FIXME: store the tick format type explicitly
+        tick_labels = d3.scale.threshold()
+                        .domain(this.props.tickvalues.slice(1))
+                        .range(this.props.tickformat);
     } else {
-	tick_labels = null;
+        tick_labels = null;
+    }
+
+    if (scale === 'date' && this.props.tickvalues) {
+        // Convert tick locations from floating point ordinal values 
+        // to JavaScript Dates
+        var domain = (this.props.xy === 'x') ?
+            this.parent.x.domain() :
+            this.parent.y.domain();
+        var range = (this.props.xy === 'x') ?
+            this.parent.xdom.domain() :
+            this.parent.ydom.domain();
+        var ordinal_to_js_date = d3.scale.linear()
+            .domain(domain)
+            .range(range);
+        this.props.tickvalues = this.props.tickvalues.map(function(value) {
+            return new Date(ordinal_to_js_date(value));
+        });
+
+        if (this.props.tickformat === null) {
+            // Use D3's default format (http://bl.ocks.org/mbostock/4149176)
+            var tick_labels = null;
+        }
+        else {
+            var labels = this.props.tickformat;
+            tick_labels = function(d, i) {
+                return labels[i];
+            };
+        }
     }
 
     this.axis = d3.svg.axis()
@@ -72,6 +105,8 @@ mpld3_Axis.prototype.draw = function() {
         .ticks(this.props.nticks)
         .tickValues(this.props.tickvalues)
         .tickFormat(tick_labels);
+
+    this.filter_ticks(this.axis.tickValues, this.axis.scale().domain());
 
 // good tips: http://bl.ocks.org/mbostock/3048166 in response to http://stackoverflow.com/questions/11286872/how-do-i-make-a-custom-axis-formatter-for-hours-minutes-in-d3-js
 
@@ -98,11 +133,14 @@ mpld3_Axis.prototype.draw = function() {
 mpld3_Axis.prototype.zoomed = function() {
     // if we set tickValues for the axis, we are responsible for
     // updating them when they pan or zoom off of the chart
-    if (this.props.tickvalues != null) {
-	var d = this.axis.scale().domain();
-	this.axis.tickValues(this.props.tickvalues.filter(
-	    function (v) { return (v >= d[0]) && (v <= d[1]); }));
-    }
-
+    this.filter_ticks(this.axis.tickValues, this.axis.scale().domain());
     this.elem.call(this.axis);
 };
+
+mpld3_Axis.prototype.filter_ticks = function(tickValues, domain) {
+    //Remove ticks outside axis limits.
+    if (this.props.tickvalues != null) {
+        tickValues(this.props.tickvalues.filter(
+            function (v) { return (v >= domain[0]) && (v <= domain[1]); }));
+    }
+}
