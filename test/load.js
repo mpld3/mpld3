@@ -37,7 +37,7 @@ module.exports = function() {
       d3 : d3, 
       console: console,
       document: document,
-      window: document.createWindow()
+      window: document.defaultView
     };
 
     return topic;
