@@ -24,10 +24,10 @@
   "gitHead": "ec7da08f78fb58860eb14c945d0924dc81543cde",
   "readmeFilename": "README.md",
   "dependencies": {
-    "d3": "~3.4.3",
-    "smash": "0.0.12",
-    "uglify-js": "~2.4.13",
-    "vows": "~0.7.0",
-    "jsdom": "1.0.0"
+    "d3": "3.5.12",
+    "smash": "0.0",
+    "uglify-js": "2.6.1",
+    "vows": "0.8",
+    "jsdom": "3"
   }
 }
