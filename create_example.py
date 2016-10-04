@@ -1,5 +1,3 @@
-import os
-import urllib2
 import numpy as np
 import matplotlib.pyplot as plt
 import mpld3
