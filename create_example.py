@@ -4,13 +4,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 from mpld3 import fig_to_d3, show_d3
 
-# Download d3 file locally
-d3_filename = 'd3.v3.min.js'
-if not os.path.exists(d3_filename):
-    page = urllib2.urlopen('http://d3js.org/d3.v3.min.js')
-    with open(d3_filename, 'w') as f:
-        f.write(page.read())
-
 #----------------------------------------------------------------------
 # create the figure and axes
 fig, ax = plt.subplots(2, 2, figsize=(8, 8),
