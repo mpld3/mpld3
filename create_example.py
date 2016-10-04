@@ -2,7 +2,7 @@ import os
 import urllib2
 import numpy as np
 import matplotlib.pyplot as plt
-from mpld3 import fig_to_d3, show_d3
+import mpld3
 
 #----------------------------------------------------------------------
 # create the figure and axes
@@ -63,4 +63,4 @@ ax[1, 1].fill_between(x, y1, y2, where=y1 <= y2,
                  color='red', alpha=0.3)
 ax[1, 1].set_title('fill_between()')
 
-show_d3()
+mpld3.show()
