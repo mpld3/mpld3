@@ -1,15 +1,6 @@
-import os
-import urllib2
 import numpy as np
 import matplotlib.pyplot as plt
-from mpld3 import fig_to_d3, show_d3
-
-# Download d3 file locally
-d3_filename = 'd3.v3.min.js'
-if not os.path.exists(d3_filename):
-    page = urllib2.urlopen('http://d3js.org/d3.v3.min.js')
-    with open(d3_filename, 'w') as f:
-        f.write(page.read())
+import mpld3
 
 #----------------------------------------------------------------------
 # create the figure and axes
@@ -70,4 +61,4 @@ ax[1, 1].fill_between(x, y1, y2, where=y1 <= y2,
                  color='red', alpha=0.3)
 ax[1, 1].set_title('fill_between()')
 
-show_d3()
+mpld3.show()
