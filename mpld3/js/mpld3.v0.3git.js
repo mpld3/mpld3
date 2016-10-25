@@ -336,7 +336,7 @@
         return new Date(ordinal_to_js_date(value));
       });
     }
-    var tickformat = mpld3_tickFormat(this.props.tickformat, this.props.tickvalues, scale);
+    var tickformat = mpld3_tickFormat(this.props.tickformat, this.props.tickvalues);
     this.axis = d3.svg.axis().scale(this.scale).orient(this.props.position).ticks(this.props.nticks).tickValues(this.props.tickvalues).tickFormat(tickformat);
     this.filter_ticks(this.axis.tickValues, this.axis.scale().domain());
     this.elem = this.ax.baseaxes.append("g").attr("transform", this.transform).attr("class", this.cssclass).call(this.axis);
@@ -352,23 +352,12 @@
       stroke: "none"
     });
   };
-  function mpld3_tickFormat(tickformat, tickvalues, scale) {
-    if (scale === "linear" && tickvalues && tickformat) {
-      tick_labels = d3.scale.threshold().domain(tickvalues.slice(1)).range(tickformat);
+  function mpld3_tickFormat(tickformat, tickvalues) {
+    if (tickformat !== null && tickvalues !== null) {
+      return d3.scale.threshold().domain(tickvalues.slice(1)).range(tickformat);
     } else {
-      tick_labels = null;
+      return null;
     }
-    if (scale === "date" && tickvalues) {
-      if (tickformat === null) {
-        var tick_labels = null;
-      } else {
-        var labels = tickformat;
-        tick_labels = function(d, i) {
-          return labels[i];
-        };
-      }
-    }
-    return tick_labels;
   }
   mpld3_Axis.prototype.zoomed = function() {
     this.filter_ticks(this.axis.tickValues, this.axis.scale().domain());

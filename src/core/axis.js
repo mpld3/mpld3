@@ -79,7 +79,7 @@ mpld3_Axis.prototype.draw = function() {
         });
     }
 
-    var tickformat = mpld3_tickFormat(this.props.tickformat, this.props.tickvalues, scale);
+    var tickformat = mpld3_tickFormat(this.props.tickformat, this.props.tickvalues);
 
     this.axis = d3.svg.axis()
         .scale(this.scale)
@@ -112,28 +112,16 @@ mpld3_Axis.prototype.draw = function() {
     });
 };
 
-function mpld3_tickFormat(tickformat, tickvalues, scale) {
-    if (scale === 'linear' && tickvalues && tickformat) {
-        // FIXME: store the tick format type explicitly
-        tick_labels = d3.scale.threshold()
-                        .domain(tickvalues.slice(1))
-                        .range(tickformat);
+function mpld3_tickFormat(tickformat, tickvalues) {
+    if (tickformat !== null && tickvalues !== null) {
+        // tickvalues is an array of tick locations
+        // tickformat is an array of tick labels
+        return d3.scale.threshold()
+            .domain(tickvalues.slice(1))
+            .range(tickformat);
     } else {
-        tick_labels = null;
+        return null;
     }
-    if (scale === 'date' && tickvalues) {
-        if (tickformat === null) {
-            // Use D3's default format (http://bl.ocks.org/mbostock/4149176)
-            var tick_labels = null;
-        }
-        else {
-            var labels = tickformat;
-            tick_labels = function(d, i) {
-                return labels[i];
-            };
-        }
-    }
-    return tick_labels;
 }
 
 mpld3_Axis.prototype.zoomed = function() {
