@@ -113,14 +113,15 @@ mpld3_Axis.prototype.draw = function() {
 };
 
 function mpld3_tickFormat(tickformat, tickvalues) {
-    if (tickformat !== null && tickvalues !== null) {
+    if (tickformat === "" || tickformat === null) {
+        return tickformat;
+    }
+    else {
         // tickvalues is an array of tick locations
         // tickformat is an array of tick labels
         return d3.scale.threshold()
             .domain(tickvalues.slice(1))
             .range(tickformat);
-    } else {
-        return null;
     }
 }
 

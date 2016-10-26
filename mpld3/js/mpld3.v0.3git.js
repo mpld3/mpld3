@@ -353,10 +353,10 @@
     });
   };
   function mpld3_tickFormat(tickformat, tickvalues) {
-    if (tickformat !== null && tickvalues !== null) {
-      return d3.scale.threshold().domain(tickvalues.slice(1)).range(tickformat);
+    if (tickformat === "" || tickformat === null) {
+      return tickformat;
     } else {
-      return null;
+      return d3.scale.threshold().domain(tickvalues.slice(1)).range(tickformat);
     }
   }
   mpld3_Axis.prototype.zoomed = function() {
