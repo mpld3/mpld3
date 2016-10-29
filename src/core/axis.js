@@ -62,15 +62,6 @@ mpld3_Axis.prototype.draw = function() {
     var scale = (this.props.xy === 'x') ?
         this.parent.props.xscale : this.parent.props.yscale;
 
-    if (scale === 'linear' && this.props.tickvalues && this.props.tickformat) {
-        // FIXME: store the tick format type explicitly
-        tick_labels = d3.scale.threshold()
-                        .domain(this.props.tickvalues.slice(1))
-                        .range(this.props.tickformat);
-    } else {
-        tick_labels = null;
-    }
-
     if (scale === 'date' && this.props.tickvalues) {
         // Convert tick locations from floating point ordinal values 
         // to JavaScript Dates
@@ -86,25 +77,16 @@ mpld3_Axis.prototype.draw = function() {
         this.props.tickvalues = this.props.tickvalues.map(function(value) {
             return new Date(ordinal_to_js_date(value));
         });
-
-        if (this.props.tickformat === null) {
-            // Use D3's default format (http://bl.ocks.org/mbostock/4149176)
-            var tick_labels = null;
-        }
-        else {
-            var labels = this.props.tickformat;
-            tick_labels = function(d, i) {
-                return labels[i];
-            };
-        }
     }
+
+    var tickformat = mpld3_tickFormat(this.props.tickformat, this.props.tickvalues);
 
     this.axis = d3.svg.axis()
         .scale(this.scale)
         .orient(this.props.position)
         .ticks(this.props.nticks)
         .tickValues(this.props.tickvalues)
-        .tickFormat(tick_labels);
+        .tickFormat(tickformat);
 
     this.filter_ticks(this.axis.tickValues, this.axis.scale().domain());
 
@@ -129,6 +111,19 @@ mpld3_Axis.prototype.draw = function() {
         "stroke": "none"
     });
 };
+
+function mpld3_tickFormat(tickformat, tickvalues) {
+    if (tickformat === "" || tickformat === null) {
+        return tickformat;
+    }
+    else {
+        // tickvalues is an array of tick locations
+        // tickformat is an array of tick labels
+        return d3.scale.threshold()
+            .domain(tickvalues.slice(1))
+            .range(tickformat);
+    }
+}
 
 mpld3_Axis.prototype.zoomed = function() {
     // if we set tickValues for the axis, we are responsible for
