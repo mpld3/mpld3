@@ -4,8 +4,8 @@ import glob
 import shutil
 import jinja2
 
-from IPython.nbformat import current as nbformat
-from IPython.nbconvert.exporters import HTMLExporter
+import nbformat
+from nbconvert.exporters import HTMLExporter
 
 
 INDEX_TEMPLATE = jinja2.Template("""
@@ -46,8 +46,7 @@ def get_notebook_title(nb_json, default=None):
     This will return the text of the first header cell.
     If that does not exist, it will return the default.
     """
-    worksheets = nb_json['worksheets']
-    cells = worksheets[0]['cells']
+    cells = nb_json['cells']
     for cell in cells:
         if cell['cell_type'] == 'heading':
             return cell['source']
@@ -82,7 +81,7 @@ def main(app):
         shutil.copyfile(nb_src, nb_dest)
 
         with open(nb_dest, 'r') as f:
-            nb_json = nbformat.reads_json(f.read())
+            nb_json = nbformat.reads(f.read(), as_version = 4)
 
         (body, resources) = exporter.from_notebook_node(nb_json)
 
