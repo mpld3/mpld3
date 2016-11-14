@@ -1,2 +1,2 @@
 """Metadata for the mpld3 package."""
-__version__ = '0.3git'
+__version__ = '0.3'
