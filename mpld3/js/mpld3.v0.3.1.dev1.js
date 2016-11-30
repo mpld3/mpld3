@@ -4,7 +4,7 @@
     figures: [],
     plugin_map: {}
   };
-  mpld3.version = "0.3";
+  mpld3.version = "0.3.1.dev1";
   mpld3.register_plugin = function(name, obj) {
     mpld3.plugin_map[name] = obj;
   };
