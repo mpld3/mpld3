@@ -13,7 +13,7 @@ import itertools
 
 import numpy as np
 
-from .mplexporter.utils import color_to_hex
+from .mplexporter.utils import export_color
 from .mplexporter.exporter import Exporter
 from .mplexporter.renderers import Renderer
 
@@ -163,7 +163,7 @@ class MPLD3Renderer(Renderer):
             line[key] = style[key]
         if 'drawstyle' in style:
             line['drawstyle'] = style['drawstyle']
-        
+
         # Some browsers do not accept dasharray="10,0"
         # This should probably be addressed in mplexporter.
         if line['dasharray'] == "10,0":
@@ -184,7 +184,7 @@ class MPLD3Renderer(Renderer):
         for key in ['dasharray', 'alpha', 'facecolor',
                     'edgecolor', 'edgewidth', 'zorder']:
             path[key] = style[key]
-        
+
         # Some browsers do not accept dasharray="10,0"
         # This should probably be addressed in mplexporter.
         if path['dasharray'] == "10,0":
@@ -212,9 +212,9 @@ class MPLD3Renderer(Renderer):
                              styles, mplobj=None):
         if len(paths) != 0:
             styles = dict(alphas=[styles['alpha']],
-                          edgecolors=[color_to_hex(ec)
+                          edgecolors=[export_color(ec)
                                       for ec in styles['edgecolor']],
-                          facecolors=[color_to_hex(fc)
+                          facecolors=[export_color(fc)
                                       for fc in styles['facecolor']],
                           edgewidths=styles['linewidth'],
                           offsetcoordinates=offset_coordinates,
