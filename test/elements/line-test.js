@@ -14,11 +14,11 @@ suite.addBatch({
                     height: 300
                 };
                 var ax_props = {
-                    xlim: [0, 1],
-                    ylim: [2, 3]
+                    xlim: [0, 5],
+                    ylim: [0, 5]
                 };
                 var line_props = {
-                    data: [[0, 2], [1, 3], [2, 4]]
+                    data: [[0, 0], [1, 2], [4, 5], [5, 2]]
                 };
                 var fig = new mpld3.Figure("chart", fig_props);
                 var ax = new mpld3.Axes(fig, ax_props);
@@ -30,7 +30,7 @@ suite.addBatch({
             },
             "returns the expected SVG path": function(line) {
 		assert.equal(line.datafunc(line.data, line.pathcodes),
-                             "M0,240L320,0L640,-240")
+                             "M0,240L64,144L256,0L320,144")
             }
         },
         "Line with NaNs": {
@@ -40,11 +40,11 @@ suite.addBatch({
                     height: 300
                 };
                 var ax_props = {
-                    xlim: [0, 1],
-                    ylim: [2, 3]
+                    xlim: [0, 5],
+                    ylim: [0, 5]
                 };
                 var line_props = {
-                    data: [[0, 2], [1, NaN], [2, 4]]
+                    data: [[0, 0], [1, 2], [3, NaN], [4, 5], [5, 2]]
                 };
                 var fig = new mpld3.Figure("chart", fig_props);
                 var ax = new mpld3.Axes(fig, ax_props);
@@ -56,7 +56,7 @@ suite.addBatch({
             },
             "returns the expected SVG path": function(line) {
 		assert.equal(line.datafunc(line.data, line.pathcodes),
-                             "M0,240M640,-240")
+                             "M0,240L64,144M256,0L320,144")
             }
         },
         "Line with Infs": {
@@ -66,11 +66,11 @@ suite.addBatch({
                     height: 300
                 };
                 var ax_props = {
-                    xlim: [0, 1],
-                    ylim: [2, 3]
+                    xlim: [0, 5],
+                    ylim: [0, 5]
                 };
                 var line_props = {
-                    data: [[0, 2], [1, Infinity], [2, 4]]
+                    data: [[0, 0], [1, 2], [3, Infinity], [4, 5], [5, 2]]
                 };
                 var fig = new mpld3.Figure("chart", fig_props);
                 var ax = new mpld3.Axes(fig, ax_props);
@@ -82,7 +82,7 @@ suite.addBatch({
             },
             "returns the expected SVG path": function(line) {
 		assert.equal(line.datafunc(line.data, line.pathcodes),
-                             "M0,240M640,-240")
+                             "M0,240L64,144M256,0L320,144")
             }
         }
     }

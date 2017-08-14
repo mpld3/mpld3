@@ -1,7 +1,9 @@
 var smash = require("smash"),
-    d3 = require("d3"),
     jsdom = require("jsdom");
 
+global.document = jsdom.jsdom("<html><head></head><body></body></html>");
+
+var d3 = require("d3");
 
 module.exports = function() {
   var files = [].slice.call(arguments).map(function(d) { return "src/" + d; }),
@@ -31,13 +33,12 @@ module.exports = function() {
   };
 
   topic.document = function(_) {
-    var document = jsdom.jsdom("<html><head></head><body></body></html>");
 
     sandbox = {
       d3 : d3, 
       console: console,
       document: document,
-      window: document.createWindow()
+      window: document.defaultView
     };
 
     return topic;
