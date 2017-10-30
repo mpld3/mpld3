@@ -128,6 +128,12 @@ class NumpyEncoder(json.JSONEncoder):
     """ Special json encoder for numpy types """
 
     def default(self, obj):
+        try:
+            iterable = iter(obj)
+        except TypeError:
+            pass
+        else:
+            return [self.default(item) for item in iterable]
         if isinstance(obj, (numpy.int_, numpy.intc, numpy.intp, numpy.int8,
             numpy.int16, numpy.int32, numpy.int64, numpy.uint8,
             numpy.uint16,numpy.uint32, numpy.uint64)):
