@@ -141,6 +141,8 @@ class NumpyEncoder(json.JSONEncoder):
         elif isinstance(obj, (numpy.float_, numpy.float16, numpy.float32, 
             numpy.float64)):
             return float(obj)
+        elif isinstance(obj, (numpy.ndarray,)):
+            return obj.tolist()
         return json.JSONEncoder.default(self, obj)
 
 
