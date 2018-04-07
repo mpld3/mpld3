@@ -284,6 +284,8 @@ class PointHTMLTooltip(PluginBase):
         The figure element to apply the tooltip to
     labels : list
         The labels for each point in points, as strings of unescaped HTML.
+    targets : list
+        The urls that each point will open when clicked.
     hoffset, voffset : integer, optional
         The number of pixels to offset the tooltip text.  Default is
         hoffset = 0, voffset = 10
@@ -306,6 +308,7 @@ class PointHTMLTooltip(PluginBase):
     HtmlTooltipPlugin.prototype.constructor = HtmlTooltipPlugin;
     HtmlTooltipPlugin.prototype.requiredProps = ["id"];
     HtmlTooltipPlugin.prototype.defaultProps = {labels:null,
+                                                target:null,
                                                 hoffset:0,
                                                 voffset:10};
     function HtmlTooltipPlugin(fig, props){
@@ -315,6 +318,7 @@ class PointHTMLTooltip(PluginBase):
     HtmlTooltipPlugin.prototype.draw = function(){
        var obj = mpld3.get_element(this.props.id);
        var labels = this.props.labels;
+       var targets = this.props.targets;
        var tooltip = d3.select("body").append("div")
                     .attr("class", "mpld3-tooltip")
                     .style("position", "absolute")
@@ -330,15 +334,18 @@ class PointHTMLTooltip(PluginBase):
                     .style("top", d3.event.pageY + this.props.voffset + "px")
                     .style("left",d3.event.pageX + this.props.hoffset + "px");
                  }.bind(this))
+           .on("mousedown.callout",  function(d, i){
+                           window.open(targets[i],"_blank");})
            .on("mouseout",  function(d, i){
                            tooltip.style("visibility", "hidden");});
     };
     """
 
-    def __init__(self, points, labels=None,
+    def __init__(self, points, labels=None, targets=None,
                  hoffset=0, voffset=10, css=None):
         self.points = points
         self.labels = labels
+        self.targets = targets
         self.voffset = voffset
         self.hoffset = hoffset
         self.css_ = css or ""
@@ -349,6 +356,7 @@ class PointHTMLTooltip(PluginBase):
         self.dict_ = {"type": "htmltooltip",
                       "id": get_id(points, suffix),
                       "labels": labels,
+                      "targets": targets,
                       "hoffset": hoffset,
                       "voffset": voffset}
 
