@@ -5,7 +5,7 @@ import mpld3
 #----------------------------------------------------------------------
 # create the figure and axes
 fig, ax = plt.subplots(2, 2, figsize=(8, 8),
-                       subplot_kw={'axisbg':'#EEEEEE'})
+                       subplot_kw={'facecolor':'#EEEEEE'})
 
 for axi in ax.flat:
     axi.grid(color='white', linestyle='solid')
