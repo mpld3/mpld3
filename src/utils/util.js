@@ -186,8 +186,11 @@ function mpld3_path(_) {
     };
 
     function path(vertices, pathcodes) {
-        var fx = d3.functor(x),
-            fy = d3.functor(y);
+        var functor = function(x) {
+            return function() { return x; }
+        }
+        var fx = functor(x),
+            fy = functor(y);
         var points = [],
             segments = [],
             i_v = 0,

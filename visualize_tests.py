@@ -238,6 +238,8 @@ def run_main():
         args.d3_url = urls.D3_URL
     if args.mpld3_url is None:
         args.mpld3_url = urls.MPLD3_URL
+        # NOTE: DEBUG
+        args.mpld3_url = urls.MPLD3_LOCAL
 
     if args.local:
         args.d3_url = urls.D3_LOCAL

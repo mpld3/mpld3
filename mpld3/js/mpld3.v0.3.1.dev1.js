@@ -153,7 +153,12 @@
       z: 0
     };
     function path(vertices, pathcodes) {
-      var fx = d3.functor(x), fy = d3.functor(y);
+      var functor = function(x) {
+        return function() {
+          return x;
+        };
+      };
+      var fx = functor(x), fy = functor(y);
       var points = [], segments = [], i_v = 0, i_c = -1, halt = 0, nullpath = false;
       if (!pathcodes) {
         pathcodes = [ "M" ];
@@ -264,7 +269,13 @@
     }
   }
   mpld3_Grid.prototype.draw = function() {
-    this.grid = d3.svg.axis().scale(this.scale).orient(this.position).ticks(this.props.nticks).tickValues(this.props.tickvalues).tickSize(this.tickSize, 0, 0).tickFormat("");
+    var scaleMethod = {
+      left: "axisLeft",
+      right: "axisRight",
+      top: "axisTop",
+      bottom: "axisBottom"
+    }[this.position];
+    this.grid = d3[scaleMethod](this.scale).ticks(this.props.nticks).tickValues(this.props.tickvalues).tickSize(this.tickSize, 0, 0).tickFormat("");
     this.elem = this.ax.axes.append("g").attr("class", this.cssclass).attr("transform", this.transform).call(this.grid);
     mpld3.insert_css("div#" + this.ax.fig.figid + " ." + this.cssclass + " .tick", {
       stroke: this.props.color,
@@ -331,13 +342,19 @@
     if (scale === "date" && this.props.tickvalues) {
       var domain = this.props.xy === "x" ? this.parent.x.domain() : this.parent.y.domain();
       var range = this.props.xy === "x" ? this.parent.xdom.domain() : this.parent.ydom.domain();
-      var ordinal_to_js_date = d3.scale.linear().domain(domain).range(range);
+      var ordinal_to_js_date = d3.scaleLinear().domain(domain).range(range);
       this.props.tickvalues = this.props.tickvalues.map(function(value) {
         return new Date(ordinal_to_js_date(value));
       });
     }
     var tickformat = mpld3_tickFormat(this.props.tickformat, this.props.tickvalues);
-    this.axis = d3.svg.axis().scale(this.scale).orient(this.props.position).ticks(this.props.nticks).tickValues(this.props.tickvalues).tickFormat(tickformat);
+    var scaleMethod = {
+      left: "axisLeft",
+      right: "axisRight",
+      top: "axisTop",
+      bottom: "axisBottom"
+    }[this.props.position];
+    this.axis = d3[scaleMethod](this.scale).ticks(this.props.nticks).tickValues(this.props.tickvalues).tickFormat(tickformat);
     this.filter_ticks(this.axis.tickValues, this.axis.scale().domain());
     this.elem = this.ax.baseaxes.append("g").attr("transform", this.transform).attr("class", this.cssclass).call(this.axis);
     mpld3.insert_css("div#" + this.ax.fig.figid + " ." + this.cssclass + " line, " + " ." + this.cssclass + " path", {
@@ -356,7 +373,7 @@
     if (tickformat === "" || tickformat === null) {
       return tickformat;
     } else {
-      return d3.scale.threshold().domain(tickvalues.slice(1)).range(tickformat);
+      return d3.scaleThreshold().domain(tickvalues.slice(1)).range(tickformat);
     }
   }
   mpld3_Axis.prototype.zoomed = function() {
@@ -759,16 +776,16 @@
     this.props.xdomain = setDomain(this.props.xscale, this.props.xdomain);
     this.props.ydomain = setDomain(this.props.yscale, this.props.ydomain);
     function build_scale(scale, domain, range) {
-      var dom = scale === "date" ? d3.time.scale() : scale === "log" ? d3.scale.log() : d3.scale.linear();
+      var dom = scale === "date" ? d3.time.scale() : scale === "log" ? d3.scaleLog() : d3.scaleLinear();
       return dom.domain(domain).range(range);
     }
     this.x = this.xdom = build_scale(this.props.xscale, this.props.xdomain, [ 0, this.width ]);
     this.y = this.ydom = build_scale(this.props.yscale, this.props.ydomain, [ this.height, 0 ]);
     if (this.props.xscale === "date") {
-      this.x = mpld3.multiscale(d3.scale.linear().domain(this.props.xlim).range(this.props.xdomain.map(Number)), this.xdom);
+      this.x = mpld3.multiscale(d3.scaleLinear().domain(this.props.xlim).range(this.props.xdomain.map(Number)), this.xdom);
     }
     if (this.props.yscale === "date") {
-      this.y = mpld3.multiscale(d3.scale.linear().domain(this.props.ylim).range(this.props.ydomain.map(Number)), this.ydom);
+      this.y = mpld3.multiscale(d3.scaleLinear().domain(this.props.ylim).range(this.props.ydomain.map(Number)), this.ydom);
     }
     var axes = this.props.axes;
     for (var i = 0; i < axes.length; i++) {
@@ -813,11 +830,6 @@
     for (var i = 0; i < this.props.sharey.length; i++) {
       this.sharey.push(mpld3.get_element(this.props.sharey[i]));
     }
-    this.zoom = d3.behavior.zoom();
-    this.zoom.last_t = this.zoom.translate();
-    this.zoom.last_s = this.zoom.scale();
-    this.zoom_x = d3.behavior.zoom().x(this.xdom);
-    this.zoom_y = d3.behavior.zoom().y(this.ydom);
     this.baseaxes = this.fig.canvas.append("g").attr("transform", "translate(" + this.position[0] + "," + this.position[1] + ")").attr("width", this.width).attr("height", this.height).attr("class", "mpld3-baseaxes");
     this.clip = this.baseaxes.append("svg:clipPath").attr("id", this.clipid).append("svg:rect").attr("x", 0).attr("y", 0).attr("width", this.width).attr("height", this.height);
     this.axes = this.baseaxes.append("g").attr("class", "mpld3-axes").attr("clip-path", "url(#" + this.clipid + ")");
@@ -826,49 +838,9 @@
       this.elements[i].draw();
     }
   };
-  mpld3_Axes.prototype.enable_zoom = function() {
-    if (this.props.zoomable) {
-      this.zoom.on("zoom", this.zoomed.bind(this, true));
-      this.axes.call(this.zoom);
-      this.axes.style("cursor", "move");
-    }
-  };
-  mpld3_Axes.prototype.disable_zoom = function() {
-    if (this.props.zoomable) {
-      this.zoom.on("zoom", null);
-      this.axes.on(".zoom", null);
-      this.axes.style("cursor", null);
-    }
-  };
-  mpld3_Axes.prototype.zoomed = function(propagate) {
-    propagate = typeof propagate == "undefined" ? true : propagate;
-    if (propagate) {
-      var dt0 = this.zoom.translate()[0] - this.zoom.last_t[0];
-      var dt1 = this.zoom.translate()[1] - this.zoom.last_t[1];
-      var ds = this.zoom.scale() / this.zoom.last_s;
-      this.zoom_x.translate([ this.zoom_x.translate()[0] + dt0, 0 ]);
-      this.zoom_x.scale(this.zoom_x.scale() * ds);
-      this.zoom_y.translate([ 0, this.zoom_y.translate()[1] + dt1 ]);
-      this.zoom_y.scale(this.zoom_y.scale() * ds);
-      this.zoom.last_t = this.zoom.translate();
-      this.zoom.last_s = this.zoom.scale();
-      this.sharex.forEach(function(ax) {
-        ax.zoom_x.translate(this.zoom_x.translate()).scale(this.zoom_x.scale());
-      }.bind(this));
-      this.sharey.forEach(function(ax) {
-        ax.zoom_y.translate(this.zoom_y.translate()).scale(this.zoom_y.scale());
-      }.bind(this));
-      this.sharex.forEach(function(ax) {
-        ax.zoomed(false);
-      });
-      this.sharey.forEach(function(ax) {
-        ax.zoomed(false);
-      });
-    }
-    for (var i = 0; i < this.elements.length; i++) {
-      this.elements[i].zoomed();
-    }
-  };
+  mpld3_Axes.prototype.enable_zoom = function() {};
+  mpld3_Axes.prototype.disable_zoom = function() {};
+  mpld3_Axes.prototype.zoomed = function(propagate) {};
   mpld3_Axes.prototype.reset = function(duration, propagate) {
     this.set_axlim(this.props.xdomain, this.props.ydomain, duration, propagate);
   };
@@ -879,11 +851,6 @@
     propagate = isUndefined(propagate) ? true : propagate;
     var interpX = this.props.xscale === "date" ? mpld3.interpolateDates(this.xdom.domain(), xlim) : d3.interpolate(this.xdom.domain(), xlim);
     var interpY = this.props.yscale === "date" ? mpld3.interpolateDates(this.ydom.domain(), ylim) : d3.interpolate(this.ydom.domain(), ylim);
-    var transition = function(t) {
-      this.zoom_x.x(this.xdom.domain(interpX(t)));
-      this.zoom_y.y(this.ydom.domain(interpY(t)));
-      this.zoomed(false);
-    }.bind(this);
     d3.select({}).transition().duration(duration).tween("zoom", function() {
       return transition;
     });
@@ -895,11 +862,6 @@
         ax.set_axlim(null, ylim, duration, false);
       });
     }
-    this.zoom.scale(1).translate([ 0, 0 ]);
-    this.zoom.last_t = this.zoom.translate();
-    this.zoom.last_s = this.zoom.scale();
-    this.zoom_x.scale(1).translate([ 0, 0 ]);
-    this.zoom_y.scale(1).translate([ 0, 0 ]);
   };
   mpld3.Toolbar = mpld3_Toolbar;
   mpld3_Toolbar.prototype = Object.create(mpld3_PlotElement.prototype);
@@ -1386,7 +1348,7 @@
   }
   mpld3_Figure.prototype.getBrush = function() {
     if (typeof this._brush === "undefined") {
-      var brush = d3.svg.brush().x(d3.scale.linear()).y(d3.scale.linear());
+      var brush = d3.brush().x(d3.scaleLinear()).y(d3.scaleLinear());
       this.root.selectAll(".mpld3-axes").data(this.axes).call(brush);
       this.axes.forEach(function(ax) {
         brush.x(ax.xdom).y(ax.ydom);

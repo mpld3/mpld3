@@ -83,7 +83,7 @@ function mpld3_Axes(fig, props) {
 
     function build_scale(scale, domain, range) {
         var dom = (scale === 'date') ? d3.time.scale() :
-            (scale === 'log') ? d3.scale.log() : d3.scale.linear();
+            (scale === 'log') ? d3.scaleLog() : d3.scaleLinear();
         return dom.domain(domain).range(range);
     }
 
@@ -94,14 +94,14 @@ function mpld3_Axes(fig, props) {
         this.props.ydomain, [this.height, 0]);
 
     if (this.props.xscale === "date") {
-        this.x = mpld3.multiscale(d3.scale.linear()
+        this.x = mpld3.multiscale(d3.scaleLinear()
                                     .domain(this.props.xlim)
                                     .range(this.props.xdomain.map(Number)),
                                   this.xdom);
     }
 
     if (this.props.yscale === "date") {
-        this.y = mpld3.multiscale(d3.scale.linear()
+        this.y = mpld3.multiscale(d3.scaleLinear()
                                     .domain(this.props.ylim)
                                     .range(this.props.ydomain.map(Number)),
                                   this.ydom);
@@ -168,13 +168,14 @@ mpld3_Axes.prototype.draw = function() {
         this.sharey.push(mpld3.get_element(this.props.sharey[i]));
     }
 
-    this.zoom = d3.behavior.zoom();
+    // TODO: Fix zoom.
+    // this.zoom = d3.zoom();
 
-    this.zoom.last_t = this.zoom.translate()
-    this.zoom.last_s = this.zoom.scale()
+    // this.zoom.last_t = this.zoom.translate()
+    // this.zoom.last_s = this.zoom.scale()
 
-    this.zoom_x = d3.behavior.zoom().x(this.xdom);
-    this.zoom_y = d3.behavior.zoom().y(this.ydom);
+    // this.zoom_x = d3.zoom().x(this.xdom);
+    // this.zoom_y = d3.zoom().y(this.ydom);
 
     this.baseaxes = this.fig.canvas.append("g")
         .attr('transform', 'translate(' + this.position[0] + ',' + this.position[1] + ')')
@@ -206,6 +207,11 @@ mpld3_Axes.prototype.draw = function() {
     }
 };
 
+// TODO: Fix zoom.
+mpld3_Axes.prototype.enable_zoom = function() {};
+mpld3_Axes.prototype.disable_zoom = function() {};
+mpld3_Axes.prototype.zoomed = function(propagate) {};
+/*
 mpld3_Axes.prototype.enable_zoom = function() {
     if (this.props.zoomable) {
         this.zoom.on("zoom", this.zoomed.bind(this, true));
@@ -267,6 +273,7 @@ mpld3_Axes.prototype.zoomed = function(propagate) {
         this.elements[i].zoomed();
     }
 };
+*/
 
 mpld3_Axes.prototype.reset = function(duration, propagate) {
     this.set_axlim(this.props.xdomain, this.props.ydomain,
@@ -290,11 +297,14 @@ mpld3_Axes.prototype.set_axlim = function(xlim, ylim,
         mpld3.interpolateDates(this.ydom.domain(), ylim) :
         d3.interpolate(this.ydom.domain(), ylim);
 
+    // TODO: Fix zoom.
+    /*
     var transition = function(t) {
         this.zoom_x.x(this.xdom.domain(interpX(t)));
         this.zoom_y.y(this.ydom.domain(interpY(t)));
         this.zoomed(false); // don't propagate here; propagate below.
     }.bind(this);
+    */
 
     // select({}) is a trick to make transitions run concurrently
     d3.select({})
@@ -314,9 +324,12 @@ mpld3_Axes.prototype.set_axlim = function(xlim, ylim,
     }
 
     // finalize the reset operation.
+    // TODO: Fix zoom.
+    /*
     this.zoom.scale(1).translate([0, 0]);
     this.zoom.last_t = this.zoom.translate();
     this.zoom.last_s = this.zoom.scale();
     this.zoom_x.scale(1).translate([0, 0]);
     this.zoom_y.scale(1).translate([0, 0]);
+    */
 };

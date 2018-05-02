@@ -63,7 +63,7 @@ mpld3_Axis.prototype.draw = function() {
         this.parent.props.xscale : this.parent.props.yscale;
 
     if (scale === 'date' && this.props.tickvalues) {
-        // Convert tick locations from floating point ordinal values 
+        // Convert tick locations from floating point ordinal values
         // to JavaScript Dates
         var domain = (this.props.xy === 'x') ?
             this.parent.x.domain() :
@@ -71,7 +71,7 @@ mpld3_Axis.prototype.draw = function() {
         var range = (this.props.xy === 'x') ?
             this.parent.xdom.domain() :
             this.parent.ydom.domain();
-        var ordinal_to_js_date = d3.scale.linear()
+        var ordinal_to_js_date = d3.scaleLinear()
             .domain(domain)
             .range(range);
         this.props.tickvalues = this.props.tickvalues.map(function(value) {
@@ -81,9 +81,14 @@ mpld3_Axis.prototype.draw = function() {
 
     var tickformat = mpld3_tickFormat(this.props.tickformat, this.props.tickvalues);
 
-    this.axis = d3.svg.axis()
-        .scale(this.scale)
-        .orient(this.props.position)
+    var scaleMethod = {
+        left: 'axisLeft',
+        right: 'axisRight',
+        top: 'axisTop',
+        bottom: 'axisBottom',
+    }[this.props.position];
+
+    this.axis = d3[scaleMethod](this.scale)
         .ticks(this.props.nticks)
         .tickValues(this.props.tickvalues)
         .tickFormat(tickformat);
@@ -119,7 +124,7 @@ function mpld3_tickFormat(tickformat, tickvalues) {
     else {
         // tickvalues is an array of tick locations
         // tickformat is an array of tick labels
-        return d3.scale.threshold()
+        return d3.scaleThreshold()
             .domain(tickvalues.slice(1))
             .range(tickformat);
     }

@@ -51,22 +51,22 @@ mpld3_Figure.prototype.getBrush = function() {
         // use temporary linear scales here: we'll replace
         // with the real x and y scales below.
         var brush = d3.svg.brush()
-            .x(d3.scale.linear())
-            .y(d3.scale.linear());
-    
-	// this connects the axes instance to the brush elements
-	this.root.selectAll(".mpld3-axes")
-	    .data(this.axes)
-	    .call(brush);
+            .x(d3.scaleLinear())
+            .y(d3.scaleLinear());
+
+        // this connects the axes instance to the brush elements
+        this.root.selectAll(".mpld3-axes")
+            .data(this.axes)
+            .call(brush);
 
         // need to call the brush on each axes with correct x/y domains
         this.axes.forEach(function(ax){
             brush.x(ax.xdom).y(ax.ydom);
             ax.axes.call(brush);
-	})
+        });
 
         this._brush = brush;
-	this.hideBrush();
+        this.hideBrush();
     }
     return this._brush;
 };
