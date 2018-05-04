@@ -38,7 +38,8 @@ class LinkedView(plugins.PluginBase):
             .attr("d", line.datafunc(line.data))
             .style("stroke", this.style.fill);
       }
-      pts.elements().on("mouseover", mouseover);
+      // TODO: (@vladh) Fix this.
+      // pts.elements().on("mouseover", mouseover);
     };
     """
 
