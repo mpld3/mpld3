@@ -173,6 +173,9 @@
     };
     function path(vertices, pathcodes) {
       var functor = function(x) {
+        if (typeof x == "function") {
+          return x;
+        }
         return function() {
           return x;
         };

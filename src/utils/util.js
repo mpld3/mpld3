@@ -220,6 +220,7 @@ function mpld3_path(_) {
 
     function path(vertices, pathcodes) {
         var functor = function(x) {
+            if (typeof x == "function") { return x; }
             return function() { return x; }
         }
         var fx = functor(x),
