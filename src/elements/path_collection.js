@@ -94,9 +94,9 @@ mpld3_PathCollection.prototype.styleFunc = function(d, i) {
 
 mpld3_PathCollection.prototype.allFinite = function(d) {
     if (d instanceof Array) {
-	return (d.length == d.filter(isFinite).length);
+        return (d.length == d.filter(isFinite).length);
     } else {
-	return true;
+        return true;
     }
 }
 

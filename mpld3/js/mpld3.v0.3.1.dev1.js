@@ -463,9 +463,9 @@
   mpld3_Path.prototype.draw = function() {
     this.datafunc.defined(this.finiteFilter.bind(this)).x(function(d) {
       return this.pathcoords.x(d[this.props.xindex]);
-    }).y(function(d) {
+    }.bind(this)).y(function(d) {
       return this.pathcoords.y(d[this.props.yindex]);
-    });
+    }.bind(this));
     this.path = this.ax.axes.append("svg:path").attr("d", this.datafunc(this.data, this.pathcodes)).attr("class", "mpld3-path").style("stroke", this.props.edgecolor).style("stroke-width", this.props.edgewidth).style("stroke-dasharray", this.props.dasharray).style("stroke-opacity", this.props.alpha).style("fill", this.props.facecolor).style("fill-opacity", this.props.alpha).attr("vector-effect", "non-scaling-stroke");
     if (this.props.offset !== null) {
       var offset = this.offsetcoords.xy(this.props.offset);

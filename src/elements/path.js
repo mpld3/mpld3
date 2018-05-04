@@ -36,8 +36,8 @@ function mpld3_Path(ax, props) {
 }
 
 mpld3_Path.prototype.finiteFilter = function(d, i) {
-    return (isFinite(this.pathcoords.x(d[this.props.xindex]))
-	    && isFinite(this.pathcoords.y(d[this.props.yindex])));
+    return (isFinite(this.pathcoords.x(d[this.props.xindex])) &&
+        isFinite(this.pathcoords.y(d[this.props.yindex])));
 };
 
 mpld3_Path.prototype.draw = function() {
@@ -45,10 +45,10 @@ mpld3_Path.prototype.draw = function() {
         .defined(this.finiteFilter.bind(this))
         .x(function(d) {
             return this.pathcoords.x(d[this.props.xindex]);
-        })
+        }.bind(this))
         .y(function(d) {
             return this.pathcoords.y(d[this.props.yindex]);
-        });
+        }.bind(this));
 
     this.path = this.ax.axes.append("svg:path")
         .attr("d", this.datafunc(this.data, this.pathcodes))
