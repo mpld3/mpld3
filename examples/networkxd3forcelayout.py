@@ -157,7 +157,7 @@ class NetworkXD3ForceLayout(mpld3.plugins.PluginBase):
     function NetworkXD3ForceLayoutPlugin(fig, props){
         mpld3.Plugin.call(this, fig, props);
     };
-    var color = d3.scale.category20();
+    var color = d3.scaleOrdinal(d3.schemeCategory20);
     NetworkXD3ForceLayoutPlugin.prototype.zoomScaleProp = function (nominal_prop, minimum_prop, maximum_prop) {
         var zoom = this.ax.zoom;
         scalerFunction = function() {
@@ -197,9 +197,9 @@ class NetworkXD3ForceLayout(mpld3.plugins.PluginBase):
         ax_obj = this.ax;
         var width = d3.max(ax.x.range()) - d3.min(ax.x.range()),
             height = d3.max(ax.y.range()) - d3.min(ax.y.range());
-        var color = d3.scale.category20();
-        this.xScale = d3.scale.linear().domain([0, 1]).range([0, width]) // ax.x;
-        this.yScale = d3.scale.linear().domain([0, 1]).range([height, 0]) // ax.y;
+        var color = d3.scaleOrdinal(d3.schemeCategory20);
+        this.xScale = d3.scaleLinear().domain([0, 1]).range([0, width]) // ax.x;
+        this.yScale = d3.scaleLinear().domain([0, 1]).range([height, 0]) // ax.y;
         this.force = d3.layout.force()
                             .size([width, height]);
         this.svg = this.ax.axes.append("g");
