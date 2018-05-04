@@ -26,6 +26,25 @@
     }
     return newObj;
   }
+  mpld3.getTransformation = function(transform) {
+    var g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+    g.setAttributeNS(null, "transform", transform);
+    var matrix = g.transform.baseVal.consolidate().matrix;
+    var a = matrix.a, b = matrix.b, c = matrix.c, d = matrix.d, e = matrix.e, f = matrix.f;
+    var scaleX, scaleY, skewX;
+    if (scaleX = Math.sqrt(a * a + b * b)) a /= scaleX, b /= scaleX;
+    if (skewX = a * c + b * d) c -= a * skewX, d -= b * skewX;
+    if (scaleY = Math.sqrt(c * c + d * d)) c /= scaleY, d /= scaleY, skewX /= scaleY;
+    if (a * d < b * c) a = -a, b = -b, skewX = -skewX, scaleX = -scaleX;
+    return {
+      translateX: e,
+      translateY: f,
+      rotate: Math.atan2(b, a) * 180 / Math.PI,
+      skewX: Math.atan(skewX) * 180 / Math.PI,
+      scaleX: scaleX,
+      scaleY: scaleY
+    };
+  };
   mpld3.merge_objects = function(_) {
     var output = {};
     var obj;
@@ -523,7 +542,8 @@
   }
   mpld3_PathCollection.prototype.transformFunc = function(d, i) {
     var t = this.props.pathtransforms;
-    var transform = t.length == 0 ? "" : d3.transform("matrix(" + getMod(t, i) + ")").toString();
+    console.log(mpld3);
+    var transform = t.length == 0 ? "" : mpld3.getTransformation("matrix(" + getMod(t, i) + ")").toString();
     var offset = d === null || typeof d === "undefined" ? "translate(0, 0)" : "translate(" + this.offsetcoords.xy(d, this.props.xindex, this.props.yindex) + ")";
     return this.props.offsetorder === "after" ? transform + offset : offset + transform;
   };

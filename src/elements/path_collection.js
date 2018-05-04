@@ -56,7 +56,7 @@ function mpld3_PathCollection(ax, props) {
 mpld3_PathCollection.prototype.transformFunc = function(d, i) {
     var t = this.props.pathtransforms;
     var transform = (t.length == 0) ? "" :
-        d3.transform("matrix(" + getMod(t, i) + ")").toString();
+        mpld3.getTransformation("matrix(" + getMod(t, i) + ")").toString();
 
     var offset = (d === null || typeof(d) === "undefined") ?
         "translate(0, 0)" :
