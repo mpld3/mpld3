@@ -200,8 +200,9 @@ class NetworkXD3ForceLayout(mpld3.plugins.PluginBase):
         var color = d3.scaleOrdinal(d3.schemeCategory20);
         this.xScale = d3.scaleLinear().domain([0, 1]).range([0, width]) // ax.x;
         this.yScale = d3.scaleLinear().domain([0, 1]).range([height, 0]) // ax.y;
-        this.force = d3.forceSimulation()
-        // TODO: (@vladh) Fix size.
+        this.force = d3.forceSimulation();
+        // TODO: (@vladh) Verify that size works. It should because of the
+        // center force below.
         //    .size([width, height]);
         this.svg = this.ax.axes.append("g");
         for(var i = 0; i < graph.nodes.length; i++){
@@ -222,11 +223,11 @@ class NetworkXD3ForceLayout(mpld3.plugins.PluginBase):
             )
             .force("collide", d3.forceCollide(function(d){return d.r + 8 }).iterations(16))
             .force("charge", d3.forceManyBody().strength(charge))
-            .force("center", d3.forceCenter(chartWidth / 2, chartHeight / 2))
+            .force("center", d3.forceCenter(width / 2, height / 2))
             .force("y", d3.forceY(0))
             .force("x", d3.forceX(0));
         this.force.nodes(graph.nodes);
-        this.force("link").links(graph.links);
+        this.force.force("link").links(graph.links);
         this.link = this.svg.selectAll(".link")
             .data(graph.links)
           .enter().append("line")
