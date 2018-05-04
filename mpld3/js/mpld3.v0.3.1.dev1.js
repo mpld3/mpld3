@@ -600,19 +600,19 @@
     switch (drawstyle) {
      case "steps":
      case "steps-pre":
-      this.datafunc = d3.line().interpolate("step-before");
+      this.datafunc = d3.line().curve(d3.curveStepBefore);
       break;
 
      case "steps-post":
-      this.datafunc = d3.line().interpolate("step-after");
+      this.datafunc = d3.line().curve(d3.curveStepAfter);
       break;
 
      case "steps-mid":
-      this.datafunc = d3.line().interpolate("step");
+      this.datafunc = d3.line().curve(d3.curveStep);
       break;
 
      default:
-      this.datafunc = d3.line().interpolate("linear");
+      this.datafunc = d3.line().curve(d3.curveLinear);
     }
   }
   mpld3.Markers = mpld3_Markers;
