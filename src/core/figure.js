@@ -47,7 +47,7 @@ function mpld3_Figure(figid, props) {
 
 // getBrush contains boilerplate for defining a d3 brush over the axes
 mpld3_Figure.prototype.getBrush = function() {
-    // TODO: (@vladh) Fix.
+    // TODO: (@vladh) Fix brush in figure.
     // if (typeof this._brush === "undefined"){
     //     // use temporary linear scales here: we'll replace
     //     // with the real x and y scales below.
@@ -73,7 +73,7 @@ mpld3_Figure.prototype.getBrush = function() {
 };
 
 mpld3_Figure.prototype.showBrush = function(extentClass) {
-    // TODO: (@vladh) Fix.
+    // TODO: (@vladh) Fix brush in figure.
     // extentClass = (typeof extentClass === "undefined") ? "" : extentClass;
     // var brush = this.getBrush();
     // brush.on("brushstart", function(d){brush.x(d.xdom).y(d.ydom);});
@@ -86,7 +86,7 @@ mpld3_Figure.prototype.showBrush = function(extentClass) {
 };
 
 mpld3_Figure.prototype.hideBrush = function(extentClass) {
-    // TODO: (@vladh) Fix.
+    // TODO: (@vladh) Fix brush in figure.
     // extentClass = (typeof extentClass === "undefined") ? "" : extentClass;
     // var brush = this.getBrush();
     // brush.on("brushstart", null)

@@ -38,7 +38,7 @@ class LinkedView(plugins.PluginBase):
             .attr("d", line.datafunc(line.data))
             .style("stroke", this.style.fill);
       }
-      // TODO: (@vladh) Fix this.
+      // TODO: (@vladh) Fix mouseover functionality in LinkedViewPlugin.
       // pts.elements().on("mouseover", mouseover);
     };
     """

@@ -168,7 +168,7 @@ mpld3_Axes.prototype.draw = function() {
         this.sharey.push(mpld3.get_element(this.props.sharey[i]));
     }
 
-    // TODO: (@vladh) Fix zoom.
+    // TODO: (@vladh) Fix zoom on axis.
     // this.zoom = d3.zoom();
 
     // this.zoom.last_t = this.zoom.translate()
@@ -207,7 +207,7 @@ mpld3_Axes.prototype.draw = function() {
     }
 };
 
-// TODO: (@vladh) Fix zoom.
+// TODO: (@vladh) Fix zoom on axis.
 mpld3_Axes.prototype.enable_zoom = function() {};
 mpld3_Axes.prototype.disable_zoom = function() {};
 mpld3_Axes.prototype.zoomed = function(propagate) {};
@@ -297,7 +297,7 @@ mpld3_Axes.prototype.set_axlim = function(xlim, ylim,
         mpld3.interpolateDates(this.ydom.domain(), ylim) :
         d3.interpolate(this.ydom.domain(), ylim);
 
-    // TODO: (@vladh) Fix zoom.
+    // TODO: (@vladh) Fix zoom on axis.
     /*
     var transition = function(t) {
         this.zoom_x.x(this.xdom.domain(interpX(t)));
@@ -324,7 +324,7 @@ mpld3_Axes.prototype.set_axlim = function(xlim, ylim,
     }
 
     // finalize the reset operation.
-    // TODO: (@vladh) Fix zoom.
+    // TODO: (@vladh) Fix zoom on axis.
     /*
     this.zoom.scale(1).translate([0, 0]);
     this.zoom.last_t = this.zoom.translate();
