@@ -43,6 +43,8 @@ mpld3_LinkedBrushPlugin.prototype.deactivate = function(){
 };
 
 mpld3_LinkedBrushPlugin.prototype.draw = function(){
+    // TODO: Fix.
+    return undefined;
     var obj = mpld3.get_element(this.props.id);
     if(obj === null){
         throw("LinkedBrush: no object with id='"
@@ -110,7 +112,7 @@ mpld3_LinkedBrushPlugin.prototype.draw = function(){
                                          e[0][1] > p[iy] || e[1][1] < p[iy];
                               });
             }
-        } 
+        }
     }
 
     function brushend(d){

@@ -1231,6 +1231,7 @@
     if (this.disable) this.disable();
   };
   mpld3_LinkedBrushPlugin.prototype.draw = function() {
+    return undefined;
     var obj = mpld3.get_element(this.props.id);
     if (obj === null) {
       throw "LinkedBrush: no object with id='" + this.props.id + "' was found";
