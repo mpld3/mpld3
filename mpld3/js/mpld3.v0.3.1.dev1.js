@@ -1346,37 +1346,9 @@
       buttons: this.buttons
     });
   }
-  mpld3_Figure.prototype.getBrush = function() {
-    if (typeof this._brush === "undefined") {
-      var brush = d3.brush().x(d3.scaleLinear()).y(d3.scaleLinear());
-      this.root.selectAll(".mpld3-axes").data(this.axes).call(brush);
-      this.axes.forEach(function(ax) {
-        brush.x(ax.xdom).y(ax.ydom);
-        ax.axes.call(brush);
-      });
-      this._brush = brush;
-      this.hideBrush();
-    }
-    return this._brush;
-  };
-  mpld3_Figure.prototype.showBrush = function(extentClass) {
-    extentClass = typeof extentClass === "undefined" ? "" : extentClass;
-    var brush = this.getBrush();
-    brush.on("brushstart", function(d) {
-      brush.x(d.xdom).y(d.ydom);
-    });
-    this.canvas.selectAll("rect.background").style("cursor", "crosshair").style("pointer-events", null);
-    this.canvas.selectAll("rect.extent, rect.resize").style("display", null).classed(extentClass, true);
-  };
-  mpld3_Figure.prototype.hideBrush = function(extentClass) {
-    extentClass = typeof extentClass === "undefined" ? "" : extentClass;
-    var brush = this.getBrush();
-    brush.on("brushstart", null).on("brush", null).on("brushend", function(d) {
-      d.axes.call(brush.clear());
-    });
-    this.canvas.selectAll("rect.background").style("cursor", null).style("pointer-events", "visible");
-    this.canvas.selectAll("rect.extent, rect.resize").style("display", "none").classed(extentClass, false);
-  };
+  mpld3_Figure.prototype.getBrush = function() {};
+  mpld3_Figure.prototype.showBrush = function(extentClass) {};
+  mpld3_Figure.prototype.hideBrush = function(extentClass) {};
   mpld3_Figure.prototype.add_plugin = function(props) {
     var plug = props.type;
     if (typeof plug === "undefined") {
