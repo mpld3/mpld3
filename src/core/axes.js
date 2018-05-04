@@ -82,7 +82,7 @@ function mpld3_Axes(fig, props) {
   *****************************************************************/
 
     function build_scale(scale, domain, range) {
-        var dom = (scale === 'date') ? d3.time.scale() :
+        var dom = (scale === 'date') ? d3.scaleTime() :
             (scale === 'log') ? d3.scaleLog() : d3.scaleLinear();
         return dom.domain(domain).range(range);
     }

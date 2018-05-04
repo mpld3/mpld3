@@ -776,7 +776,7 @@
     this.props.xdomain = setDomain(this.props.xscale, this.props.xdomain);
     this.props.ydomain = setDomain(this.props.yscale, this.props.ydomain);
     function build_scale(scale, domain, range) {
-      var dom = scale === "date" ? d3.time.scale() : scale === "log" ? d3.scaleLog() : d3.scaleLinear();
+      var dom = scale === "date" ? d3.scaleTime() : scale === "log" ? d3.scaleLog() : d3.scaleLinear();
       return dom.domain(domain).range(range);
     }
     this.x = this.xdom = build_scale(this.props.xscale, this.props.xdomain, [ 0, this.width ]);
