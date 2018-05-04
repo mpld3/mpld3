@@ -19,9 +19,7 @@ mpld3_Image.prototype.draw = function() {
     this.image = this.ax.axes.append("svg:image")
         .attr('class', 'mpld3-image')
         .attr('xlink:href', "data:image/png;base64," + this.props.data)
-        .style({
-            'opacity': this.props.alpha
-        })
+        .style('opacity', this.props.alpha)
         .attr("preserveAspectRatio", "none");
     this.zoomed();
 };

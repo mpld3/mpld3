@@ -542,7 +542,6 @@
   }
   mpld3_PathCollection.prototype.transformFunc = function(d, i) {
     var t = this.props.pathtransforms;
-    console.log(mpld3);
     var transform = t.length == 0 ? "" : mpld3.getTransformation("matrix(" + getMod(t, i) + ")").toString();
     var offset = d === null || typeof d === "undefined" ? "translate(0, 0)" : "translate(" + this.offsetcoords.xy(d, this.props.xindex, this.props.yindex) + ")";
     return this.props.offsetorder === "after" ? transform + offset : offset + transform;
@@ -693,9 +692,7 @@
     this.coords = new mpld3_Coordinates(this.props.coordinates, this.ax);
   }
   mpld3_Image.prototype.draw = function() {
-    this.image = this.ax.axes.append("svg:image").attr("class", "mpld3-image").attr("xlink:href", "data:image/png;base64," + this.props.data).style({
-      opacity: this.props.alpha
-    }).attr("preserveAspectRatio", "none");
+    this.image = this.ax.axes.append("svg:image").attr("class", "mpld3-image").attr("xlink:href", "data:image/png;base64," + this.props.data).style("opacity", this.props.alpha).attr("preserveAspectRatio", "none");
     this.zoomed();
   };
   mpld3_Image.prototype.elements = function(d) {
