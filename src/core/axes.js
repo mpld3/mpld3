@@ -74,7 +74,7 @@ function mpld3_Axes(fig, props) {
            - data domain
     The data range and domain are only different in the case of
     date axes.  For log or linear axes, the two are identical.
-  
+
     To convert between these, we have the following mappings:
      - [x,y]dom     : map from domain to screen
      - [x,y]        : map from range to screen
@@ -168,12 +168,11 @@ mpld3_Axes.prototype.draw = function() {
         this.sharey.push(mpld3.get_element(this.props.sharey[i]));
     }
 
-    // TODO: (@vladh) Fix zoom on axis.
-    // this.zoom = d3.zoom();
+    this.zoom = d3.zoom();
 
+    // TODO: (@vladh) Fix other stuff I don't really get.
     // this.zoom.last_t = this.zoom.translate()
     // this.zoom.last_s = this.zoom.scale()
-
     // this.zoom_x = d3.zoom().x(this.xdom);
     // this.zoom_y = d3.zoom().y(this.ydom);
 
@@ -211,7 +210,6 @@ mpld3_Axes.prototype.draw = function() {
 mpld3_Axes.prototype.enable_zoom = function() {};
 mpld3_Axes.prototype.disable_zoom = function() {};
 mpld3_Axes.prototype.zoomed = function(propagate) {};
-/*
 mpld3_Axes.prototype.enable_zoom = function() {
     if (this.props.zoomable) {
         this.zoom.on("zoom", this.zoomed.bind(this, true));
@@ -233,47 +231,47 @@ mpld3_Axes.prototype.zoomed = function(propagate) {
     // to shared axes, specified by sharex and sharey.  Default is true.
     propagate = (typeof propagate == 'undefined') ? true : propagate;
 
-    if (propagate) {
-        // update scale and translation of zoom_x and zoom_y,
-        // based on change in this.zoom scale and translation values
-        var dt0 = this.zoom.translate()[0] - this.zoom.last_t[0];
-        var dt1 = this.zoom.translate()[1] - this.zoom.last_t[1];
-        var ds = this.zoom.scale() / this.zoom.last_s;
+    // TODO: (@vladh) Fix zoom propagation
+    // if (propagate) {
+    //     // update scale and translation of zoom_x and zoom_y,
+    //     // based on change in this.zoom scale and translation values
+    //     var dt0 = this.zoom.translate()[0] - this.zoom.last_t[0];
+    //     var dt1 = this.zoom.translate()[1] - this.zoom.last_t[1];
+    //     var ds = this.zoom.scale() / this.zoom.last_s;
 
-        this.zoom_x.translate([this.zoom_x.translate()[0] + dt0, 0]);
-        this.zoom_x.scale(this.zoom_x.scale() * ds)
+    //     this.zoom_x.translate([this.zoom_x.translate()[0] + dt0, 0]);
+    //     this.zoom_x.scale(this.zoom_x.scale() * ds)
 
-        this.zoom_y.translate([0, this.zoom_y.translate()[1] + dt1]);
-        this.zoom_y.scale(this.zoom_y.scale() * ds)
+    //     this.zoom_y.translate([0, this.zoom_y.translate()[1] + dt1]);
+    //     this.zoom_y.scale(this.zoom_y.scale() * ds)
 
-        // update last translate and scale values for future use
-        this.zoom.last_t = this.zoom.translate();
-        this.zoom.last_s = this.zoom.scale();
+    //     // update last translate and scale values for future use
+    //     this.zoom.last_t = this.zoom.translate();
+    //     this.zoom.last_s = this.zoom.scale();
 
-        // update shared axes objects
-        this.sharex.forEach(function(ax) {
-            ax.zoom_x.translate(this.zoom_x.translate())
-                .scale(this.zoom_x.scale());
-        }.bind(this));
-        this.sharey.forEach(function(ax) {
-            ax.zoom_y.translate(this.zoom_y.translate())
-                .scale(this.zoom_y.scale());
-        }.bind(this));
+    //     // update shared axes objects
+    //     this.sharex.forEach(function(ax) {
+    //         ax.zoom_x.translate(this.zoom_x.translate())
+    //             .scale(this.zoom_x.scale());
+    //     }.bind(this));
+    //     this.sharey.forEach(function(ax) {
+    //         ax.zoom_y.translate(this.zoom_y.translate())
+    //             .scale(this.zoom_y.scale());
+    //     }.bind(this));
 
-        // render updates
-        this.sharex.forEach(function(ax) {
-            ax.zoomed(false);
-        });
-        this.sharey.forEach(function(ax) {
-            ax.zoomed(false);
-        });
-    }
+    //     // render updates
+    //     this.sharex.forEach(function(ax) {
+    //         ax.zoomed(false);
+    //     });
+    //     this.sharey.forEach(function(ax) {
+    //         ax.zoomed(false);
+    //     });
+    // }
 
     for (var i = 0; i < this.elements.length; i++) {
         this.elements[i].zoomed();
     }
 };
-*/
 
 mpld3_Axes.prototype.reset = function(duration, propagate) {
     this.set_axlim(this.props.xdomain, this.props.ydomain,
@@ -297,7 +295,7 @@ mpld3_Axes.prototype.set_axlim = function(xlim, ylim,
         mpld3.interpolateDates(this.ydom.domain(), ylim) :
         d3.interpolate(this.ydom.domain(), ylim);
 
-    // TODO: (@vladh) Fix zoom on axis.
+    // TODO: (@vladh) Fix transition.
     /*
     var transition = function(t) {
         this.zoom_x.x(this.xdom.domain(interpX(t)));
@@ -324,12 +322,10 @@ mpld3_Axes.prototype.set_axlim = function(xlim, ylim,
     }
 
     // finalize the reset operation.
-    // TODO: (@vladh) Fix zoom on axis.
-    /*
     this.zoom.scale(1).translate([0, 0]);
-    this.zoom.last_t = this.zoom.translate();
-    this.zoom.last_s = this.zoom.scale();
-    this.zoom_x.scale(1).translate([0, 0]);
-    this.zoom_y.scale(1).translate([0, 0]);
-    */
+    // TODO: (@vladh) Fix other stuff I don't get.
+    // this.zoom.last_t = this.zoom.translate();
+    // this.zoom.last_s = this.zoom.scale();
+    // this.zoom_x.scale(1).translate([0, 0]);
+    // this.zoom_y.scale(1).translate([0, 0]);
 };

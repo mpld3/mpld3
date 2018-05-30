@@ -852,6 +852,7 @@
     for (var i = 0; i < this.props.sharey.length; i++) {
       this.sharey.push(mpld3.get_element(this.props.sharey[i]));
     }
+    this.zoom = d3.zoom();
     this.baseaxes = this.fig.canvas.append("g").attr("transform", "translate(" + this.position[0] + "," + this.position[1] + ")").attr("width", this.width).attr("height", this.height).attr("class", "mpld3-baseaxes");
     this.clip = this.baseaxes.append("svg:clipPath").attr("id", this.clipid).append("svg:rect").attr("x", 0).attr("y", 0).attr("width", this.width).attr("height", this.height);
     this.axes = this.baseaxes.append("g").attr("class", "mpld3-axes").attr("clip-path", "url(#" + this.clipid + ")");
@@ -863,6 +864,26 @@
   mpld3_Axes.prototype.enable_zoom = function() {};
   mpld3_Axes.prototype.disable_zoom = function() {};
   mpld3_Axes.prototype.zoomed = function(propagate) {};
+  mpld3_Axes.prototype.enable_zoom = function() {
+    if (this.props.zoomable) {
+      this.zoom.on("zoom", this.zoomed.bind(this, true));
+      this.axes.call(this.zoom);
+      this.axes.style("cursor", "move");
+    }
+  };
+  mpld3_Axes.prototype.disable_zoom = function() {
+    if (this.props.zoomable) {
+      this.zoom.on("zoom", null);
+      this.axes.on(".zoom", null);
+      this.axes.style("cursor", null);
+    }
+  };
+  mpld3_Axes.prototype.zoomed = function(propagate) {
+    propagate = typeof propagate == "undefined" ? true : propagate;
+    for (var i = 0; i < this.elements.length; i++) {
+      this.elements[i].zoomed();
+    }
+  };
   mpld3_Axes.prototype.reset = function(duration, propagate) {
     this.set_axlim(this.props.xdomain, this.props.ydomain, duration, propagate);
   };
@@ -884,6 +905,7 @@
         ax.set_axlim(null, ylim, duration, false);
       });
     }
+    this.zoom.scale(1).translate([ 0, 0 ]);
   };
   mpld3.Toolbar = mpld3_Toolbar;
   mpld3_Toolbar.prototype = Object.create(mpld3_PlotElement.prototype);
