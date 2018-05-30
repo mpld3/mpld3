@@ -36,7 +36,7 @@
     if (skewX = a * c + b * d) c -= a * skewX, d -= b * skewX;
     if (scaleY = Math.sqrt(c * c + d * d)) c /= scaleY, d /= scaleY, skewX /= scaleY;
     if (a * d < b * c) a = -a, b = -b, skewX = -skewX, scaleX = -scaleX;
-    return {
+    var transformObj = {
       translateX: e,
       translateY: f,
       rotate: Math.atan2(b, a) * 180 / Math.PI,
@@ -44,6 +44,8 @@
       scaleX: scaleX,
       scaleY: scaleY
     };
+    var transformStr = "" + "translate(" + transformObj.translateX + "," + transformObj.translateY + ")" + "rotate(" + transformObj.rotate + ")" + "skewX(" + transformObj.skewX + ")" + "scale(" + transformObj.scaleX + "," + transformObj.scaleY + ")";
+    return transformStr;
   };
   mpld3.merge_objects = function(_) {
     var output = {};
