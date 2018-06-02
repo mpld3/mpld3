@@ -43,7 +43,7 @@ mpld3_LinkedBrushPlugin.prototype.deactivate = function(){
 };
 
 mpld3_LinkedBrushPlugin.prototype.draw = function(){
-    // TODO: (@vladh) Fix brush in LinkedBrushPlugin.
+    // TODO: (@vladh) [brush] Fix brush in LinkedBrushPlugin.
     return undefined;
     var obj = mpld3.get_element(this.props.id);
     if(obj === null){

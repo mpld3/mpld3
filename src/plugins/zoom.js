@@ -16,39 +16,43 @@ mpld3_ZoomPlugin.prototype.defaultProps = {
 
 function mpld3_ZoomPlugin(fig, props) {
     mpld3_Plugin.call(this, fig, props);
-    if (this.props.enabled === null){
+    if (this.props.enabled === null) {
         this.props.enabled = !(this.props.button);
     }
 
     var enabled = this.props.enabled;
 
-    if (this.props.button){
+    if (this.props.button) {
         var ZoomButton = mpld3.ButtonFactory({
             buttonID: "zoom",
             sticky: true,
             actions: ["scroll", "drag"],
             onActivate: this.activate.bind(this),
             onDeactivate: this.deactivate.bind(this),
-            onDraw: function(){this.setState(enabled);},
+            onDraw: function(){ this.setState(enabled); },
             icon: function() {
                 return mpld3.icons["move"];
             }
         });
-	this.fig.buttons.push(ZoomButton);
+        this.fig.buttons.push(ZoomButton);
     }
 }
 
-mpld3_ZoomPlugin.prototype.activate = function(){
+mpld3_ZoomPlugin.prototype.activate = function() {
+    console.log('[zoom#activate]');
     this.fig.enable_zoom();
 };
 
-mpld3_ZoomPlugin.prototype.deactivate = function(){
+mpld3_ZoomPlugin.prototype.deactivate = function() {
+    console.log('[zoom#deactivate]');
     this.fig.disable_zoom()
 };
 
-mpld3_ZoomPlugin.prototype.draw = function(){
-    if(this.props.enabled)
+mpld3_ZoomPlugin.prototype.draw = function() {
+    console.log('[zoom#draw] enabled:', this.props.enabled);
+    if (this.props.enabled) {
       this.fig.enable_zoom();
-    else
+    } else {
       this.fig.disable_zoom();
+    }
 }

@@ -45,6 +45,7 @@ mpld3_BoxZoomPlugin.prototype.deactivate = function(){
 };
 
 mpld3_BoxZoomPlugin.prototype.draw = function(){
+    // TODO: (@vladh) [brush] Fix brush in boxzoom.
     mpld3.insert_css(
         "#" + this.fig.figid + " rect.extent." + this.extentClass,
         {
@@ -54,33 +55,46 @@ mpld3_BoxZoomPlugin.prototype.draw = function(){
         }
     );
 
-    // getBrush is a d3.svg.brush() object, set up for use on the figure.
+    // getBrush is a d3.brush() object, set up for use on the figure.
     var brush = this.fig.getBrush();
 
     this.enable = function() {
+        console.log('[boxzoom#enable]');
         this.fig.showBrush(this.extentClass);
-        brush.on("brushend", brushend.bind(this));
+        brush.on("end", brushend.bind(this));
         this.enabled = true;
     }
 
     this.disable = function() {
+        console.log('[boxzoom#disable]');
         this.fig.hideBrush(this.extentClass);
         this.enabled = false;
     }
 
     this.toggle = function() {
+        console.log('[boxzoom#toggle] enabled:', this.enabled);
         this.enabled ? this.disable() : this.enable();
     }
 
     function brushend(d) {
-        if (this.enabled) {
-            var extent = brush.extent();
-            if (!brush.empty()) {
-                d.set_axlim([extent[0][0], extent[1][0]],
-                [extent[0][1], extent[1][1]]);
-            }
+        console.log('[boxboxzoom#brushend]', extent);
+        var extent = d3.event.selection;
+        if (!extent) {
+            console.log('[boxboxzoom#brushend] doing nothing');
+            return;
         }
-        d.axes.call(brush.clear());
+        console.log('[boxboxzoom#brushend] trying to do something');
+        if (this.enabled) {
+            console.log('[boxboxzoom#brushend] doing something');
+            d.set_axlim(
+                [extent[0][0], extent[1][0]],
+                [extent[0][1], extent[1][1]],
+                null,
+                null,
+                extent
+            );
+        }
+        d.axes.call(brush.move, null);
     }
 
     this.disable();

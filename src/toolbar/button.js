@@ -17,28 +17,29 @@ mpld3_Button.prototype.setState = function(state) {
 }
 
 mpld3_Button.prototype.click = function() {
+    console.log('[button#click] (' + this.cssclass + ') active:', this.active);
     this.active ? this.deactivate() : this.activate();
 };
 
 mpld3_Button.prototype.activate = function() {
+    console.log('[button#activate (' + this.cssclass + ')]');
     this.toolbar.deactivate_by_action(this.actions);
     this.onActivate();
     this.active = true;
     this.toolbar.toolbar.select('.' + this.cssclass)
-        .classed({
-            pressed: true
-        });
-    if (!this.sticky)
+        .classed('pressed', true);
+    if (!this.sticky) {
         this.deactivate();
+    }
 };
 
 mpld3_Button.prototype.deactivate = function() {
+    console.log('[button#deactivate] (' + this.cssclass + ')');
     this.onDeactivate();
+    console.log('[button#deactivate] (' + this.cssclass + ') onDeactivate done');
     this.active = false;
     this.toolbar.toolbar.select('.' + this.cssclass)
-        .classed({
-            pressed: false
-        });
+        .classed('pressed', false);
 }
 mpld3_Button.prototype.sticky = false;
 mpld3_Button.prototype.actions = [];
@@ -59,8 +60,8 @@ mpld3.ButtonFactory = function(members) {
     }
     B.prototype = Object.create(mpld3_Button.prototype);
     B.prototype.constructor = B;
-    for (var key in members){
-	B.prototype[key] = members[key];
+    for (var key in members) {
+        B.prototype[key] = members[key];
     }
     return B;
 }

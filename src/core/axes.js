@@ -160,6 +160,7 @@ function mpld3_Axes(fig, props) {
 }
 
 mpld3_Axes.prototype.draw = function() {
+    console.log('[axes#draw]');
     for (var i = 0; i < this.props.sharex.length; i++) {
         this.sharex.push(mpld3.get_element(this.props.sharex[i]));
     }
@@ -170,7 +171,7 @@ mpld3_Axes.prototype.draw = function() {
 
     this.zoom = d3.zoom();
 
-    // TODO: (@vladh) Fix other stuff I don't really get.
+    // TODO: (@vladh) [zoom] Fix secondary zoom stuff.
     // this.zoom.last_t = this.zoom.translate()
     // this.zoom.last_s = this.zoom.scale()
     // this.zoom_x = d3.zoom().x(this.xdom);
@@ -204,34 +205,38 @@ mpld3_Axes.prototype.draw = function() {
     for (var i = 0; i < this.elements.length; i++) {
         this.elements[i].draw();
     }
+
+    // TODO: (@vladh) [zoom] This wasn't needed before, why is it now?
+    // this.enable_zoom();
 };
 
-// TODO: (@vladh) Fix zoom on axis.
-mpld3_Axes.prototype.enable_zoom = function() {};
-mpld3_Axes.prototype.disable_zoom = function() {};
-mpld3_Axes.prototype.zoomed = function(propagate) {};
+// TODO: (@vladh) [zoom] Fix zoom on axis.
 mpld3_Axes.prototype.enable_zoom = function() {
+    console.log('[axes#enable_zoom]');
     if (this.props.zoomable) {
         this.zoom.on("zoom", this.zoomed.bind(this, true));
+        // TODO: (@vladh) [zoom] Fix this.
         this.axes.call(this.zoom);
         this.axes.style("cursor", 'move');
     }
 };
 
 mpld3_Axes.prototype.disable_zoom = function() {
+    console.log('[axes#disable_zoom]');
     if (this.props.zoomable) {
         this.zoom.on("zoom", null);
+        // TODO: (@vladh) [zoom] Fix this.
         this.axes.on('.zoom', null)
         this.axes.style('cursor', null);
     }
 };
 
 mpld3_Axes.prototype.zoomed = function(propagate) {
-    // propagate is a boolean specifying whether to propagate movements
-    // to shared axes, specified by sharex and sharey.  Default is true.
-    propagate = (typeof propagate == 'undefined') ? true : propagate;
-
-    // TODO: (@vladh) Fix zoom propagation
+    console.log('[axes#zoomed]');
+    // TODO: (@vladh) [zoom] Fix zoom propagation.
+    // // propagate is a boolean specifying whether to propagate movements
+    // // to shared axes, specified by sharex and sharey.  Default is true.
+    // propagate = (typeof propagate == 'undefined') ? true : propagate;
     // if (propagate) {
     //     // update scale and translation of zoom_x and zoom_y,
     //     // based on change in this.zoom scale and translation values
@@ -268,34 +273,38 @@ mpld3_Axes.prototype.zoomed = function(propagate) {
     //     });
     // }
 
-    for (var i = 0; i < this.elements.length; i++) {
-        this.elements[i].zoomed();
-    }
+    // for (var i = 0; i < this.elements.length; i++) {
+    //     this.elements[i].zoomed();
+    // }
 };
 
 mpld3_Axes.prototype.reset = function(duration, propagate) {
-    this.set_axlim(this.props.xdomain, this.props.ydomain,
-        duration, propagate);
+    this.set_axlim(
+        this.props.xdomain, this.props.ydomain, duration, propagate
+    );
 };
 
-mpld3_Axes.prototype.set_axlim = function(xlim, ylim,
-                                          duration, propagate) {
-    xlim = isUndefinedOrNull(xlim) ? this.xdom.domain() : xlim;
-    ylim = isUndefinedOrNull(ylim) ? this.ydom.domain() : ylim;
-    duration = isUndefinedOrNull(duration) ? 750 : duration;
-    propagate = isUndefined(propagate) ? true : propagate;
+mpld3_Axes.prototype.set_axlim = function(
+    xlim, ylim, duration, propagate, bounds
+) {
+    console.log('[axes#set_axlim]');
+    console.log(bounds);
+    // xlim = isUndefinedOrNull(xlim) ? this.xdom.domain() : xlim;
+    // ylim = isUndefinedOrNull(ylim) ? this.ydom.domain() : ylim;
+    // duration = isUndefinedOrNull(duration) ? 750 : duration;
+    // propagate = isUndefined(propagate) ? true : propagate;
 
-    // Create a transition function which will interpolate
-    // from the current axes limits to the final limits
-    var interpX = (this.props.xscale === 'date') ?
-        mpld3.interpolateDates(this.xdom.domain(), xlim) :
-        d3.interpolate(this.xdom.domain(), xlim);
+    // // Create a transition function which will interpolate
+    // // from the current axes limits to the final limits
+    // var interpX = (this.props.xscale === 'date') ?
+    //     mpld3.interpolateDates(this.xdom.domain(), xlim) :
+    //     d3.interpolate(this.xdom.domain(), xlim);
 
-    var interpY = (this.props.yscale === 'date') ?
-        mpld3.interpolateDates(this.ydom.domain(), ylim) :
-        d3.interpolate(this.ydom.domain(), ylim);
+    // var interpY = (this.props.yscale === 'date') ?
+    //     mpld3.interpolateDates(this.ydom.domain(), ylim) :
+    //     d3.interpolate(this.ydom.domain(), ylim);
 
-    // TODO: (@vladh) Fix transition.
+    // TODO: (@vladh) [zoom] Fix zoom transition.
     /*
     var transition = function(t) {
         this.zoom_x.x(this.xdom.domain(interpX(t)));
@@ -305,25 +314,41 @@ mpld3_Axes.prototype.set_axlim = function(xlim, ylim,
     */
 
     // select({}) is a trick to make transitions run concurrently
-    d3.select({})
-        .transition().duration(duration)
-        .tween("zoom", function() {
-            return transition;
-        });
-
-    // propagate axis limits to shared axes
-    if (propagate) {
-        this.sharex.forEach(function(ax) {
-            ax.set_axlim(xlim, null, duration, false);
-        });
-        this.sharey.forEach(function(ax) {
-            ax.set_axlim(null, ylim, duration, false);
-        });
+    // d3.select({})
+    //     .transition().duration(duration)
+    //     .tween("zoom", function() {
+    //         return transition;
+    //     });
+    if (!bounds) {
+        console.error('[axes#set_axlim] Tried to zoom, but got no bounds.');
+        return;
     }
+    transform = mpld3.boundsToTransform(this.fig, bounds);
+    console.log('DO IT');
+    this.axes.call(this.zoom.transform, d3.zoomIdentity.translate(100, 100).scale(0.5));
+    // this.fig.canvas
+    //     .transition()
+    //     .duration(750)
+    //     .call(
+    //         this.zoom.transform,
+    //         d3.zoomIdentity
+    //             .translate(transform.translate[0], transform.translate[1])
+    //             .scale(transform.scale)
+    //     );
 
+    // TODO: (@vladh) [zoom] Fix zoom propagation.
+    // propagate axis limits to shared axes
+    // if (propagate) {
+    //     this.sharex.forEach(function(ax) {
+    //         ax.set_axlim(xlim, null, duration, false);
+    //     });
+    //     this.sharey.forEach(function(ax) {
+    //         ax.set_axlim(null, ylim, duration, false);
+    //     });
+    // }
+
+    // TODO: (@vladh) [zoom] Fix other zoom that might not be needed.
     // finalize the reset operation.
-    this.zoom.scale(1).translate([0, 0]);
-    // TODO: (@vladh) Fix other stuff I don't get.
     // this.zoom.last_t = this.zoom.translate();
     // this.zoom.last_s = this.zoom.scale();
     // this.zoom_x.scale(1).translate([0, 0]);

@@ -47,57 +47,50 @@ function mpld3_Figure(figid, props) {
 
 // getBrush contains boilerplate for defining a d3 brush over the axes
 mpld3_Figure.prototype.getBrush = function() {
-    // TODO: (@vladh) Fix brush in figure.
-    // if (typeof this._brush === "undefined"){
-    //     // use temporary linear scales here: we'll replace
-    //     // with the real x and y scales below.
-    //     var brush = d3.svg.brush()
-    //         .x(d3.scaleLinear())
-    //         .y(d3.scaleLinear());
+    // TODO: (@vladh) [brush] Fix brush in figure.
+    if (typeof this._brush === "undefined"){
+        // use temporary linear scales here: we'll replace
+        // with the real x and y scales below.
+        var brush = d3.brush();
 
-    //     // this connects the axes instance to the brush elements
-    //     this.root.selectAll(".mpld3-axes")
-    //         .data(this.axes)
-    //         .call(brush);
+        // this connects the axes instance to the brush elements
+        this.root.selectAll(".mpld3-axes")
+            .data(this.axes)
+            .call(brush);
 
-    //     // need to call the brush on each axes with correct x/y domains
-    //     this.axes.forEach(function(ax){
-    //         brush.x(ax.xdom).y(ax.ydom);
-    //         ax.axes.call(brush);
-    //     });
-
-    //     this._brush = brush;
-    //     this.hideBrush();
-    // }
-    // return this._brush;
+        this._brush = brush;
+        this.hideBrush();
+    }
+    return this._brush;
 };
 
 mpld3_Figure.prototype.showBrush = function(extentClass) {
-    // TODO: (@vladh) Fix brush in figure.
-    // extentClass = (typeof extentClass === "undefined") ? "" : extentClass;
-    // var brush = this.getBrush();
-    // brush.on("brushstart", function(d){brush.x(d.xdom).y(d.ydom);});
-    // this.canvas.selectAll("rect.background")
-    //     .style("cursor", "crosshair")
-    //     .style("pointer-events", null);
-    // this.canvas.selectAll("rect.extent, rect.resize")
-    //     .style("display", null)
-    //     .classed(extentClass, true);
+    // TODO: (@vladh) [brush] Fix brush in figure.
+    extentClass = (typeof extentClass === "undefined") ? "" : extentClass;
+    var brush = this.getBrush();
+    // TODO: (@vladh) [brush] Is this still needed?
+    // brush.on("start", function(d){ brush.x(d.xdom).y(d.ydom); });
+    this.canvas.selectAll("rect.overlay")
+        .attr("cursor", "crosshair")
+        .attr("pointer-events", null);
+    this.canvas.selectAll("rect.selection, rect.handle")
+        .style("display", null)
+        .classed(extentClass, true);
 };
 
 mpld3_Figure.prototype.hideBrush = function(extentClass) {
-    // TODO: (@vladh) Fix brush in figure.
-    // extentClass = (typeof extentClass === "undefined") ? "" : extentClass;
-    // var brush = this.getBrush();
-    // brush.on("brushstart", null)
-    //      .on("brush", null)
-    //      .on("brushend", function(d){d.axes.call(brush.clear());});
-    // this.canvas.selectAll("rect.background")
-    //     .style("cursor", null)
-    //     .style("pointer-events", "visible");
-    // this.canvas.selectAll("rect.extent, rect.resize")
-    //     .style("display", "none")
-    //     .classed(extentClass, false);
+    // TODO: (@vladh) [brush] Fix brush in figure.
+    extentClass = (typeof extentClass === "undefined") ? "" : extentClass;
+    var brush = this.getBrush();
+    brush.on("start", null)
+         .on("brush", null)
+         .on("end", function(d){ d.axes.call(brush.move, null); });
+    this.canvas.selectAll("rect.overlay")
+        .attr("cursor", null)
+        .attr("pointer-events", "visible");
+    this.canvas.selectAll("rect.selection, rect.handle")
+        .style("display", "none")
+        .classed(extentClass, false);
 };
 
 mpld3_Figure.prototype.add_plugin = function(props) {
@@ -160,6 +153,7 @@ mpld3_Figure.prototype.reset = function(duration) {
 };
 
 mpld3_Figure.prototype.enable_zoom = function() {
+    console.log('[figure#enable_zoom]');
     for (var i = 0; i < this.axes.length; i++) {
         this.axes[i].enable_zoom();
     }
@@ -167,6 +161,7 @@ mpld3_Figure.prototype.enable_zoom = function() {
 };
 
 mpld3_Figure.prototype.disable_zoom = function() {
+    console.log('[figure#disable_zoom]');
     for (var i = 0; i < this.axes.length; i++) {
         this.axes[i].disable_zoom();
     }
@@ -174,6 +169,7 @@ mpld3_Figure.prototype.disable_zoom = function() {
 };
 
 mpld3_Figure.prototype.toggle_zoom = function() {
+    console.log('[figure#toggle_zoom] zoom_on:', this.zoom_on);
     if (this.zoom_on) {
         this.disable_zoom();
     } else {

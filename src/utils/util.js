@@ -31,6 +31,19 @@ function mpld3_cloneObj(oldObj) {
    return newObj;
 }
 
+mpld3.boundsToTransform = function(fig, bounds) {
+    // https://bl.ocks.org/iamkevinv/0a24e9126cd2fa6b283c6f2d774b69a2
+    var width = fig.width;
+    var height = fig.height;
+    var dx = bounds[1][0] - bounds[0][0];
+    var dy = bounds[1][1] - bounds[0][1];
+    var x = (bounds[0][0] + bounds[1][0]) / 2;
+    var y = (bounds[0][1] + bounds[1][1]) / 2;
+    var scale = Math.max(1, Math.min(8, 0.9 / Math.max(dx / width, dy / height)));
+    var translate = [width / 2 - scale * x, height / 2 - scale * y];
+    return {translate: translate, scale: scale}
+}
+
 mpld3.getTransformation = function(transform) {
     // https://stackoverflow.com/questions/38224875/replacing-d3-transform-in-d3-v4
     // Create a dummy g for calculation purposes only. This will never
