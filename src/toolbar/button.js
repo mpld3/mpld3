@@ -10,23 +10,23 @@ function mpld3_Button(toolbar, key) {
     this.fig = this.toolbar.fig;
     this.cssclass = "mpld3-" + key + "button";
     this.active = false;
-}
+    }
 
 mpld3_Button.prototype.setState = function(state) {
     (state) ? this.activate() : this.deactivate();
 }
 
 mpld3_Button.prototype.click = function() {
-    console.log('[button#click] (' + this.cssclass + ') active:', this.active);
     this.active ? this.deactivate() : this.activate();
 };
 
 mpld3_Button.prototype.activate = function() {
-    console.log('[button#activate (' + this.cssclass + ')]');
+    // This will also deactivate itself. A bit silly, but should be ok, maybe.
     this.toolbar.deactivate_by_action(this.actions);
     this.onActivate();
     this.active = true;
-    this.toolbar.toolbar.select('.' + this.cssclass)
+    this.toolbar.toolbar
+        .select('.' + this.cssclass)
         .classed('pressed', true);
     if (!this.sticky) {
         this.deactivate();
@@ -34,11 +34,10 @@ mpld3_Button.prototype.activate = function() {
 };
 
 mpld3_Button.prototype.deactivate = function() {
-    console.log('[button#deactivate] (' + this.cssclass + ')');
     this.onDeactivate();
-    console.log('[button#deactivate] (' + this.cssclass + ') onDeactivate done');
     this.active = false;
-    this.toolbar.toolbar.select('.' + this.cssclass)
+    this.toolbar.toolbar
+        .select('.' + this.cssclass)
         .classed('pressed', false);
 }
 mpld3_Button.prototype.sticky = false;

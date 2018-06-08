@@ -988,11 +988,9 @@
     state ? this.activate() : this.deactivate();
   };
   mpld3_Button.prototype.click = function() {
-    console.log("[button#click] (" + this.cssclass + ") active:", this.active);
     this.active ? this.deactivate() : this.activate();
   };
   mpld3_Button.prototype.activate = function() {
-    console.log("[button#activate (" + this.cssclass + ")]");
     this.toolbar.deactivate_by_action(this.actions);
     this.onActivate();
     this.active = true;
@@ -1002,9 +1000,7 @@
     }
   };
   mpld3_Button.prototype.deactivate = function() {
-    console.log("[button#deactivate] (" + this.cssclass + ")");
     this.onDeactivate();
-    console.log("[button#deactivate] (" + this.cssclass + ") onDeactivate done");
     this.active = false;
     this.toolbar.toolbar.select("." + this.cssclass).classed("pressed", false);
   };
@@ -1401,7 +1397,9 @@
     this.axes = [];
     for (var i = 0; i < this.props.axes.length; i++) this.axes.push(new mpld3_Axes(this, this.props.axes[i]));
     this.plugins = [];
-    for (var i = 0; i < this.props.plugins.length; i++) this.add_plugin(this.props.plugins[i]);
+    this.props.plugins.forEach(function(plugin) {
+      this.addPlugin(plugin);
+    }.bind(this));
     this.toolbar = new mpld3.Toolbar(this, {
       buttons: this.buttons
     });
@@ -1430,32 +1428,22 @@
     this.canvas.selectAll("rect.overlay").attr("cursor", null).attr("pointer-events", "visible");
     this.canvas.selectAll("rect.selection, rect.handle").style("display", "none").classed(extentClass, false);
   };
-  mpld3_Figure.prototype.add_plugin = function(props) {
-    var plug = props.type;
-    if (typeof plug === "undefined") {
-      console.warn("unspecified plugin type. Skipping this");
-      return;
+  mpld3_Figure.prototype.addPlugin = function(pluginInfo) {
+    if (!pluginInfo.type) {
+      return console.warn("unspecified plugin type. Skipping this");
     }
-    props = mpld3_cloneObj(props);
-    delete props.type;
-    if (plug in mpld3.plugin_map) plug = mpld3.plugin_map[plug];
-    if (typeof plug !== "function") {
-      console.warn("Skipping unrecognized plugin: " + plug);
-      return;
+    var plugin;
+    if (pluginInfo.type in mpld3.plugin_map) {
+      plugin = mpld3.plugin_map[pluginInfo.type];
+    } else {
+      return console.warn("Skipping unrecognized plugin: " + plugin);
     }
-    if (props.clear_toolbar) {
-      this.props.toolbar = [];
+    if (pluginInfo.clear_toolbar || pluginInfo.buttons) {
+      console.warn("DEPRECATION WARNING: " + "You are using pluginInfo.clear_toolbar or pluginInfo, which " + "have been deprecated. Please see the build-in plugins for the new " + "method to add buttons, otherwise contact the mpld3 maintainers.");
     }
-    if ("buttons" in props) {
-      if (typeof props.buttons === "string") {
-        this.props.toolbar.push(props.buttons);
-      } else {
-        for (var i = 0; i < props.buttons.length; i++) {
-          this.props.toolbar.push(props.buttons[i]);
-        }
-      }
-    }
-    this.plugins.push(new plug(this, props));
+    var pluginInfoNoType = mpld3_cloneObj(pluginInfo);
+    delete pluginInfoNoType.type;
+    this.plugins.push(new plugin(this, pluginInfoNoType));
   };
   mpld3_Figure.prototype.draw = function() {
     this.canvas = this.root.append("svg:svg").attr("class", "mpld3-figure").attr("width", this.width).attr("height", this.height);

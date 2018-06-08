@@ -35,11 +35,13 @@ function mpld3_Figure(figid, props) {
 
     // Connect the plugins to the figure
     this.plugins = [];
-    for (var i = 0; i < this.props.plugins.length; i++)
-        this.add_plugin(this.props.plugins[i]);
+    this.props.plugins.forEach(function(plugin) {
+        this.addPlugin(plugin);
+    }.bind(this));
 
-    // Create the figure toolbar
-    //  do this last because plugins may modify the button list
+    // Create the figure toolbar. Do this last because plugins may modify the
+    // button list.
+    // TODO: (@vladh) Refactor this to fix tight coupling and mutation.
     this.toolbar = new mpld3.Toolbar(this, {
         buttons: this.buttons
     });
@@ -93,37 +95,32 @@ mpld3_Figure.prototype.hideBrush = function(extentClass) {
         .classed(extentClass, false);
 };
 
-mpld3_Figure.prototype.add_plugin = function(props) {
-    var plug = props.type;
-    if (typeof plug === "undefined"){
-        console.warn("unspecified plugin type. Skipping this");
-        return;
+mpld3_Figure.prototype.addPlugin = function(pluginInfo) {
+    if (!pluginInfo.type) {
+        return console.warn("unspecified plugin type. Skipping this");
     }
 
-    // clone props without the "type" argument
-    props = mpld3_cloneObj(props);
-    delete props.type;
-
-    if (plug in mpld3.plugin_map)
-        plug = mpld3.plugin_map[plug];
-    if (typeof(plug) !== "function") {
-        console.warn("Skipping unrecognized plugin: " + plug);
-        return;
+    var plugin;
+    if (pluginInfo.type in mpld3.plugin_map) {
+        plugin = mpld3.plugin_map[pluginInfo.type];
+    } else {
+        return console.warn("Skipping unrecognized plugin: " + plugin);
     }
 
-    if (props.clear_toolbar) {
-        this.props.toolbar = [];
+    if (pluginInfo.clear_toolbar || pluginInfo.buttons) {
+        console.warn(
+            'DEPRECATION WARNING: ' +
+            'You are using pluginInfo.clear_toolbar or pluginInfo, which ' +
+            'have been deprecated. Please see the build-in plugins for the new ' +
+            'method to add buttons, otherwise contact the mpld3 maintainers.'
+        );
     }
-    if ("buttons" in props) {
-        if (typeof(props.buttons) === "string") {
-            this.props.toolbar.push(props.buttons);
-        } else {
-            for (var i = 0; i < props.buttons.length; i++) {
-                this.props.toolbar.push(props.buttons[i]);
-            }
-        }
-    }
-    this.plugins.push(new plug(this, props));
+
+    // Not sure why we need to take the type out.
+    var pluginInfoNoType = mpld3_cloneObj(pluginInfo);
+    delete pluginInfoNoType.type;
+
+    this.plugins.push(new plugin(this, pluginInfoNoType));
 };
 
 mpld3_Figure.prototype.draw = function() {
