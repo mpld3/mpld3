@@ -150,7 +150,6 @@ mpld3_Figure.prototype.reset = function(duration) {
 };
 
 mpld3_Figure.prototype.enable_zoom = function() {
-    console.log('[figure#enable_zoom]');
     for (var i = 0; i < this.axes.length; i++) {
         this.axes[i].enable_zoom();
     }
@@ -158,7 +157,6 @@ mpld3_Figure.prototype.enable_zoom = function() {
 };
 
 mpld3_Figure.prototype.disable_zoom = function() {
-    console.log('[figure#disable_zoom]');
     for (var i = 0; i < this.axes.length; i++) {
         this.axes[i].disable_zoom();
     }
@@ -166,7 +164,6 @@ mpld3_Figure.prototype.disable_zoom = function() {
 };
 
 mpld3_Figure.prototype.toggle_zoom = function() {
-    console.log('[figure#toggle_zoom] zoom_on:', this.zoom_on);
     if (this.zoom_on) {
         this.disable_zoom();
     } else {

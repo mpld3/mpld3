@@ -160,18 +160,16 @@ function mpld3_Axes(fig, props) {
 }
 
 mpld3_Axes.prototype.draw = function() {
-    console.log('[axes#draw]');
     for (var i = 0; i < this.props.sharex.length; i++) {
         this.sharex.push(mpld3.get_element(this.props.sharex[i]));
     }
-
     for (var i = 0; i < this.props.sharey.length; i++) {
         this.sharey.push(mpld3.get_element(this.props.sharey[i]));
     }
+    // TODO: (@vladh) Enable zoom for shared axes.
 
-    this.zoom = d3.zoom();
-
-    // TODO: (@vladh) [zoom] Fix secondary zoom stuff.
+    // => zoom init
+    // this.zoom = d3.zoom();
     // this.zoom.last_t = this.zoom.translate()
     // this.zoom.last_s = this.zoom.scale()
     // this.zoom_x = d3.zoom().x(this.xdom);
@@ -205,35 +203,28 @@ mpld3_Axes.prototype.draw = function() {
     for (var i = 0; i < this.elements.length; i++) {
         this.elements[i].draw();
     }
-
-    // TODO: (@vladh) [zoom] This wasn't needed before, why is it now?
-    // this.enable_zoom();
 };
 
-// TODO: (@vladh) [zoom] Fix zoom on axis.
 mpld3_Axes.prototype.enable_zoom = function() {
-    console.log('[axes#enable_zoom]');
-    if (this.props.zoomable) {
-        this.zoom.on("zoom", this.zoomed.bind(this, true));
-        // TODO: (@vladh) [zoom] Fix this.
-        this.axes.call(this.zoom);
-        this.axes.style("cursor", 'move');
-    }
+    // => enable zoom
+    // if (this.props.zoomable) {
+    //     this.zoom.on("zoom", this.zoomed.bind(this, true));
+    //     this.axes.call(this.zoom);
+    //     this.axes.style("cursor", 'move');
+    // }
 };
 
 mpld3_Axes.prototype.disable_zoom = function() {
-    console.log('[axes#disable_zoom]');
-    if (this.props.zoomable) {
-        this.zoom.on("zoom", null);
-        // TODO: (@vladh) [zoom] Fix this.
-        this.axes.on('.zoom', null)
-        this.axes.style('cursor', null);
-    }
+    // => disable zoom
+    // if (this.props.zoomable) {
+    //     this.zoom.on("zoom", null);
+    //     this.axes.on('.zoom', null)
+    //     this.axes.style('cursor', null);
+    // }
 };
 
 mpld3_Axes.prototype.zoomed = function(propagate) {
-    console.log('[axes#zoomed]');
-    // TODO: (@vladh) [zoom] Fix zoom propagation.
+    // => zoomed
     // // propagate is a boolean specifying whether to propagate movements
     // // to shared axes, specified by sharex and sharey.  Default is true.
     // propagate = (typeof propagate == 'undefined') ? true : propagate;
@@ -287,8 +278,8 @@ mpld3_Axes.prototype.reset = function(duration, propagate) {
 mpld3_Axes.prototype.set_axlim = function(
     xlim, ylim, duration, propagate, bounds
 ) {
-    console.log('[axes#set_axlim]');
-    console.log(bounds);
+    // => zoom set_axlim?
+
     // xlim = isUndefinedOrNull(xlim) ? this.xdom.domain() : xlim;
     // ylim = isUndefinedOrNull(ylim) ? this.ydom.domain() : ylim;
     // duration = isUndefinedOrNull(duration) ? 750 : duration;
@@ -304,14 +295,18 @@ mpld3_Axes.prototype.set_axlim = function(
     //     mpld3.interpolateDates(this.ydom.domain(), ylim) :
     //     d3.interpolate(this.ydom.domain(), ylim);
 
-    // TODO: (@vladh) [zoom] Fix zoom transition.
-    /*
-    var transition = function(t) {
-        this.zoom_x.x(this.xdom.domain(interpX(t)));
-        this.zoom_y.y(this.ydom.domain(interpY(t)));
-        this.zoomed(false); // don't propagate here; propagate below.
-    }.bind(this);
-    */
+    // if (!bounds) {
+    //     console.error('[axes#set_axlim] Tried to zoom, but got no bounds.');
+    //     return;
+    // }
+    // transform = mpld3.boundsToTransform(this.fig, bounds);
+    // this.axes.call(this.zoom.transform, d3.zoomIdentity.translate(100, 100).scale(0.5));
+
+    // var transition = function(t) {
+    //     this.zoom_x.x(this.xdom.domain(interpX(t)));
+    //     this.zoom_y.y(this.ydom.domain(interpY(t)));
+    //     this.zoomed(false); // don't propagate here; propagate below.
+    // }.bind(this);
 
     // select({}) is a trick to make transitions run concurrently
     // d3.select({})
@@ -319,13 +314,9 @@ mpld3_Axes.prototype.set_axlim = function(
     //     .tween("zoom", function() {
     //         return transition;
     //     });
-    if (!bounds) {
-        console.error('[axes#set_axlim] Tried to zoom, but got no bounds.');
-        return;
-    }
-    transform = mpld3.boundsToTransform(this.fig, bounds);
-    console.log('DO IT');
-    this.axes.call(this.zoom.transform, d3.zoomIdentity.translate(100, 100).scale(0.5));
+
+    // or
+
     // this.fig.canvas
     //     .transition()
     //     .duration(750)
@@ -336,7 +327,6 @@ mpld3_Axes.prototype.set_axlim = function(
     //             .scale(transform.scale)
     //     );
 
-    // TODO: (@vladh) [zoom] Fix zoom propagation.
     // propagate axis limits to shared axes
     // if (propagate) {
     //     this.sharex.forEach(function(ax) {
@@ -347,7 +337,6 @@ mpld3_Axes.prototype.set_axlim = function(
     //     });
     // }
 
-    // TODO: (@vladh) [zoom] Fix other zoom that might not be needed.
     // finalize the reset operation.
     // this.zoom.last_t = this.zoom.translate();
     // this.zoom.last_s = this.zoom.scale();

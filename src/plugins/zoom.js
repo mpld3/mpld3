@@ -29,7 +29,7 @@ function mpld3_ZoomPlugin(fig, props) {
             actions: ["scroll", "drag"],
             onActivate: this.activate.bind(this),
             onDeactivate: this.deactivate.bind(this),
-            onDraw: function(){ this.setState(enabled); },
+            onDraw: function() { this.setState(enabled); },
             icon: function() {
                 return mpld3.icons["move"];
             }
@@ -39,17 +39,14 @@ function mpld3_ZoomPlugin(fig, props) {
 }
 
 mpld3_ZoomPlugin.prototype.activate = function() {
-    console.log('[zoom#activate]');
     this.fig.enable_zoom();
 };
 
 mpld3_ZoomPlugin.prototype.deactivate = function() {
-    console.log('[zoom#deactivate]');
     this.fig.disable_zoom()
 };
 
 mpld3_ZoomPlugin.prototype.draw = function() {
-    console.log('[zoom#draw] enabled:', this.props.enabled);
     if (this.props.enabled) {
       this.fig.enable_zoom();
     } else {
