@@ -28,6 +28,17 @@ function mpld3_Figure(figid, props) {
     this.root = d3.select('#' + figid)
         .append("div").style("position", "relative");
 
+    // this.root
+    //     .on('mousedown.drag', this.mousedown.bind(this))
+    //     .on('touchstart.drag', this.mousedown.bind(this))
+    //     .on('mousemove.drag', this.mousemove.bind(this))
+    //     .on('touchmove.drag', this.mousemove.bind(this))
+    //     .on('mouseup.drag', this.mouseup.bind(this))
+    //     .on('touchup.drag', this.mouseup.bind(this));
+
+    this.zoom = d3.zoom()
+        .on('zoom', this.zoomed.bind(this));
+
     // Create all the axes elements in the figure
     this.axes = [];
     for (var i = 0; i < this.props.axes.length; i++)
@@ -36,6 +47,8 @@ function mpld3_Figure(figid, props) {
     // Connect the plugins to the figure
     this.plugins = [];
     this.props.plugins.forEach(function(plugin) {
+        // TODO: (@vladh) Remove
+        return
         this.addPlugin(plugin);
     }.bind(this));
 
@@ -45,6 +58,27 @@ function mpld3_Figure(figid, props) {
     this.toolbar = new mpld3.Toolbar(this, {
         buttons: this.buttons
     });
+}
+
+mpld3_Figure.prototype.mousedown = function() {
+    console.log('[figure#mousedown]');
+    this.root.style('cursor', 'move');
+}
+
+mpld3_Figure.prototype.mousemove = function() {
+    console.log('[figure#mousemove]');
+}
+
+mpld3_Figure.prototype.mouseup = function() {
+    console.log('[figure#mouseup]');
+    this.root.style('cursor', 'default');
+}
+
+mpld3_Figure.prototype.zoomed = function() {
+    // console.log('[figure#zoomed]', d3.event.transform);
+    this.canvas.select('.mpld3-axes').attr('transform', d3.event.transform);
+    // TODO: (@vladh) [0]?
+    this.axes[0].zoomed(null, d3.event.transform);
 }
 
 // getBrush contains boilerplate for defining a d3 brush over the axes
@@ -129,12 +163,14 @@ mpld3_Figure.prototype.draw = function() {
         .attr('width', this.width)
         .attr('height', this.height);
 
+    this.canvas.call(this.zoom);
+
     for (var i = 0; i < this.axes.length; i++) {
         this.axes[i].draw();
     }
 
     // disable zoom by default; plugins or toolbar items might change this.
-    this.disable_zoom();
+    // this.disable_zoom();
 
     for (var i = 0; i < this.plugins.length; i++) {
         this.plugins[i].draw();

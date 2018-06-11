@@ -71,6 +71,10 @@ mpld3_Path.prototype.elements = function(d) {
     return this.path;
 };
 
+/*
+NOTE: (@vladh) Not entirely clear to me how this works and to what extent it's
+still needed. We should have a look.
+*/
 mpld3_Path.prototype.zoomed = function() {
     if (this.pathcoords.zoomable) {
         this.path.attr("d", this.datafunc(this.data, this.pathcodes));

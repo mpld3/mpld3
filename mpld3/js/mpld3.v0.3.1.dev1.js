@@ -414,9 +414,16 @@
       return d3.scaleThreshold().domain(tickvalues.slice(1)).range(tickformat);
     }
   }
-  mpld3_Axis.prototype.zoomed = function() {
-    this.filter_ticks(this.axis.tickValues, this.axis.scale().domain());
-    this.elem.call(this.axis);
+  mpld3_Axis.prototype.zoomed = function(transform) {
+    if (transform) {
+      if (this.props.xy == "x") {
+        this.elem.call(this.axis.scale(transform.rescaleX(this.scale)));
+      } else {
+        this.elem.call(this.axis.scale(transform.rescaleY(this.scale)));
+      }
+    } else {
+      this.elem.call(this.axis);
+    }
   };
   mpld3_Axis.prototype.filter_ticks = function(tickValues, domain) {
     if (this.props.tickvalues != null) {
@@ -860,14 +867,12 @@
     });
   }
   mpld3_Axes.prototype.draw = function() {
-    console.log("[axes#draw]");
     for (var i = 0; i < this.props.sharex.length; i++) {
       this.sharex.push(mpld3.get_element(this.props.sharex[i]));
     }
     for (var i = 0; i < this.props.sharey.length; i++) {
       this.sharey.push(mpld3.get_element(this.props.sharey[i]));
     }
-    this.zoom = d3.zoom();
     this.baseaxes = this.fig.canvas.append("g").attr("transform", "translate(" + this.position[0] + "," + this.position[1] + ")").attr("width", this.width).attr("height", this.height).attr("class", "mpld3-baseaxes");
     this.clip = this.baseaxes.append("svg:clipPath").attr("id", this.clipid).append("svg:rect").attr("x", 0).attr("y", 0).attr("width", this.width).attr("height", this.height);
     this.axes = this.baseaxes.append("g").attr("class", "mpld3-axes").attr("clip-path", "url(#" + this.clipid + ")");
@@ -876,39 +881,17 @@
       this.elements[i].draw();
     }
   };
-  mpld3_Axes.prototype.enable_zoom = function() {
-    console.log("[axes#enable_zoom]");
-    if (this.props.zoomable) {
-      this.zoom.on("zoom", this.zoomed.bind(this, true));
-      this.axes.call(this.zoom);
-      this.axes.style("cursor", "move");
+  mpld3_Axes.prototype.enable_zoom = function() {};
+  mpld3_Axes.prototype.disable_zoom = function() {};
+  mpld3_Axes.prototype.zoomed = function(propagate, transform) {
+    for (var i = 0; i < this.elements.length; i++) {
+      this.elements[i].zoomed(transform);
     }
-  };
-  mpld3_Axes.prototype.disable_zoom = function() {
-    console.log("[axes#disable_zoom]");
-    if (this.props.zoomable) {
-      this.zoom.on("zoom", null);
-      this.axes.on(".zoom", null);
-      this.axes.style("cursor", null);
-    }
-  };
-  mpld3_Axes.prototype.zoomed = function(propagate) {
-    console.log("[axes#zoomed]");
   };
   mpld3_Axes.prototype.reset = function(duration, propagate) {
     this.set_axlim(this.props.xdomain, this.props.ydomain, duration, propagate);
   };
-  mpld3_Axes.prototype.set_axlim = function(xlim, ylim, duration, propagate, bounds) {
-    console.log("[axes#set_axlim]");
-    console.log(bounds);
-    if (!bounds) {
-      console.error("[axes#set_axlim] Tried to zoom, but got no bounds.");
-      return;
-    }
-    transform = mpld3.boundsToTransform(this.fig, bounds);
-    console.log("DO IT");
-    this.axes.call(this.zoom.transform, d3.zoomIdentity.translate(100, 100).scale(.5));
-  };
+  mpld3_Axes.prototype.set_axlim = function(xlim, ylim, duration, propagate, bounds) {};
   mpld3.Toolbar = mpld3_Toolbar;
   mpld3_Toolbar.prototype = Object.create(mpld3_PlotElement.prototype);
   mpld3_Toolbar.prototype.constructor = mpld3_Toolbar;
@@ -1088,15 +1071,12 @@
     }
   }
   mpld3_ZoomPlugin.prototype.activate = function() {
-    console.log("[zoom#activate]");
     this.fig.enable_zoom();
   };
   mpld3_ZoomPlugin.prototype.deactivate = function() {
-    console.log("[zoom#deactivate]");
     this.fig.disable_zoom();
   };
   mpld3_ZoomPlugin.prototype.draw = function() {
-    console.log("[zoom#draw] enabled:", this.props.enabled);
     if (this.props.enabled) {
       this.fig.enable_zoom();
     } else {
@@ -1394,16 +1374,33 @@
     this.data = this.props.data;
     this.buttons = [];
     this.root = d3.select("#" + figid).append("div").style("position", "relative");
+    this.zoom = d3.zoom().on("zoom", this.zoomed.bind(this));
     this.axes = [];
     for (var i = 0; i < this.props.axes.length; i++) this.axes.push(new mpld3_Axes(this, this.props.axes[i]));
     this.plugins = [];
     this.props.plugins.forEach(function(plugin) {
+      return;
       this.addPlugin(plugin);
     }.bind(this));
     this.toolbar = new mpld3.Toolbar(this, {
       buttons: this.buttons
     });
   }
+  mpld3_Figure.prototype.mousedown = function() {
+    console.log("[figure#mousedown]");
+    this.root.style("cursor", "move");
+  };
+  mpld3_Figure.prototype.mousemove = function() {
+    console.log("[figure#mousemove]");
+  };
+  mpld3_Figure.prototype.mouseup = function() {
+    console.log("[figure#mouseup]");
+    this.root.style("cursor", "default");
+  };
+  mpld3_Figure.prototype.zoomed = function() {
+    this.canvas.select(".mpld3-axes").attr("transform", d3.event.transform);
+    this.axes[0].zoomed(null, d3.event.transform);
+  };
   mpld3_Figure.prototype.getBrush = function() {
     if (typeof this._brush === "undefined") {
       var brush = d3.brush();
@@ -1447,10 +1444,10 @@
   };
   mpld3_Figure.prototype.draw = function() {
     this.canvas = this.root.append("svg:svg").attr("class", "mpld3-figure").attr("width", this.width).attr("height", this.height);
+    this.canvas.call(this.zoom);
     for (var i = 0; i < this.axes.length; i++) {
       this.axes[i].draw();
     }
-    this.disable_zoom();
     for (var i = 0; i < this.plugins.length; i++) {
       this.plugins[i].draw();
     }
@@ -1462,21 +1459,18 @@
     });
   };
   mpld3_Figure.prototype.enable_zoom = function() {
-    console.log("[figure#enable_zoom]");
     for (var i = 0; i < this.axes.length; i++) {
       this.axes[i].enable_zoom();
     }
     this.zoom_on = true;
   };
   mpld3_Figure.prototype.disable_zoom = function() {
-    console.log("[figure#disable_zoom]");
     for (var i = 0; i < this.axes.length; i++) {
       this.axes[i].disable_zoom();
     }
     this.zoom_on = false;
   };
   mpld3_Figure.prototype.toggle_zoom = function() {
-    console.log("[figure#toggle_zoom] zoom_on:", this.zoom_on);
     if (this.zoom_on) {
       this.disable_zoom();
     } else {

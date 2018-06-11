@@ -223,7 +223,7 @@ mpld3_Axes.prototype.disable_zoom = function() {
     // }
 };
 
-mpld3_Axes.prototype.zoomed = function(propagate) {
+mpld3_Axes.prototype.zoomed = function(propagate, transform) {
     // => zoomed
     // // propagate is a boolean specifying whether to propagate movements
     // // to shared axes, specified by sharex and sharey.  Default is true.
@@ -264,9 +264,9 @@ mpld3_Axes.prototype.zoomed = function(propagate) {
     //     });
     // }
 
-    // for (var i = 0; i < this.elements.length; i++) {
-    //     this.elements[i].zoomed();
-    // }
+    for (var i = 0; i < this.elements.length; i++) {
+        this.elements[i].zoomed(transform);
+    }
 };
 
 mpld3_Axes.prototype.reset = function(duration, propagate) {
