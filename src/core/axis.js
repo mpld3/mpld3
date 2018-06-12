@@ -136,7 +136,6 @@ mpld3_Axis.prototype.zoomed = function(transform) {
     // updating them when they pan or zoom off of the chart
     // this.filter_ticks(this.axis.tickValues, this.axis.scale().domain());
     if (transform) {
-        // console.log("[axis#zoomed] Great job.", transform);
         if (this.props.xy == 'x') {
             this.elem.call(this.axis.scale(transform.rescaleX(this.scale)));
         } else {

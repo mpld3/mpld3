@@ -50,7 +50,7 @@ mpld3_Path.prototype.draw = function() {
             return this.pathcoords.y(d[this.props.yindex]);
         }.bind(this));
 
-    this.path = this.ax.axes.append("svg:path")
+    this.path = this.ax.paths.append("svg:path")
         .attr("d", this.datafunc(this.data, this.pathcodes))
         .attr('class', "mpld3-path")
         .style("stroke", this.props.edgecolor)
@@ -72,15 +72,14 @@ mpld3_Path.prototype.elements = function(d) {
 };
 
 /*
-NOTE: (@vladh) Not entirely clear to me how this works and to what extent it's
-still needed. We should have a look.
+TODO: (@vladh) Remove legacy zooming code.
 */
-mpld3_Path.prototype.zoomed = function() {
-    if (this.pathcoords.zoomable) {
-        this.path.attr("d", this.datafunc(this.data, this.pathcodes));
-    }
-    if (this.props.offset !== null && this.offsetcoords.zoomable) {
-        var offset = this.offsetcoords.xy(this.props.offset);
-        this.path.attr("transform", "translate(" + offset + ")");
-    }
-};
+// mpld3_Path.prototype.zoomed = function() {
+//     if (this.pathcoords.zoomable) {
+//         this.path.attr("d", this.datafunc(this.data, this.pathcodes));
+//     }
+//     if (this.props.offset !== null && this.offsetcoords.zoomable) {
+//         var offset = this.offsetcoords.xy(this.props.offset);
+//         this.path.attr("transform", "translate(" + offset + ")");
+//     }
+// };

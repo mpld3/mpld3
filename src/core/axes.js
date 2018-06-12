@@ -200,6 +200,9 @@ mpld3_Axes.prototype.draw = function() {
         .style("fill", this.props.axesbg)
         .style("fill-opacity", this.props.axesbgalpha);
 
+    this.paths = this.axes.append("g")
+        .attr("class", "mpld3-paths");
+
     for (var i = 0; i < this.elements.length; i++) {
         this.elements[i].draw();
     }
@@ -263,10 +266,12 @@ mpld3_Axes.prototype.zoomed = function(propagate, transform) {
     //         ax.zoomed(false);
     //     });
     // }
-
-    for (var i = 0; i < this.elements.length; i++) {
-        this.elements[i].zoomed(transform);
-    }
+    this.paths.attr('transform', transform);
+    this.elements.forEach(function(element) {
+        if (element.zoomed) {
+            element.zoomed(transform);
+        }
+    }.bind(this));
 };
 
 mpld3_Axes.prototype.reset = function(duration, propagate) {

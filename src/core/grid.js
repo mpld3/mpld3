@@ -68,6 +68,15 @@ mpld3_Grid.prototype.draw = function() {
         });
 };
 
-mpld3_Grid.prototype.zoomed = function() {
-    this.elem.call(this.grid);
+mpld3_Grid.prototype.zoomed = function(transform) {
+    if (transform) {
+        if (this.props.xy == 'x') {
+            this.elem.call(this.grid.scale(transform.rescaleX(this.scale)));
+        } else {
+            this.elem.call(this.grid.scale(transform.rescaleY(this.scale)));
+        }
+    } else {
+        // Backwards compatibility.
+        this.elem.call(this.grid);
+    }
 };

@@ -76,9 +76,9 @@ mpld3_Figure.prototype.mouseup = function() {
 
 mpld3_Figure.prototype.zoomed = function() {
     // console.log('[figure#zoomed]', d3.event.transform);
-    this.canvas.select('.mpld3-axes').attr('transform', d3.event.transform);
-    // TODO: (@vladh) [0]?
-    this.axes[0].zoomed(null, d3.event.transform);
+    this.axes.forEach(function(axis) {
+        axis.zoomed(null, d3.event.transform);
+    }.bind(this));
 }
 
 // getBrush contains boilerplate for defining a d3 brush over the axes

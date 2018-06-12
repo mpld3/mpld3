@@ -101,7 +101,7 @@ mpld3_PathCollection.prototype.allFinite = function(d) {
 }
 
 mpld3_PathCollection.prototype.draw = function() {
-    this.group = this.ax.axes.append("svg:g");
+    this.group = this.ax.paths.append("svg:g");
     this.pathsobj = this.group.selectAll("paths")
     .data(this.offsets.filter(this.allFinite))
         .enter().append("svg:path")
@@ -116,11 +116,12 @@ mpld3_PathCollection.prototype.elements = function(d) {
     return this.group.selectAll("path");
 };
 
-mpld3_PathCollection.prototype.zoomed = function() {
-    if (this.props.pathcoordinates === "data") {
-        this.pathsobj.attr("d", this.pathFunc.bind(this));
-    }
-    if (this.props.offsetcoordinates === "data") {
-        this.pathsobj.attr("transform", this.transformFunc.bind(this));
-    }
-};
+// TODO: (@vladh) Remove legacy zooming code.
+// mpld3_PathCollection.prototype.zoomed = function() {
+//     if (this.props.pathcoordinates === "data") {
+//         this.pathsobj.attr("d", this.pathFunc.bind(this));
+//     }
+//     if (this.props.offsetcoordinates === "data") {
+//         this.pathsobj.attr("transform", this.transformFunc.bind(this));
+//     }
+// };
