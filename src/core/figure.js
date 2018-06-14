@@ -36,8 +36,8 @@ function mpld3_Figure(figid, props) {
     //     .on('mouseup.drag', this.mouseup.bind(this))
     //     .on('touchup.drag', this.mouseup.bind(this));
 
-    this.zoom = d3.zoom()
-        .on('zoom', this.zoomed.bind(this));
+    this.isZoomEnabled = null
+    this.zoom = d3.zoom();
 
     // Create all the axes elements in the figure
     this.axes = [];
@@ -48,7 +48,9 @@ function mpld3_Figure(figid, props) {
     this.plugins = [];
     this.props.plugins.forEach(function(plugin) {
         // TODO: (@vladh) Remove
-        return
+        if (plugin.type == 'boxzoom') {
+            return;
+        }
         this.addPlugin(plugin);
     }.bind(this));
 
@@ -75,7 +77,9 @@ mpld3_Figure.prototype.mouseup = function() {
 }
 
 mpld3_Figure.prototype.zoomed = function() {
-    // console.log('[figure#zoomed]', d3.event.transform);
+    if (!this.isZoomEnabled) {
+        return;
+    }
     this.axes.forEach(function(axis) {
         axis.zoomed(null, d3.event.transform);
     }.bind(this));
@@ -163,14 +167,12 @@ mpld3_Figure.prototype.draw = function() {
         .attr('width', this.width)
         .attr('height', this.height);
 
-    this.canvas.call(this.zoom);
-
     for (var i = 0; i < this.axes.length; i++) {
         this.axes[i].draw();
     }
 
     // disable zoom by default; plugins or toolbar items might change this.
-    // this.disable_zoom();
+    this.disableZoom();
 
     for (var i = 0; i < this.plugins.length; i++) {
         this.plugins[i].draw();
@@ -185,25 +187,25 @@ mpld3_Figure.prototype.reset = function(duration) {
     });
 };
 
-mpld3_Figure.prototype.enable_zoom = function() {
-    for (var i = 0; i < this.axes.length; i++) {
-        this.axes[i].enable_zoom();
-    }
-    this.zoom_on = true;
+mpld3_Figure.prototype.enableZoom = function() {
+    this.isZoomEnabled = true;
+    this.zoom.on('zoom', this.zoomed.bind(this));
+    this.canvas.call(this.zoom);
+    this.canvas.style('cursor', 'move');
 };
 
-mpld3_Figure.prototype.disable_zoom = function() {
-    for (var i = 0; i < this.axes.length; i++) {
-        this.axes[i].disable_zoom();
-    }
-    this.zoom_on = false;
+mpld3_Figure.prototype.disableZoom = function() {
+    this.isZoomEnabled = false;
+    this.zoom.on('zoom', null);
+    this.canvas.on('.zoom', null);
+    this.canvas.style('cursor', null);
 };
 
-mpld3_Figure.prototype.toggle_zoom = function() {
-    if (this.zoom_on) {
-        this.disable_zoom();
+mpld3_Figure.prototype.toggleZoom = function() {
+    if (this.isZoomEnabled) {
+        this.disableZoom();
     } else {
-        this.enable_zoom();
+        this.enableZoom();
     }
 };
 

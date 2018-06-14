@@ -865,8 +865,6 @@
       this.elements[i].draw();
     }
   };
-  mpld3_Axes.prototype.enable_zoom = function() {};
-  mpld3_Axes.prototype.disable_zoom = function() {};
   mpld3_Axes.prototype.zoomed = function(propagate, transform) {
     this.paths.attr("transform", transform);
     this.elements.forEach(function(element) {
@@ -1058,16 +1056,16 @@
     }
   }
   mpld3_ZoomPlugin.prototype.activate = function() {
-    this.fig.enable_zoom();
+    this.fig.enableZoom();
   };
   mpld3_ZoomPlugin.prototype.deactivate = function() {
-    this.fig.disable_zoom();
+    this.fig.disableZoom();
   };
   mpld3_ZoomPlugin.prototype.draw = function() {
     if (this.props.enabled) {
-      this.fig.enable_zoom();
+      this.fig.enableZoom();
     } else {
-      this.fig.disable_zoom();
+      this.fig.disableZoom();
     }
   };
   mpld3.BoxZoomPlugin = mpld3_BoxZoomPlugin;
@@ -1361,12 +1359,15 @@
     this.data = this.props.data;
     this.buttons = [];
     this.root = d3.select("#" + figid).append("div").style("position", "relative");
-    this.zoom = d3.zoom().on("zoom", this.zoomed.bind(this));
+    this.isZoomEnabled = null;
+    this.zoom = d3.zoom();
     this.axes = [];
     for (var i = 0; i < this.props.axes.length; i++) this.axes.push(new mpld3_Axes(this, this.props.axes[i]));
     this.plugins = [];
     this.props.plugins.forEach(function(plugin) {
-      return;
+      if (plugin.type == "boxzoom") {
+        return;
+      }
       this.addPlugin(plugin);
     }.bind(this));
     this.toolbar = new mpld3.Toolbar(this, {
@@ -1385,6 +1386,9 @@
     this.root.style("cursor", "default");
   };
   mpld3_Figure.prototype.zoomed = function() {
+    if (!this.isZoomEnabled) {
+      return;
+    }
     this.axes.forEach(function(axis) {
       axis.zoomed(null, d3.event.transform);
     }.bind(this));
@@ -1432,10 +1436,10 @@
   };
   mpld3_Figure.prototype.draw = function() {
     this.canvas = this.root.append("svg:svg").attr("class", "mpld3-figure").attr("width", this.width).attr("height", this.height);
-    this.canvas.call(this.zoom);
     for (var i = 0; i < this.axes.length; i++) {
       this.axes[i].draw();
     }
+    this.disableZoom();
     for (var i = 0; i < this.plugins.length; i++) {
       this.plugins[i].draw();
     }
@@ -1446,23 +1450,23 @@
       ax.reset(duration, false);
     });
   };
-  mpld3_Figure.prototype.enable_zoom = function() {
-    for (var i = 0; i < this.axes.length; i++) {
-      this.axes[i].enable_zoom();
-    }
-    this.zoom_on = true;
+  mpld3_Figure.prototype.enableZoom = function() {
+    this.isZoomEnabled = true;
+    this.zoom.on("zoom", this.zoomed.bind(this));
+    this.canvas.call(this.zoom);
+    this.canvas.style("cursor", "move");
   };
-  mpld3_Figure.prototype.disable_zoom = function() {
-    for (var i = 0; i < this.axes.length; i++) {
-      this.axes[i].disable_zoom();
-    }
-    this.zoom_on = false;
+  mpld3_Figure.prototype.disableZoom = function() {
+    this.isZoomEnabled = false;
+    this.zoom.on("zoom", null);
+    this.canvas.on(".zoom", null);
+    this.canvas.style("cursor", null);
   };
-  mpld3_Figure.prototype.toggle_zoom = function() {
-    if (this.zoom_on) {
-      this.disable_zoom();
+  mpld3_Figure.prototype.toggleZoom = function() {
+    if (this.isZoomEnabled) {
+      this.disableZoom();
     } else {
-      this.enable_zoom();
+      this.enableZoom();
     }
   };
   mpld3_Figure.prototype.get_data = function(data) {

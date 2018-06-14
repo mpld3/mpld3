@@ -39,17 +39,17 @@ function mpld3_ZoomPlugin(fig, props) {
 }
 
 mpld3_ZoomPlugin.prototype.activate = function() {
-    this.fig.enable_zoom();
+    this.fig.enableZoom();
 };
 
 mpld3_ZoomPlugin.prototype.deactivate = function() {
-    this.fig.disable_zoom()
+    this.fig.disableZoom()
 };
 
 mpld3_ZoomPlugin.prototype.draw = function() {
     if (this.props.enabled) {
-      this.fig.enable_zoom();
+      this.fig.enableZoom();
     } else {
-      this.fig.disable_zoom();
+      this.fig.disableZoom();
     }
 }
