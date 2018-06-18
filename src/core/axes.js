@@ -256,7 +256,9 @@ mpld3_Axes.prototype.zoomed = function(propagate, transform) {
     }.bind(this));
 };
 
+/*
 mpld3_Axes.prototype.reset = function(duration, propagate) {
+    // TODO: (@vladh) Reimplement this.
     this.set_axlim(
         this.props.xdomain, this.props.ydomain, duration, propagate
     );
@@ -265,6 +267,7 @@ mpld3_Axes.prototype.reset = function(duration, propagate) {
 mpld3_Axes.prototype.set_axlim = function(
     xlim, ylim, duration, propagate, bounds
 ) {
+    // TODO: (@vladh) Remove this after reimplementing.
     // => zoom set_axlim?
 
     // xlim = isUndefinedOrNull(xlim) ? this.xdom.domain() : xlim;
@@ -330,3 +333,4 @@ mpld3_Axes.prototype.set_axlim = function(
     // this.zoom_x.scale(1).translate([0, 0]);
     // this.zoom_y.scale(1).translate([0, 0]);
 };
+*/

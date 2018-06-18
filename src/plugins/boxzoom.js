@@ -36,67 +36,65 @@ function mpld3_BoxZoomPlugin(fig, props) {
     this.extentClass = "boxzoombrush";
 }
 
-mpld3_BoxZoomPlugin.prototype.activate = function(){
-    if (this.enable) this.enable();
+mpld3_BoxZoomPlugin.prototype.activate = function() {
+    // TODO: (@vladh) Multiple axes.
+    this.brushG = this.fig.axes[0].axes
+        .append('g')
+        .attr('class', 'brush')
+        .call(this.brush);
+    this.fig.enableZoom();
 };
 
-mpld3_BoxZoomPlugin.prototype.deactivate = function(){
-    if (this.disable) this.disable();
+mpld3_BoxZoomPlugin.prototype.deactivate = function() {
+    if (this.brushG) {
+        this.brushG.remove();
+        this.brushG.on('.brush', null);
+    }
+    this.fig.disableZoom();
 };
 
-mpld3_BoxZoomPlugin.prototype.draw = function(){
-    // TODO: (@vladh) [brush] Fix brush in boxzoom.
-    mpld3.insert_css(
-        "#" + this.fig.figid + " rect.extent." + this.extentClass,
-        {
-            "fill": "#fff",
-            "fill-opacity": 0,
-            "stroke": "#999",
-        }
-    );
+mpld3_BoxZoomPlugin.prototype.draw = function() {
+    this.brush = d3.brush().extent([
+        [0, 0], [this.fig.width, this.fig.height],
+    ])
+        .on('start', this.brushStart.bind(this))
+        .on('brush', this.brushBrush.bind(this))
+        .on('end', this.brushEnd.bind(this))
+        .on('start.nokey', function() {
+            d3.select(window).on('keydown.brush keyup.brush', null);
+        });
 
-    // getBrush is a d3.brush() object, set up for use on the figure.
-    var brush = this.fig.getBrush();
+    this.brushG = null;
+};
 
-    this.enable = function() {
-        console.log('[boxzoom#enable]');
-        this.fig.showBrush(this.extentClass);
-        brush.on("end", brushend.bind(this));
-        this.enabled = true;
+mpld3_BoxZoomPlugin.prototype.brushStart = function() {
+};
+
+// Sorry for this function name.
+mpld3_BoxZoomPlugin.prototype.brushBrush = function() {
+};
+
+mpld3_BoxZoomPlugin.prototype.brushEnd = function() {
+    if (!d3.event.selection || !this.fig.canvas || !this.brushG) {
+        return;
     }
 
-    this.disable = function() {
-        console.log('[boxzoom#disable]');
-        this.fig.hideBrush(this.extentClass);
-        this.enabled = false;
-    }
+    var bounds = d3.event.selection;
+    var width = this.fig.width;
+    var height = this.fig.height;
 
-    this.toggle = function() {
-        console.log('[boxzoom#toggle] enabled:', this.enabled);
-        this.enabled ? this.disable() : this.enable();
-    }
+    var dx = bounds[1][0] - bounds[0][0];
+    var dy = bounds[1][1] - bounds[0][1];
+    var x = (bounds[0][0] + bounds[1][0]) / 2;
+    var y = (bounds[0][1] + bounds[1][1]) / 2;
+    var scale = Math.max(1, Math.min(8, 0.9 / Math.max(dx / width, dy / height)));
+    var translate = [width / 2 - scale * x, height / 2 - scale * y];
 
-    function brushend(d) {
-        console.log('[boxboxzoom#brushend]', extent);
-        var extent = d3.event.selection;
-        if (!extent) {
-            console.log('[boxboxzoom#brushend] doing nothing');
-            return;
-        }
-        console.log('[boxboxzoom#brushend] trying to do something');
-        if (this.enabled) {
-            console.log('[boxboxzoom#brushend] doing something');
-            d.set_axlim(
-                [extent[0][0], extent[1][0]],
-                [extent[0][1], extent[1][1]],
-                null,
-                null,
-                extent
-            );
-        }
-        d.axes.call(brush.move, null);
-    }
-
-    this.disable();
-}
-
+    this.brushG.call(this.brush.move, null);
+    this.fig.axes[0].axes.transition()
+        .duration(750)
+        .call(
+            this.fig.zoom.transform,
+            d3.zoomIdentity.translate(translate[0], translate[1]).scale(scale)
+        );
+};

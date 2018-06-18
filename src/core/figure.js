@@ -28,14 +28,6 @@ function mpld3_Figure(figid, props) {
     this.root = d3.select('#' + figid)
         .append("div").style("position", "relative");
 
-    // this.root
-    //     .on('mousedown.drag', this.mousedown.bind(this))
-    //     .on('touchstart.drag', this.mousedown.bind(this))
-    //     .on('mousemove.drag', this.mousemove.bind(this))
-    //     .on('touchmove.drag', this.mousemove.bind(this))
-    //     .on('mouseup.drag', this.mouseup.bind(this))
-    //     .on('touchup.drag', this.mouseup.bind(this));
-
     this.isZoomEnabled = null
     this.zoom = d3.zoom();
 
@@ -47,10 +39,6 @@ function mpld3_Figure(figid, props) {
     // Connect the plugins to the figure
     this.plugins = [];
     this.props.plugins.forEach(function(plugin) {
-        // TODO: (@vladh) Remove
-        if (plugin.type == 'boxzoom') {
-            return;
-        }
         this.addPlugin(plugin);
     }.bind(this));
 
@@ -62,75 +50,17 @@ function mpld3_Figure(figid, props) {
     });
 }
 
-mpld3_Figure.prototype.mousedown = function() {
-    console.log('[figure#mousedown]');
-    this.root.style('cursor', 'move');
-}
-
-mpld3_Figure.prototype.mousemove = function() {
-    console.log('[figure#mousemove]');
-}
-
-mpld3_Figure.prototype.mouseup = function() {
-    console.log('[figure#mouseup]');
-    this.root.style('cursor', 'default');
-}
-
 mpld3_Figure.prototype.zoomed = function() {
     if (!this.isZoomEnabled) {
         return;
     }
-    this.axes.forEach(function(axis) {
-        axis.zoomed(null, d3.event.transform);
+    this.axes.forEach(function(axes) {
+        axes.zoomed(null, d3.event.transform);
     }.bind(this));
 }
 
-// getBrush contains boilerplate for defining a d3 brush over the axes
 mpld3_Figure.prototype.getBrush = function() {
-    // TODO: (@vladh) [brush] Fix brush in figure.
-    if (typeof this._brush === "undefined"){
-        // use temporary linear scales here: we'll replace
-        // with the real x and y scales below.
-        var brush = d3.brush();
-
-        // this connects the axes instance to the brush elements
-        this.root.selectAll(".mpld3-axes")
-            .data(this.axes)
-            .call(brush);
-
-        this._brush = brush;
-        this.hideBrush();
-    }
-    return this._brush;
-};
-
-mpld3_Figure.prototype.showBrush = function(extentClass) {
-    // TODO: (@vladh) [brush] Fix brush in figure.
-    extentClass = (typeof extentClass === "undefined") ? "" : extentClass;
-    var brush = this.getBrush();
-    // TODO: (@vladh) [brush] Is this still needed?
-    // brush.on("start", function(d){ brush.x(d.xdom).y(d.ydom); });
-    this.canvas.selectAll("rect.overlay")
-        .attr("cursor", "crosshair")
-        .attr("pointer-events", null);
-    this.canvas.selectAll("rect.selection, rect.handle")
-        .style("display", null)
-        .classed(extentClass, true);
-};
-
-mpld3_Figure.prototype.hideBrush = function(extentClass) {
-    // TODO: (@vladh) [brush] Fix brush in figure.
-    extentClass = (typeof extentClass === "undefined") ? "" : extentClass;
-    var brush = this.getBrush();
-    brush.on("start", null)
-         .on("brush", null)
-         .on("end", function(d){ d.axes.call(brush.move, null); });
-    this.canvas.selectAll("rect.overlay")
-        .attr("cursor", null)
-        .attr("pointer-events", "visible");
-    this.canvas.selectAll("rect.selection, rect.handle")
-        .style("display", "none")
-        .classed(extentClass, false);
+    return undefined;
 };
 
 mpld3_Figure.prototype.addPlugin = function(pluginInfo) {
@@ -182,23 +112,26 @@ mpld3_Figure.prototype.draw = function() {
 };
 
 mpld3_Figure.prototype.reset = function(duration) {
-    this.axes.forEach(function(ax) {
-        ax.reset(duration, false);
-    });
+    // TODO: (@vladh) Multiple axes.
+    this.axes[0].axes.transition()
+        .duration(750)
+        .call(this.zoom.transform, d3.zoomIdentity);
 };
 
 mpld3_Figure.prototype.enableZoom = function() {
     this.isZoomEnabled = true;
     this.zoom.on('zoom', this.zoomed.bind(this));
-    this.canvas.call(this.zoom);
-    this.canvas.style('cursor', 'move');
+    // TODO: (@vladh) Multiple axes.
+    this.axes[0].axes.call(this.zoom);
+    this.axes[0].axes.style('cursor', 'move');
 };
 
 mpld3_Figure.prototype.disableZoom = function() {
     this.isZoomEnabled = false;
     this.zoom.on('zoom', null);
-    this.canvas.on('.zoom', null);
-    this.canvas.style('cursor', null);
+    // TODO: (@vladh) Multiple axes.
+    this.axes[0].axes.on('.zoom', null);
+    this.axes[0].axes.style('cursor', null);
 };
 
 mpld3_Figure.prototype.toggleZoom = function() {
