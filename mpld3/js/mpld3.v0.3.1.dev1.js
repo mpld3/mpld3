@@ -866,6 +866,9 @@
     }
   };
   mpld3_Axes.prototype.zoomed = function(propagate, transform) {
+    if (!this.props.zoomable) {
+      return;
+    }
     this.paths.attr("transform", transform);
     this.elements.forEach(function(element) {
       if (element.zoomed) {
