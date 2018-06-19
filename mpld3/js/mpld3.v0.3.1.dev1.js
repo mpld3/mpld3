@@ -793,6 +793,8 @@
     this.position = [ bbox[0] * this.fig.width, (1 - bbox[1] - bbox[3]) * this.fig.height ];
     this.width = bbox[2] * this.fig.width;
     this.height = bbox[3] * this.fig.height;
+    this.isZoomEnabled = null;
+    this.zoom = d3.zoom();
     function buildDate(d) {
       return new Date(d[0], d[1], d[2], d[3], d[4], d[5]);
     }
@@ -865,9 +867,27 @@
       this.elements[i].draw();
     }
   };
-  mpld3_Axes.prototype.zoomed = function(propagate, transform) {
-    if (!this.props.zoomable) {
+  mpld3_Axes.prototype.reset = function() {
+    this.axes.transition().duration(750).call(this.zoom.transform, d3.zoomIdentity);
+  };
+  mpld3.Axes.prototype.enableZoom = function() {
+    this.isZoomEnabled = true;
+    this.zoom.on("zoom", this.zoomed.bind(this));
+    this.axes.call(this.zoom);
+    this.axes.style("cursor", "move");
+  };
+  mpld3.Axes.prototype.disableZoom = function() {
+    this.isZoomEnabled = false;
+    this.zoom.on("zoom", null);
+    this.axes.on(".zoom", null);
+    this.axes.style("cursor", null);
+  };
+  mpld3_Axes.prototype.doZoom = function(propagate, transform) {
+    if (!this.props.zoomable || !this.isZoomEnabled) {
       return;
+    }
+    function makeTransform(k, x, y) {
+      return new d3.zoomIdentity.constructor(k, x, y);
     }
     this.paths.attr("transform", transform);
     this.elements.forEach(function(element) {
@@ -875,6 +895,20 @@
         element.zoomed(transform);
       }
     }.bind(this));
+    if (propagate) {
+      this.sharex.forEach(function(sharedAxes) {
+        var newTransform = makeTransform(transform.k, transform.x, d3.zoomTransform(sharedAxes.axes).y);
+        sharedAxes.axes.call(sharedAxes.zoom.transform, newTransform);
+      });
+      this.sharey.forEach(function(sharedAxes) {
+        var newTransform = makeTransform(transform.k, d3.zoomTransform(sharedAxes.axes).x, transform.y);
+        sharedAxes.axes.call(sharedAxes.zoom.transform, newTransform);
+      });
+    }
+  };
+  mpld3_Axes.prototype.zoomed = function() {
+    var propagate = d3.event.sourceEvent.type != "zoom";
+    this.doZoom(propagate, d3.event.transform);
   };
   mpld3.Toolbar = mpld3_Toolbar;
   mpld3_Toolbar.prototype = Object.create(mpld3_PlotElement.prototype);
@@ -1349,8 +1383,6 @@
     this.data = this.props.data;
     this.buttons = [];
     this.root = d3.select("#" + figid).append("div").style("position", "relative");
-    this.isZoomEnabled = null;
-    this.zoom = d3.zoom();
     this.axes = [];
     for (var i = 0; i < this.props.axes.length; i++) this.axes.push(new mpld3_Axes(this, this.props.axes[i]));
     this.plugins = [];
@@ -1361,14 +1393,6 @@
       buttons: this.buttons
     });
   }
-  mpld3_Figure.prototype.zoomed = function() {
-    if (!this.isZoomEnabled) {
-      return;
-    }
-    this.axes.forEach(function(axes) {
-      axes.zoomed(null, d3.event.transform);
-    }.bind(this));
-  };
   mpld3_Figure.prototype.getBrush = function() {
     return undefined;
   };
@@ -1401,19 +1425,19 @@
     this.toolbar.draw();
   };
   mpld3_Figure.prototype.reset = function(duration) {
-    this.axes[0].axes.transition().duration(750).call(this.zoom.transform, d3.zoomIdentity);
+    this.axes.forEach(function(axes) {
+      axes.reset();
+    });
   };
   mpld3_Figure.prototype.enableZoom = function() {
-    this.isZoomEnabled = true;
-    this.zoom.on("zoom", this.zoomed.bind(this));
-    this.axes[0].axes.call(this.zoom);
-    this.axes[0].axes.style("cursor", "move");
+    this.axes.forEach(function(axes) {
+      axes.enableZoom();
+    });
   };
   mpld3_Figure.prototype.disableZoom = function() {
-    this.isZoomEnabled = false;
-    this.zoom.on("zoom", null);
-    this.axes[0].axes.on(".zoom", null);
-    this.axes[0].axes.style("cursor", null);
+    this.axes.forEach(function(axes) {
+      axes.disableZoom();
+    });
   };
   mpld3_Figure.prototype.toggleZoom = function() {
     if (this.isZoomEnabled) {

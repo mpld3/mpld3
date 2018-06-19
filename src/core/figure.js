@@ -28,9 +28,6 @@ function mpld3_Figure(figid, props) {
     this.root = d3.select('#' + figid)
         .append("div").style("position", "relative");
 
-    this.isZoomEnabled = null
-    this.zoom = d3.zoom();
-
     // Create all the axes elements in the figure
     this.axes = [];
     for (var i = 0; i < this.props.axes.length; i++)
@@ -48,15 +45,6 @@ function mpld3_Figure(figid, props) {
     this.toolbar = new mpld3.Toolbar(this, {
         buttons: this.buttons
     });
-}
-
-mpld3_Figure.prototype.zoomed = function() {
-    if (!this.isZoomEnabled) {
-        return;
-    }
-    this.axes.forEach(function(axes) {
-        axes.zoomed(null, d3.event.transform);
-    }.bind(this));
 }
 
 mpld3_Figure.prototype.getBrush = function() {
@@ -112,26 +100,21 @@ mpld3_Figure.prototype.draw = function() {
 };
 
 mpld3_Figure.prototype.reset = function(duration) {
-    // TODO: (@vladh) Multiple axes.
-    this.axes[0].axes.transition()
-        .duration(750)
-        .call(this.zoom.transform, d3.zoomIdentity);
+    this.axes.forEach(function(axes) {
+        axes.reset();
+    });
 };
 
 mpld3_Figure.prototype.enableZoom = function() {
-    this.isZoomEnabled = true;
-    this.zoom.on('zoom', this.zoomed.bind(this));
-    // TODO: (@vladh) Multiple axes.
-    this.axes[0].axes.call(this.zoom);
-    this.axes[0].axes.style('cursor', 'move');
+    this.axes.forEach(function(axes) {
+        axes.enableZoom();
+    });
 };
 
 mpld3_Figure.prototype.disableZoom = function() {
-    this.isZoomEnabled = false;
-    this.zoom.on('zoom', null);
-    // TODO: (@vladh) Multiple axes.
-    this.axes[0].axes.on('.zoom', null);
-    this.axes[0].axes.style('cursor', null);
+    this.axes.forEach(function(axes) {
+        axes.disableZoom();
+    });
 };
 
 mpld3_Figure.prototype.toggleZoom = function() {

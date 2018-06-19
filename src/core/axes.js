@@ -52,6 +52,9 @@ function mpld3_Axes(fig, props) {
     this.width = bbox[2] * this.fig.width;
     this.height = bbox[3] * this.fig.height;
 
+    this.isZoomEnabled = null
+    this.zoom = d3.zoom();
+
     // In the case of date scales, set the domain
 
     function buildDate(d) {
@@ -208,60 +211,70 @@ mpld3_Axes.prototype.draw = function() {
     }
 };
 
-mpld3_Axes.prototype.zoomed = function(propagate, transform) {
-    // => zoomed
-    // // propagate is a boolean specifying whether to propagate movements
-    // // to shared axes, specified by sharex and sharey.  Default is true.
-    // propagate = (typeof propagate == 'undefined') ? true : propagate;
-    // if (propagate) {
-    //     // update scale and translation of zoom_x and zoom_y,
-    //     // based on change in this.zoom scale and translation values
-    //     var dt0 = this.zoom.translate()[0] - this.zoom.last_t[0];
-    //     var dt1 = this.zoom.translate()[1] - this.zoom.last_t[1];
-    //     var ds = this.zoom.scale() / this.zoom.last_s;
+mpld3_Axes.prototype.reset = function() {
+    this.axes.transition()
+        .duration(750)
+        .call(this.zoom.transform, d3.zoomIdentity);
+};
 
-    //     this.zoom_x.translate([this.zoom_x.translate()[0] + dt0, 0]);
-    //     this.zoom_x.scale(this.zoom_x.scale() * ds)
+mpld3.Axes.prototype.enableZoom = function() {
+    this.isZoomEnabled = true;
+    this.zoom.on('zoom', this.zoomed.bind(this));
+    this.axes.call(this.zoom);
+    this.axes.style('cursor', 'move');
+};
 
-    //     this.zoom_y.translate([0, this.zoom_y.translate()[1] + dt1]);
-    //     this.zoom_y.scale(this.zoom_y.scale() * ds)
+mpld3.Axes.prototype.disableZoom = function() {
+    this.isZoomEnabled = false;
+    this.zoom.on('zoom', null);
+    this.axes.on('.zoom', null);
+    this.axes.style('cursor', null);
+};
 
-    //     // update last translate and scale values for future use
-    //     this.zoom.last_t = this.zoom.translate();
-    //     this.zoom.last_s = this.zoom.scale();
-
-    //     // update shared axes objects
-    //     this.sharex.forEach(function(ax) {
-    //         ax.zoom_x.translate(this.zoom_x.translate())
-    //             .scale(this.zoom_x.scale());
-    //     }.bind(this));
-    //     this.sharey.forEach(function(ax) {
-    //         ax.zoom_y.translate(this.zoom_y.translate())
-    //             .scale(this.zoom_y.scale());
-    //     }.bind(this));
-
-    //     // render updates
-    //     this.sharex.forEach(function(ax) {
-    //         ax.zoomed(false);
-    //     });
-    //     this.sharey.forEach(function(ax) {
-    //         ax.zoomed(false);
-    //     });
-    // }
-    if (!this.props.zoomable) {
+mpld3_Axes.prototype.doZoom = function(propagate, transform) {
+    if (!this.props.zoomable || !this.isZoomEnabled) {
         return;
     }
+
+    function makeTransform(k, x, y) {
+        // NOTE: (@vladh) Total hack, using d3 private class.
+        // https://github.com/d3/d3-zoom/issues/48
+        return new d3.zoomIdentity.constructor(k, x, y);
+    }
+
     this.paths.attr('transform', transform);
     this.elements.forEach(function(element) {
         if (element.zoomed) {
             element.zoomed(transform);
         }
     }.bind(this));
+
+    // TODO: (@vladh) Fix a bug here where the position of the wrong axis resets.
+    if (propagate) {
+        this.sharex.forEach(function(sharedAxes) {
+            var newTransform = makeTransform(
+                transform.k, transform.x, d3.zoomTransform(sharedAxes.axes).y
+            );
+            sharedAxes.axes.call(sharedAxes.zoom.transform, newTransform);
+        });
+
+        this.sharey.forEach(function(sharedAxes) {
+            var newTransform = makeTransform(
+                transform.k, d3.zoomTransform(sharedAxes.axes).x, transform.y
+            );
+            sharedAxes.axes.call(sharedAxes.zoom.transform, newTransform);
+        });
+    }
 };
 
+mpld3_Axes.prototype.zoomed = function() {
+    var propagate = (d3.event.sourceEvent.type != 'zoom');
+    this.doZoom(propagate, d3.event.transform);
+};
+
+// TODO: (@vladh) Remove this when no longer needed.
 /*
 mpld3_Axes.prototype.reset = function(duration, propagate) {
-    // TODO: (@vladh) Reimplement this.
     this.set_axlim(
         this.props.xdomain, this.props.ydomain, duration, propagate
     );
@@ -270,7 +283,6 @@ mpld3_Axes.prototype.reset = function(duration, propagate) {
 mpld3_Axes.prototype.set_axlim = function(
     xlim, ylim, duration, propagate, bounds
 ) {
-    // TODO: (@vladh) Remove this after reimplementing.
     // => zoom set_axlim?
 
     // xlim = isUndefinedOrNull(xlim) ? this.xdom.domain() : xlim;
@@ -307,18 +319,6 @@ mpld3_Axes.prototype.set_axlim = function(
     //     .tween("zoom", function() {
     //         return transition;
     //     });
-
-    // or
-
-    // this.fig.canvas
-    //     .transition()
-    //     .duration(750)
-    //     .call(
-    //         this.zoom.transform,
-    //         d3.zoomIdentity
-    //             .translate(transform.translate[0], transform.translate[1])
-    //             .scale(transform.scale)
-    //     );
 
     // propagate axis limits to shared axes
     // if (propagate) {
