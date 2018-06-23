@@ -46,10 +46,6 @@ function mpld3_Figure(figid, props) {
     });
 }
 
-mpld3_Figure.prototype.getBrush = function() {
-    return undefined;
-};
-
 mpld3_Figure.prototype.addPlugin = function(pluginInfo) {
     if (!pluginInfo.type) {
         return console.warn("unspecified plugin type. Skipping this");

@@ -180,6 +180,8 @@ class NetworkXD3ForceLayout(mpld3.plugins.PluginBase):
             this.tick()
         }
     NetworkXD3ForceLayoutPlugin.prototype.draw = function(){
+        // TODO: (@vladh) Somehow fix this.
+        return undefined;
         plugin = this
         brush = this.fig.getBrush();
         DEFAULT_NODE_SIZE = this.props.nominal_radius;
@@ -201,9 +203,6 @@ class NetworkXD3ForceLayout(mpld3.plugins.PluginBase):
         this.xScale = d3.scaleLinear().domain([0, 1]).range([0, width]) // ax.x;
         this.yScale = d3.scaleLinear().domain([0, 1]).range([height, 0]) // ax.y;
         this.force = d3.forceSimulation();
-        // TODO: (@vladh) Verify that size works. It should because of the
-        // center force below.
-        //    .size([width, height]);
         this.svg = this.ax.axes.append("g");
         for(var i = 0; i < graph.nodes.length; i++){
             var node = graph.nodes[i];

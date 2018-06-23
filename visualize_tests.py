@@ -46,6 +46,10 @@ TEMPLATE = """
   height: 500px;
 }}
 
+#fig036, #fig037 {{
+    height: 850px;
+}}
+
 {extra_css}
 
 </style>
