@@ -41,7 +41,6 @@ function mpld3_Figure(figid, props) {
 
     // Create the figure toolbar. Do this last because plugins may modify the
     // button list.
-    // TODO: (@vladh) Refactor this to fix tight coupling and mutation.
     this.toolbar = new mpld3.Toolbar(this, {
         buttons: this.buttons
     });

@@ -131,7 +131,6 @@ function mpld3_tickFormat(tickformat, tickvalues) {
 }
 
 mpld3_Axis.prototype.zoomed = function(transform) {
-    // TODO: (@vladh) Figure out what this does?
     // if we set tickValues for the axis, we are responsible for
     // updating them when they pan or zoom off of the chart
     // this.filter_ticks(this.axis.tickValues, this.axis.scale().domain());
@@ -142,7 +141,6 @@ mpld3_Axis.prototype.zoomed = function(transform) {
             this.elem.call(this.axis.scale(transform.rescaleY(this.scale)));
         }
     } else {
-        // Backwards compatibility.
         this.elem.call(this.axis);
     }
 };

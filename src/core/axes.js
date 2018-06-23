@@ -204,8 +204,6 @@ mpld3_Axes.prototype.draw = function() {
     this.brush = d3.brush().extent([
         [0, 0], [this.fig.width, this.fig.height],
     ])
-        .on('start', this.brushStart.bind(this))
-        .on('brush', this.brushBrush.bind(this))
         .on('end', this.brushEnd.bind(this))
         .on('start.nokey', function() {
             d3.select(window).on('keydown.brush keyup.brush', null);
@@ -267,8 +265,6 @@ mpld3_Axes.prototype.doZoom = function(propagate, transform, duration) {
         return;
     }
 
-    // console.log(propagate, transform, this.lastTransform, kDiff);
-
     if (duration) {
         this.axes
             .transition()
@@ -316,98 +312,23 @@ mpld3_Axes.prototype.zoomed = function() {
     }
 };
 
-mpld3_Axes.prototype.brushStart = function() {
-};
-
-// Sorry for this function name.
-mpld3_Axes.prototype.brushBrush = function() {
-};
-
 mpld3_Axes.prototype.brushEnd = function() {
-    if (!d3.event.selection || !this.fig.canvas || !this.brushG) {
+    if (!d3.event.selection || !this.brushG) {
         return;
     }
 
-    var bounds = d3.event.selection;
-    var axesDimensions = this.axesbg.node().getBBox();
-    var width = axesDimensions.width;
-    var height = axesDimensions.height;
+    var sel = d3.event.selection.map(this.lastTransform.invert, this.lastTransform);
 
-    var dx = bounds[1][0] - bounds[0][0];
-    var dy = bounds[1][1] - bounds[0][1];
-    var cx = (bounds[0][0] + bounds[1][0]) / 2;
-    var cy = (bounds[0][1] + bounds[1][1]) / 2;
-    var scale = Math.max(1, Math.min(8, 0.85 / Math.max(dx / width, dy / height)));
-    var translate = [width / 2 - scale * cx, height / 2 - scale * cy];
+    var dx = sel[1][0] - sel[0][0];
+    var dy = sel[1][1] - sel[0][1];
+    var cx = (sel[0][0] + sel[1][0]) / 2;
+    var cy = (sel[0][1] + sel[1][1]) / 2;
 
-    this.brushG.call(this.brush.move, null);
+    var scale = (dx > dy) ? this.width / dx : this.height / dy;
+    var transX = this.width / 2 - scale * cx;
+    var transY = this.height / 2 - scale * cy;
+    var transform = d3.zoomIdentity.translate(transX, transY).scale(scale);
 
-    var transform = d3.zoomIdentity.translate(translate[0], translate[1]).scale(scale);
     this.doZoom(true, transform, 750);
+    this.brushG.call(this.brush.move, null);
 };
-
-// TODO: (@vladh) Remove this when no longer needed.
-/*
-mpld3_Axes.prototype.reset = function(duration, propagate) {
-    this.set_axlim(
-        this.props.xdomain, this.props.ydomain, duration, propagate
-    );
-};
-
-mpld3_Axes.prototype.set_axlim = function(
-    xlim, ylim, duration, propagate, bounds
-) {
-    // => zoom set_axlim?
-
-    // xlim = isUndefinedOrNull(xlim) ? this.xdom.domain() : xlim;
-    // ylim = isUndefinedOrNull(ylim) ? this.ydom.domain() : ylim;
-    // duration = isUndefinedOrNull(duration) ? 750 : duration;
-    // propagate = isUndefined(propagate) ? true : propagate;
-
-    // // Create a transition function which will interpolate
-    // // from the current axes limits to the final limits
-    // var interpX = (this.props.xscale === 'date') ?
-    //     mpld3.interpolateDates(this.xdom.domain(), xlim) :
-    //     d3.interpolate(this.xdom.domain(), xlim);
-
-    // var interpY = (this.props.yscale === 'date') ?
-    //     mpld3.interpolateDates(this.ydom.domain(), ylim) :
-    //     d3.interpolate(this.ydom.domain(), ylim);
-
-    // if (!bounds) {
-    //     console.error('[axes#set_axlim] Tried to zoom, but got no bounds.');
-    //     return;
-    // }
-    // transform = mpld3.boundsToTransform(this.fig, bounds);
-    // this.axes.call(this.zoom.transform, d3.zoomIdentity.translate(100, 100).scale(0.5));
-
-    // var transition = function(t) {
-    //     this.zoom_x.x(this.xdom.domain(interpX(t)));
-    //     this.zoom_y.y(this.ydom.domain(interpY(t)));
-    //     this.zoomed(false); // don't propagate here; propagate below.
-    // }.bind(this);
-
-    // select({}) is a trick to make transitions run concurrently
-    // d3.select({})
-    //     .transition().duration(duration)
-    //     .tween("zoom", function() {
-    //         return transition;
-    //     });
-
-    // propagate axis limits to shared axes
-    // if (propagate) {
-    //     this.sharex.forEach(function(ax) {
-    //         ax.set_axlim(xlim, null, duration, false);
-    //     });
-    //     this.sharey.forEach(function(ax) {
-    //         ax.set_axlim(null, ylim, duration, false);
-    //     });
-    // }
-
-    // finalize the reset operation.
-    // this.zoom.last_t = this.zoom.translate();
-    // this.zoom.last_s = this.zoom.scale();
-    // this.zoom_x.scale(1).translate([0, 0]);
-    // this.zoom_y.scale(1).translate([0, 0]);
-};
-*/

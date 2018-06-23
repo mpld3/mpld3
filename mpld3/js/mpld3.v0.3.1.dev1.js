@@ -865,7 +865,7 @@
     this.axes = this.baseaxes.append("g").attr("class", "mpld3-axes").attr("clip-path", "url(#" + this.clipid + ")");
     this.axesbg = this.axes.append("svg:rect").attr("width", this.width).attr("height", this.height).attr("class", "mpld3-axesbg").style("fill", this.props.axesbg).style("fill-opacity", this.props.axesbgalpha);
     this.paths = this.axes.append("g").attr("class", "mpld3-paths");
-    this.brush = d3.brush().extent([ [ 0, 0 ], [ this.fig.width, this.fig.height ] ]).on("start", this.brushStart.bind(this)).on("brush", this.brushBrush.bind(this)).on("end", this.brushEnd.bind(this)).on("start.nokey", function() {
+    this.brush = d3.brush().extent([ [ 0, 0 ], [ this.fig.width, this.fig.height ] ]).on("end", this.brushEnd.bind(this)).on("start.nokey", function() {
       d3.select(window).on("keydown.brush keyup.brush", null);
     });
     this.brushG = null;
@@ -943,25 +943,21 @@
       }.bind(this));
     }
   };
-  mpld3_Axes.prototype.brushStart = function() {};
-  mpld3_Axes.prototype.brushBrush = function() {};
   mpld3_Axes.prototype.brushEnd = function() {
-    if (!d3.event.selection || !this.fig.canvas || !this.brushG) {
+    if (!d3.event.selection || !this.brushG) {
       return;
     }
-    var bounds = d3.event.selection;
-    var axesDimensions = this.axesbg.node().getBBox();
-    var width = axesDimensions.width;
-    var height = axesDimensions.height;
-    var dx = bounds[1][0] - bounds[0][0];
-    var dy = bounds[1][1] - bounds[0][1];
-    var cx = (bounds[0][0] + bounds[1][0]) / 2;
-    var cy = (bounds[0][1] + bounds[1][1]) / 2;
-    var scale = Math.max(1, Math.min(8, .85 / Math.max(dx / width, dy / height)));
-    var translate = [ width / 2 - scale * cx, height / 2 - scale * cy ];
-    this.brushG.call(this.brush.move, null);
-    var transform = d3.zoomIdentity.translate(translate[0], translate[1]).scale(scale);
+    var sel = d3.event.selection.map(this.lastTransform.invert, this.lastTransform);
+    var dx = sel[1][0] - sel[0][0];
+    var dy = sel[1][1] - sel[0][1];
+    var cx = (sel[0][0] + sel[1][0]) / 2;
+    var cy = (sel[0][1] + sel[1][1]) / 2;
+    var scale = dx > dy ? this.width / dx : this.height / dy;
+    var transX = this.width / 2 - scale * cx;
+    var transY = this.height / 2 - scale * cy;
+    var transform = d3.zoomIdentity.translate(transX, transY).scale(scale);
     this.doZoom(true, transform, 750);
+    this.brushG.call(this.brush.move, null);
   };
   mpld3.Toolbar = mpld3_Toolbar;
   mpld3_Toolbar.prototype = Object.create(mpld3_PlotElement.prototype);
