@@ -54,6 +54,7 @@ function mpld3_Axes(fig, props) {
 
     this.isZoomEnabled = null
     this.zoom = d3.zoom();
+    this.lastTransform = d3.zoomIdentity;
 
     // In the case of date scales, set the domain
 
@@ -236,12 +237,11 @@ mpld3_Axes.prototype.doZoom = function(propagate, transform) {
         return;
     }
 
-    function makeTransform(k, x, y) {
-        // NOTE: (@vladh) Total hack, using d3 private class.
-        // https://github.com/d3/d3-zoom/issues/48
-        return new d3.zoomIdentity.constructor(k, x, y);
-    }
+    var xDiff = transform.x - this.lastTransform.x;
+    var yDiff = transform.y - this.lastTransform.y;
+    var kDiff = 1 + transform.k - this.lastTransform.k;
 
+    this.lastTransform = transform;
     this.paths.attr('transform', transform);
     this.elements.forEach(function(element) {
         if (element.zoomed) {
@@ -249,26 +249,21 @@ mpld3_Axes.prototype.doZoom = function(propagate, transform) {
         }
     }.bind(this));
 
-    // TODO: (@vladh) Fix a bug here where the position of the wrong axis resets.
     if (propagate) {
         this.sharex.forEach(function(sharedAxes) {
-            var newTransform = makeTransform(
-                transform.k, transform.x, d3.zoomTransform(sharedAxes.axes).y
-            );
-            sharedAxes.axes.call(sharedAxes.zoom.transform, newTransform);
+            var xTransform = sharedAxes.lastTransform.translate(xDiff, 0).scale(kDiff);
+            sharedAxes.axes.call(sharedAxes.zoom.transform, xTransform);
         });
 
         this.sharey.forEach(function(sharedAxes) {
-            var newTransform = makeTransform(
-                transform.k, d3.zoomTransform(sharedAxes.axes).x, transform.y
-            );
-            sharedAxes.axes.call(sharedAxes.zoom.transform, newTransform);
+            var yTransform = sharedAxes.lastTransform.translate(0, yDiff).scale(kDiff);
+            sharedAxes.axes.call(sharedAxes.zoom.transform, yTransform);
         });
     }
 };
 
 mpld3_Axes.prototype.zoomed = function() {
-    var propagate = (d3.event.sourceEvent.type != 'zoom');
+    var propagate = (d3.event.sourceEvent && d3.event.sourceEvent.type != 'zoom');
     this.doZoom(propagate, d3.event.transform);
 };
 
