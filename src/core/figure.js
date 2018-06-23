@@ -105,6 +105,18 @@ mpld3_Figure.prototype.reset = function(duration) {
     });
 };
 
+mpld3_Figure.prototype.enableBoxzoom = function() {
+    this.axes.forEach(function(axes) {
+        axes.enableBoxzoom();
+    });
+};
+
+mpld3_Figure.prototype.disableBoxzoom = function() {
+    this.axes.forEach(function(axes) {
+        axes.disableBoxzoom();
+    });
+};
+
 mpld3_Figure.prototype.enableZoom = function() {
     this.axes.forEach(function(axes) {
         axes.enableZoom();

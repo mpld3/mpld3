@@ -52,9 +52,11 @@ function mpld3_Axes(fig, props) {
     this.width = bbox[2] * this.fig.width;
     this.height = bbox[3] * this.fig.height;
 
-    this.isZoomEnabled = null
+    this.isZoomEnabled = null;
     this.zoom = d3.zoom();
     this.lastTransform = d3.zoomIdentity;
+
+    this.isBoxzoomEnabled = null;
 
     // In the case of date scales, set the domain
 
@@ -199,72 +201,149 @@ mpld3_Axes.prototype.draw = function() {
     this.paths = this.axes.append("g")
         .attr("class", "mpld3-paths");
 
-    // TODO: (@vladh) Enable zoom for shared axes.
-    // => zoom init
-    // this.zoom = d3.zoom();
-    // this.zoom.last_t = this.zoom.translate()
-    // this.zoom.last_s = this.zoom.scale()
-    // this.zoom_x = d3.zoom().x(this.xdom);
-    // this.zoom_y = d3.zoom().y(this.ydom);
+    this.brush = d3.brush().extent([
+        [0, 0], [this.fig.width, this.fig.height],
+    ])
+        .on('start', this.brushStart.bind(this))
+        .on('brush', this.brushBrush.bind(this))
+        .on('end', this.brushEnd.bind(this))
+        .on('start.nokey', function() {
+            d3.select(window).on('keydown.brush keyup.brush', null);
+        });
+
+    this.brushG = null;
+
+    // We use this.zoom both for zoom and boxzoom, and potentially for other
+    // things too, so we'll just enable it here and leave it enabled.
+    this.bindZoom();
 
     for (var i = 0; i < this.elements.length; i++) {
         this.elements[i].draw();
     }
 };
 
-mpld3_Axes.prototype.reset = function() {
-    this.axes.transition()
-        .duration(750)
-        .call(this.zoom.transform, d3.zoomIdentity);
-};
-
-mpld3.Axes.prototype.enableZoom = function() {
-    this.isZoomEnabled = true;
+mpld3_Axes.prototype.bindZoom = function() {
     this.zoom.on('zoom', this.zoomed.bind(this));
     this.axes.call(this.zoom);
     this.axes.style('cursor', 'move');
 };
 
-mpld3.Axes.prototype.disableZoom = function() {
-    this.isZoomEnabled = false;
+mpld3_Axes.prototype.unbindZoom = function() {
     this.zoom.on('zoom', null);
     this.axes.on('.zoom', null);
     this.axes.style('cursor', null);
 };
 
-mpld3_Axes.prototype.doZoom = function(propagate, transform) {
-    if (!this.props.zoomable || !this.isZoomEnabled) {
+mpld3_Axes.prototype.reset = function() {
+    this.doZoom(false, d3.zoomIdentity, 750);
+};
+
+mpld3_Axes.prototype.enableBoxzoom = function() {
+    this.isBoxzoomEnabled = true;
+    this.brushG = this.axes
+        .append('g')
+        .attr('class', 'brush')
+        .call(this.brush);
+};
+
+mpld3_Axes.prototype.disableBoxzoom = function() {
+    this.isBoxzoomEnabled = false;
+    if (this.brushG) {
+        this.brushG.remove();
+        this.brushG.on('.brush', null);
+    }
+};
+
+mpld3_Axes.prototype.enableZoom = function() {
+    this.isZoomEnabled = true;
+};
+
+mpld3_Axes.prototype.disableZoom = function() {
+    this.isZoomEnabled = false;
+};
+
+mpld3_Axes.prototype.doZoom = function(propagate, transform, duration) {
+    if (!(this.props.zoomable && (this.isZoomEnabled || this.isBoxzoomEnabled))) {
         return;
     }
 
-    var xDiff = transform.x - this.lastTransform.x;
-    var yDiff = transform.y - this.lastTransform.y;
-    var kDiff = 1 + transform.k - this.lastTransform.k;
+    // console.log(propagate, transform, this.lastTransform, kDiff);
 
-    this.lastTransform = transform;
-    this.paths.attr('transform', transform);
-    this.elements.forEach(function(element) {
-        if (element.zoomed) {
-            element.zoomed(transform);
-        }
-    }.bind(this));
+    if (duration) {
+        this.axes
+            .transition()
+            .duration(duration)
+            .call(this.zoom.transform, transform);
+    } else {
+        this.axes
+            .call(this.zoom.transform, transform);
+    }
 
     if (propagate) {
+        var xDiff = transform.x - this.lastTransform.x;
+        var yDiff = transform.y - this.lastTransform.y;
+        var kDiff = 1 + transform.k - this.lastTransform.k;
+
+        this.lastTransform = transform;
+
         this.sharex.forEach(function(sharedAxes) {
             var xTransform = sharedAxes.lastTransform.translate(xDiff, 0).scale(kDiff);
-            sharedAxes.axes.call(sharedAxes.zoom.transform, xTransform);
+            sharedAxes.doZoom(false, xTransform, duration);
         });
 
         this.sharey.forEach(function(sharedAxes) {
             var yTransform = sharedAxes.lastTransform.translate(0, yDiff).scale(kDiff);
-            sharedAxes.axes.call(sharedAxes.zoom.transform, yTransform);
+            sharedAxes.doZoom(false, yTransform, duration);
         });
+    } else {
+        this.lastTransform = transform;
     }
 };
 
 mpld3_Axes.prototype.zoomed = function() {
-    var propagate = (d3.event.sourceEvent && d3.event.sourceEvent.type != 'zoom');
-    this.doZoom(propagate, d3.event.transform);
+    // If called from an event (i.e. actual mouse movement).
+    if (d3.event.sourceEvent && d3.event.sourceEvent.constructor.name != 'ZoomEvent') {
+        this.doZoom(true, d3.event.transform, false);
+    // If called programmatically.
+    } else {
+        var transform = d3.event.transform;
+        this.paths.attr('transform', transform);
+        this.elements.forEach(function(element) {
+            if (element.zoomed) {
+                element.zoomed(transform);
+            }
+        }.bind(this));
+    }
+};
+
+mpld3_Axes.prototype.brushStart = function() {
+};
+
+// Sorry for this function name.
+mpld3_Axes.prototype.brushBrush = function() {
+};
+
+mpld3_Axes.prototype.brushEnd = function() {
+    if (!d3.event.selection || !this.fig.canvas || !this.brushG) {
+        return;
+    }
+
+    var bounds = d3.event.selection;
+    var axesDimensions = this.axesbg.node().getBBox();
+    var width = axesDimensions.width;
+    var height = axesDimensions.height;
+
+    var dx = bounds[1][0] - bounds[0][0];
+    var dy = bounds[1][1] - bounds[0][1];
+    var cx = (bounds[0][0] + bounds[1][0]) / 2;
+    var cy = (bounds[0][1] + bounds[1][1]) / 2;
+    var scale = Math.max(1, Math.min(8, 0.85 / Math.max(dx / width, dy / height)));
+    var translate = [width / 2 - scale * cx, height / 2 - scale * cy];
+
+    this.brushG.call(this.brush.move, null);
+
+    var transform = d3.zoomIdentity.translate(translate[0], translate[1]).scale(scale);
+    this.doZoom(true, transform, 750);
 };
 
 // TODO: (@vladh) Remove this when no longer needed.

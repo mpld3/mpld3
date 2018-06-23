@@ -48,8 +48,8 @@ mpld3_ZoomPlugin.prototype.deactivate = function() {
 
 mpld3_ZoomPlugin.prototype.draw = function() {
     if (this.props.enabled) {
-      this.fig.enableZoom();
+      this.activate();
     } else {
-      this.fig.disableZoom();
+      this.deactivate();
     }
 }
