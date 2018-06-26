@@ -58,6 +58,9 @@ function mpld3_Axes(fig, props) {
 
     this.isBoxzoomEnabled = null;
 
+    this.isLinkedBrushEnabled = null;
+    this.isCurrentLinkedBrushTarget = false;
+
     // In the case of date scales, set the domain
 
     function buildDate(d) {
@@ -204,6 +207,8 @@ mpld3_Axes.prototype.draw = function() {
     this.brush = d3.brush().extent([
         [0, 0], [this.fig.width, this.fig.height],
     ])
+        .on('start', this.brushStart.bind(this))
+        .on('brush', this.brushMove.bind(this))
         .on('end', this.brushEnd.bind(this))
         .on('start.nokey', function() {
             d3.select(window).on('keydown.brush keyup.brush', null);
@@ -236,20 +241,41 @@ mpld3_Axes.prototype.reset = function() {
     this.doZoom(false, d3.zoomIdentity, 750);
 };
 
+mpld3_Axes.prototype.enableOrDisableBrushing = function() {
+    if (this.isBoxzoomEnabled || this.isLinkedBrushEnabled) {
+        if (!this.brushG) {
+            this.brushG = this.axes
+                .append('g')
+                .attr('class', 'mpld3-brush')
+                .call(this.brush);
+        }
+    } else {
+        if (this.brushG) {
+            this.brushG.remove();
+            this.brushG.on('.brush', null);
+            this.brushG = null;
+        }
+    }
+};
+
+mpld3_Axes.prototype.enableLinkedBrush = function() {
+    this.isLinkedBrushEnabled = true;
+    this.enableOrDisableBrushing();
+};
+
+mpld3_Axes.prototype.disableLinkedBrush = function() {
+    this.isLinkedBrushEnabled = false;
+    this.enableOrDisableBrushing();
+};
+
 mpld3_Axes.prototype.enableBoxzoom = function() {
     this.isBoxzoomEnabled = true;
-    this.brushG = this.axes
-        .append('g')
-        .attr('class', 'brush')
-        .call(this.brush);
+    this.enableOrDisableBrushing();
 };
 
 mpld3_Axes.prototype.disableBoxzoom = function() {
     this.isBoxzoomEnabled = false;
-    if (this.brushG) {
-        this.brushG.remove();
-        this.brushG.on('.brush', null);
-    }
+    this.enableOrDisableBrushing();
 };
 
 mpld3_Axes.prototype.enableZoom = function() {
@@ -312,12 +338,16 @@ mpld3_Axes.prototype.zoomed = function() {
     }
 };
 
-mpld3_Axes.prototype.brushEnd = function() {
-    if (!d3.event.selection || !this.brushG) {
+mpld3_Axes.prototype.resetBrush = function() {
+    this.brushG.call(this.brush.move, null);
+};
+
+mpld3_Axes.prototype.doBoxzoom = function(selection) {
+    if (!selection || !this.brushG) {
         return;
     }
 
-    var sel = d3.event.selection.map(this.lastTransform.invert, this.lastTransform);
+    var sel = selection.map(this.lastTransform.invert, this.lastTransform);
 
     var dx = sel[1][0] - sel[0][0];
     var dy = sel[1][1] - sel[0][1];
@@ -330,5 +360,35 @@ mpld3_Axes.prototype.brushEnd = function() {
     var transform = d3.zoomIdentity.translate(transX, transY).scale(scale);
 
     this.doZoom(true, transform, 750);
-    this.brushG.call(this.brush.move, null);
+    this.resetBrush();
+}
+
+mpld3_Axes.prototype.brushStart = function() {
+    if (this.isLinkedBrushEnabled) {
+        this.isCurrentLinkedBrushTarget =
+            (d3.event.sourceEvent.constructor.name == 'MouseEvent');
+        if (this.isCurrentLinkedBrushTarget) {
+            this.fig.resetBrushForOtherAxes(this.axid);
+        }
+    }
+};
+
+mpld3_Axes.prototype.brushMove = function() {
+    var selection = d3.event.selection;
+    if (this.isLinkedBrushEnabled) {
+        this.fig.updateLinkedBrush(selection);
+    }
+};
+
+mpld3_Axes.prototype.brushEnd = function() {
+    var selection = d3.event.selection;
+    if (this.isBoxzoomEnabled) {
+        this.doBoxzoom(selection);
+    }
+    if (this.isLinkedBrushEnabled) {
+        if (!selection) {
+            this.fig.endLinkedBrush();
+        }
+        this.isCurrentLinkedBrushTarget = false;
+    }
 };

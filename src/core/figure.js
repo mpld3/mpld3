@@ -35,6 +35,7 @@ function mpld3_Figure(figid, props) {
 
     // Connect the plugins to the figure
     this.plugins = [];
+    this.pluginsByType = {};
     this.props.plugins.forEach(function(plugin) {
         this.addPlugin(plugin);
     }.bind(this));
@@ -71,7 +72,9 @@ mpld3_Figure.prototype.addPlugin = function(pluginInfo) {
     var pluginInfoNoType = mpld3_cloneObj(pluginInfo);
     delete pluginInfoNoType.type;
 
-    this.plugins.push(new plugin(this, pluginInfoNoType));
+    var pluginInstance = new plugin(this, pluginInfoNoType);
+    this.plugins.push(pluginInstance);
+    this.pluginsByType[pluginInfo.type] = pluginInstance;
 };
 
 mpld3_Figure.prototype.draw = function() {
@@ -94,9 +97,43 @@ mpld3_Figure.prototype.draw = function() {
     this.toolbar.draw();
 };
 
+mpld3_Figure.prototype.resetBrushForOtherAxes = function(currentAxid) {
+    this.axes.forEach(function(axes) {
+        if (axes.axid != currentAxid) {
+            axes.resetBrush();
+        }
+    });
+};
+
+mpld3_Figure.prototype.updateLinkedBrush = function(selection) {
+    if (!this.pluginsByType.linkedbrush) {
+        return;
+    }
+    this.pluginsByType.linkedbrush.update(selection);
+};
+
+mpld3_Figure.prototype.endLinkedBrush = function() {
+    if (!this.pluginsByType.linkedbrush) {
+        return;
+    }
+    this.pluginsByType.linkedbrush.end();
+};
+
 mpld3_Figure.prototype.reset = function(duration) {
     this.axes.forEach(function(axes) {
         axes.reset();
+    });
+};
+
+mpld3_Figure.prototype.enableLinkedBrush = function() {
+    this.axes.forEach(function(axes) {
+        axes.enableLinkedBrush();
+    });
+};
+
+mpld3_Figure.prototype.disableLinkedBrush = function() {
+    this.axes.forEach(function(axes) {
+        axes.disableLinkedBrush();
     });
 };
 

@@ -14,12 +14,12 @@ mpld3_LinkedBrushPlugin.prototype.defaultProps = {
 
 function mpld3_LinkedBrushPlugin(fig, props) {
     mpld3.Plugin.call(this, fig, props);
-    if (this.props.enabled === null){
+    if (this.props.enabled === null) {
         this.props.enabled = !(this.props.button);
     }
 
     var enabled = this.props.enabled;
-    if (this.props.button){
+    if (this.props.button) {
         var BrushButton = mpld3.ButtonFactory({
             buttonID: "linkedbrush",
             sticky: true,
@@ -31,24 +31,20 @@ function mpld3_LinkedBrushPlugin(fig, props) {
         });
         this.fig.buttons.push(BrushButton);
     }
-    this.dataByAxes = [];
+    this.pathCollectionsByAxes = [];
+    this.objectsByAxes = [];
+    this.allObjects = [];
     this.extentClass = "linkedbrush";
     this.dataKey = 'offsets';
     this.objectClass = null;
 }
 
 mpld3_LinkedBrushPlugin.prototype.activate = function() {
-    this.brushG = this.fig.canvas
-        .append('g')
-        .attr('class', 'brush')
-        .call(this.brush);
+    this.fig.enableLinkedBrush();
 };
 
 mpld3_LinkedBrushPlugin.prototype.deactivate = function() {
-    if (this.brushG) {
-        this.brushG.remove();
-        this.brushG.on('.brush', null);
-    }
+    this.fig.disableLinkedBrush();
 };
 
 mpld3_LinkedBrushPlugin.prototype.isPathInSelection = function(path, ix, iy, sel) {
@@ -59,42 +55,45 @@ mpld3_LinkedBrushPlugin.prototype.isPathInSelection = function(path, ix, iy, sel
 };
 
 mpld3_LinkedBrushPlugin.prototype.invertSelection = function(sel, axes) {
+    var xs = [
+        axes.x.invert(sel[0][0]),
+        axes.x.invert(sel[1][0])
+    ];
+    var ys = [
+        axes.y.invert(sel[1][1]),
+        axes.y.invert(sel[0][1])
+    ];
     return [
-        [axes.x.invert(sel[0][0]), axes.y.invert(sel[0][1])],
-        [axes.x.invert(sel[1][0]), axes.y.invert(sel[1][1])]
+        [Math.min.apply(Math, xs), Math.min.apply(Math, ys)],
+        [Math.max.apply(Math, xs), Math.max.apply(Math, ys)]
     ];
 };
 
-// Sorry for this function name.
-mpld3_LinkedBrushPlugin.prototype.brushBrush = function() {
-    var selection = d3.event.selection;
+mpld3_LinkedBrushPlugin.prototype.update = function(selection) {
     if (!selection) {
-        this.objects.selectAll('path').classed('mpld3-hidden', false);
         return;
     }
 
-    this.dataByAxes.forEach(function(axesData, index) {
-        var invertedSelection = this.invertSelection(selection, this.fig.axes[index]);
-        console.log(invertedSelection);
-        var ix = axesData[0].props.xindex;
-        var iy = axesData[0].props.yindex;
+    this.pathCollectionsByAxes.forEach(function(axesColls, axesIndex) {
+        var pathCollection = axesColls[0];
+        var objects = this.objectsByAxes[axesIndex];
 
-        // TODO: (@vladh) Only go through the elements of these axes.
-        this.objects.selectAll('path')
-            .classed('mpld3-hidden', function(path) {
-                return !this.isPathInSelection(path, ix, iy, invertedSelection);
-            }.bind(this));
+        var invertedSelection = this.invertSelection(selection, this.fig.axes[axesIndex]);
+        var ix = pathCollection.props.xindex;
+        var iy = pathCollection.props.yindex;
+
+        objects.selectAll('path').classed('mpld3-hidden', function(path, idx) {
+            return !this.isPathInSelection(path, ix, iy, invertedSelection);
+        }.bind(this));
     }.bind(this));
 };
 
-mpld3_LinkedBrushPlugin.prototype.brushEnd = function() {
-    if (!d3.event.selection) {
-        this.objects.selectAll('path').classed('mpld3-hidden', false);
-    }
+mpld3_LinkedBrushPlugin.prototype.end = function() {
+    this.allObjects.selectAll('path').classed('mpld3-hidden', false);
 };
 
 mpld3_LinkedBrushPlugin.prototype.draw = function() {
-    // Ugh.
+    // TODO: Ugh. Move this to some CSS somehow.
     mpld3.insert_css(
         '#' + this.fig.figid + ' path.mpld3-hidden',
         {
@@ -102,12 +101,6 @@ mpld3_LinkedBrushPlugin.prototype.draw = function() {
             'fill': '#ccc !important'
         }
     );
-
-    this.brush = d3.brush().extent([
-        [0, 0], [this.fig.width, this.fig.height],
-    ])
-        .on('brush', this.brushBrush.bind(this))
-        .on('end', this.brushEnd.bind(this));
 
     var pathCollection = mpld3.get_element(this.props.id);
 
@@ -120,7 +113,7 @@ mpld3_LinkedBrushPlugin.prototype.draw = function() {
 
     this.objectClass = 'mpld3-brushtarget-' + pathCollection.props[this.dataKey];
 
-    this.dataByAxes = this.fig.axes.map(function(axes) {
+    this.pathCollectionsByAxes = this.fig.axes.map(function(axes) {
         return axes.elements.map(function(el) {
             if (el.props[this.dataKey] == pathCollection.props[this.dataKey]) {
                 el.group.classed(this.objectClass, true);
@@ -129,5 +122,9 @@ mpld3_LinkedBrushPlugin.prototype.draw = function() {
         }.bind(this)).filter(function(d) { return d; });
     }.bind(this));
 
-    this.objects = this.fig.canvas.selectAll('.' + this.objectClass);
+    this.objectsByAxes = this.fig.axes.map(function(axes) {
+        return axes.axes.selectAll('.' + this.objectClass);
+    }.bind(this));
+
+    this.allObjects = this.fig.canvas.selectAll('.' + this.objectClass);
 };

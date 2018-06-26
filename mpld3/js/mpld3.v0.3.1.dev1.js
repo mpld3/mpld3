@@ -797,6 +797,8 @@
     this.zoom = d3.zoom();
     this.lastTransform = d3.zoomIdentity;
     this.isBoxzoomEnabled = null;
+    this.isLinkedBrushEnabled = null;
+    this.isCurrentLinkedBrushTarget = false;
     function buildDate(d) {
       return new Date(d[0], d[1], d[2], d[3], d[4], d[5]);
     }
@@ -865,7 +867,7 @@
     this.axes = this.baseaxes.append("g").attr("class", "mpld3-axes").attr("clip-path", "url(#" + this.clipid + ")");
     this.axesbg = this.axes.append("svg:rect").attr("width", this.width).attr("height", this.height).attr("class", "mpld3-axesbg").style("fill", this.props.axesbg).style("fill-opacity", this.props.axesbgalpha);
     this.paths = this.axes.append("g").attr("class", "mpld3-paths");
-    this.brush = d3.brush().extent([ [ 0, 0 ], [ this.fig.width, this.fig.height ] ]).on("end", this.brushEnd.bind(this)).on("start.nokey", function() {
+    this.brush = d3.brush().extent([ [ 0, 0 ], [ this.fig.width, this.fig.height ] ]).on("start", this.brushStart.bind(this)).on("brush", this.brushMove.bind(this)).on("end", this.brushEnd.bind(this)).on("start.nokey", function() {
       d3.select(window).on("keydown.brush keyup.brush", null);
     });
     this.brushG = null;
@@ -887,16 +889,34 @@
   mpld3_Axes.prototype.reset = function() {
     this.doZoom(false, d3.zoomIdentity, 750);
   };
+  mpld3_Axes.prototype.enableOrDisableBrushing = function() {
+    if (this.isBoxzoomEnabled || this.isLinkedBrushEnabled) {
+      if (!this.brushG) {
+        this.brushG = this.axes.append("g").attr("class", "mpld3-brush").call(this.brush);
+      }
+    } else {
+      if (this.brushG) {
+        this.brushG.remove();
+        this.brushG.on(".brush", null);
+        this.brushG = null;
+      }
+    }
+  };
+  mpld3_Axes.prototype.enableLinkedBrush = function() {
+    this.isLinkedBrushEnabled = true;
+    this.enableOrDisableBrushing();
+  };
+  mpld3_Axes.prototype.disableLinkedBrush = function() {
+    this.isLinkedBrushEnabled = false;
+    this.enableOrDisableBrushing();
+  };
   mpld3_Axes.prototype.enableBoxzoom = function() {
     this.isBoxzoomEnabled = true;
-    this.brushG = this.axes.append("g").attr("class", "brush").call(this.brush);
+    this.enableOrDisableBrushing();
   };
   mpld3_Axes.prototype.disableBoxzoom = function() {
     this.isBoxzoomEnabled = false;
-    if (this.brushG) {
-      this.brushG.remove();
-      this.brushG.on(".brush", null);
-    }
+    this.enableOrDisableBrushing();
   };
   mpld3_Axes.prototype.enableZoom = function() {
     this.isZoomEnabled = true;
@@ -943,11 +963,14 @@
       }.bind(this));
     }
   };
-  mpld3_Axes.prototype.brushEnd = function() {
-    if (!d3.event.selection || !this.brushG) {
+  mpld3_Axes.prototype.resetBrush = function() {
+    this.brushG.call(this.brush.move, null);
+  };
+  mpld3_Axes.prototype.doBoxzoom = function(selection) {
+    if (!selection || !this.brushG) {
       return;
     }
-    var sel = d3.event.selection.map(this.lastTransform.invert, this.lastTransform);
+    var sel = selection.map(this.lastTransform.invert, this.lastTransform);
     var dx = sel[1][0] - sel[0][0];
     var dy = sel[1][1] - sel[0][1];
     var cx = (sel[0][0] + sel[1][0]) / 2;
@@ -957,7 +980,33 @@
     var transY = this.height / 2 - scale * cy;
     var transform = d3.zoomIdentity.translate(transX, transY).scale(scale);
     this.doZoom(true, transform, 750);
-    this.brushG.call(this.brush.move, null);
+    this.resetBrush();
+  };
+  mpld3_Axes.prototype.brushStart = function() {
+    if (this.isLinkedBrushEnabled) {
+      this.isCurrentLinkedBrushTarget = d3.event.sourceEvent.constructor.name == "MouseEvent";
+      if (this.isCurrentLinkedBrushTarget) {
+        this.fig.resetBrushForOtherAxes(this.axid);
+      }
+    }
+  };
+  mpld3_Axes.prototype.brushMove = function() {
+    var selection = d3.event.selection;
+    if (this.isLinkedBrushEnabled) {
+      this.fig.updateLinkedBrush(selection);
+    }
+  };
+  mpld3_Axes.prototype.brushEnd = function() {
+    var selection = d3.event.selection;
+    if (this.isBoxzoomEnabled) {
+      this.doBoxzoom(selection);
+    }
+    if (this.isLinkedBrushEnabled) {
+      if (!selection) {
+        this.fig.endLinkedBrush();
+      }
+      this.isCurrentLinkedBrushTarget = false;
+    }
   };
   mpld3.Toolbar = mpld3_Toolbar;
   mpld3_Toolbar.prototype = Object.create(mpld3_PlotElement.prototype);
@@ -1276,55 +1325,51 @@
       });
       this.fig.buttons.push(BrushButton);
     }
-    this.dataByAxes = [];
+    this.pathCollectionsByAxes = [];
+    this.objectsByAxes = [];
+    this.allObjects = [];
     this.extentClass = "linkedbrush";
     this.dataKey = "offsets";
     this.objectClass = null;
   }
   mpld3_LinkedBrushPlugin.prototype.activate = function() {
-    this.brushG = this.fig.canvas.append("g").attr("class", "brush").call(this.brush);
+    this.fig.enableLinkedBrush();
   };
   mpld3_LinkedBrushPlugin.prototype.deactivate = function() {
-    if (this.brushG) {
-      this.brushG.remove();
-      this.brushG.on(".brush", null);
-    }
+    this.fig.disableLinkedBrush();
   };
-  mpld3_LinkedBrushPlugin.prototype.isPathInSelection = function(path, ix, iy, sel, debug) {
+  mpld3_LinkedBrushPlugin.prototype.isPathInSelection = function(path, ix, iy, sel) {
     var result = sel[0][0] < path[ix] && sel[1][0] > path[ix] && sel[0][1] < path[iy] && sel[1][1] > path[iy];
-    if (debug) {}
     return result;
   };
   mpld3_LinkedBrushPlugin.prototype.invertSelection = function(sel, axes) {
-    return [ [ axes.x.invert(sel[0][0]), axes.y.invert(sel[0][1]) ], [ axes.x.invert(sel[1][0]), axes.y.invert(sel[1][1]) ] ];
+    var xs = [ axes.x.invert(sel[0][0]), axes.x.invert(sel[1][0]) ];
+    var ys = [ axes.y.invert(sel[1][1]), axes.y.invert(sel[0][1]) ];
+    return [ [ Math.min.apply(Math, xs), Math.min.apply(Math, ys) ], [ Math.max.apply(Math, xs), Math.max.apply(Math, ys) ] ];
   };
-  mpld3_LinkedBrushPlugin.prototype.brushBrush = function() {
-    var selection = d3.event.selection;
+  mpld3_LinkedBrushPlugin.prototype.update = function(selection) {
     if (!selection) {
-      this.objects.selectAll("path").classed("mpld3-hidden", false);
       return;
     }
-    this.dataByAxes.forEach(function(axesData, index) {
-      var invertedSelection = this.invertSelection(selection, this.fig.axes[index]);
-      console.log(invertedSelection);
-      var ix = axesData[0].props.xindex;
-      var iy = axesData[0].props.yindex;
-      this.objects.selectAll("path").classed("mpld3-hidden", function(path, idx) {
-        return !this.isPathInSelection(path, ix, iy, invertedSelection, idx < 50);
+    this.pathCollectionsByAxes.forEach(function(axesColls, axesIndex) {
+      var pathCollection = axesColls[0];
+      var objects = this.objectsByAxes[axesIndex];
+      var invertedSelection = this.invertSelection(selection, this.fig.axes[axesIndex]);
+      var ix = pathCollection.props.xindex;
+      var iy = pathCollection.props.yindex;
+      objects.selectAll("path").classed("mpld3-hidden", function(path, idx) {
+        return !this.isPathInSelection(path, ix, iy, invertedSelection);
       }.bind(this));
     }.bind(this));
   };
-  mpld3_LinkedBrushPlugin.prototype.brushEnd = function() {
-    if (!d3.event.selection) {
-      this.objects.selectAll("path").classed("mpld3-hidden", false);
-    }
+  mpld3_LinkedBrushPlugin.prototype.end = function() {
+    this.allObjects.selectAll("path").classed("mpld3-hidden", false);
   };
   mpld3_LinkedBrushPlugin.prototype.draw = function() {
     mpld3.insert_css("#" + this.fig.figid + " path.mpld3-hidden", {
       stroke: "#ccc !important",
       fill: "#ccc !important"
     });
-    this.brush = d3.brush().extent([ [ 0, 0 ], [ this.fig.width, this.fig.height ] ]).on("brush", this.brushBrush.bind(this)).on("end", this.brushEnd.bind(this));
     var pathCollection = mpld3.get_element(this.props.id);
     if (!pathCollection) {
       throw new Error("[LinkedBrush] Could not find path collection");
@@ -1333,7 +1378,7 @@
       throw new Error("[LinkedBrush] Figure is not a scatter plot.");
     }
     this.objectClass = "mpld3-brushtarget-" + pathCollection.props[this.dataKey];
-    this.dataByAxes = this.fig.axes.map(function(axes) {
+    this.pathCollectionsByAxes = this.fig.axes.map(function(axes) {
       return axes.elements.map(function(el) {
         if (el.props[this.dataKey] == pathCollection.props[this.dataKey]) {
           el.group.classed(this.objectClass, true);
@@ -1343,7 +1388,10 @@
         return d;
       });
     }.bind(this));
-    this.objects = this.fig.canvas.selectAll("." + this.objectClass);
+    this.objectsByAxes = this.fig.axes.map(function(axes) {
+      return axes.axes.selectAll("." + this.objectClass);
+    }.bind(this));
+    this.allObjects = this.fig.canvas.selectAll("." + this.objectClass);
   };
   mpld3.register_plugin("mouseposition", MousePositionPlugin);
   MousePositionPlugin.prototype = Object.create(mpld3.Plugin.prototype);
@@ -1399,6 +1447,7 @@
     this.axes = [];
     for (var i = 0; i < this.props.axes.length; i++) this.axes.push(new mpld3_Axes(this, this.props.axes[i]));
     this.plugins = [];
+    this.pluginsByType = {};
     this.props.plugins.forEach(function(plugin) {
       this.addPlugin(plugin);
     }.bind(this));
@@ -1421,7 +1470,9 @@
     }
     var pluginInfoNoType = mpld3_cloneObj(pluginInfo);
     delete pluginInfoNoType.type;
-    this.plugins.push(new plugin(this, pluginInfoNoType));
+    var pluginInstance = new plugin(this, pluginInfoNoType);
+    this.plugins.push(pluginInstance);
+    this.pluginsByType[pluginInfo.type] = pluginInstance;
   };
   mpld3_Figure.prototype.draw = function() {
     this.canvas = this.root.append("svg:svg").attr("class", "mpld3-figure").attr("width", this.width).attr("height", this.height);
@@ -1434,9 +1485,38 @@
     }
     this.toolbar.draw();
   };
+  mpld3_Figure.prototype.resetBrushForOtherAxes = function(currentAxid) {
+    this.axes.forEach(function(axes) {
+      if (axes.axid != currentAxid) {
+        axes.resetBrush();
+      }
+    });
+  };
+  mpld3_Figure.prototype.updateLinkedBrush = function(selection) {
+    if (!this.pluginsByType.linkedbrush) {
+      return;
+    }
+    this.pluginsByType.linkedbrush.update(selection);
+  };
+  mpld3_Figure.prototype.endLinkedBrush = function() {
+    if (!this.pluginsByType.linkedbrush) {
+      return;
+    }
+    this.pluginsByType.linkedbrush.end();
+  };
   mpld3_Figure.prototype.reset = function(duration) {
     this.axes.forEach(function(axes) {
       axes.reset();
+    });
+  };
+  mpld3_Figure.prototype.enableLinkedBrush = function() {
+    this.axes.forEach(function(axes) {
+      axes.enableLinkedBrush();
+    });
+  };
+  mpld3_Figure.prototype.disableLinkedBrush = function() {
+    this.axes.forEach(function(axes) {
+      axes.disableLinkedBrush();
     });
   };
   mpld3_Figure.prototype.enableBoxzoom = function() {
