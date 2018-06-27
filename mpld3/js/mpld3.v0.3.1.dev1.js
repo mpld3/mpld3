@@ -973,17 +973,12 @@
       this.axes.call(this.zoom.transform, transform);
     }
     if (propagate) {
-      var xDiff = transform.x - this.lastTransform.x;
-      var yDiff = transform.y - this.lastTransform.y;
-      var kDiff = 1 + transform.k - this.lastTransform.k;
       this.lastTransform = transform;
       this.sharex.forEach(function(sharedAxes) {
-        var xTransform = sharedAxes.lastTransform.translate(xDiff, 0).scale(kDiff);
-        sharedAxes.doZoom(false, xTransform, duration);
+        sharedAxes.doZoom(false, transform, duration);
       });
       this.sharey.forEach(function(sharedAxes) {
-        var yTransform = sharedAxes.lastTransform.translate(0, yDiff).scale(kDiff);
-        sharedAxes.doZoom(false, yTransform, duration);
+        sharedAxes.doZoom(false, transform, duration);
       });
     } else {
       this.lastTransform = transform;

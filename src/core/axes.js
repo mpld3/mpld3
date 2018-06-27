@@ -355,20 +355,21 @@ mpld3_Axes.prototype.doZoom = function(
     }
 
     if (propagate) {
-        var xDiff = transform.x - this.lastTransform.x;
-        var yDiff = transform.y - this.lastTransform.y;
-        var kDiff = 1 + transform.k - this.lastTransform.k;
-
+        // var xDiff = transform.x - this.lastTransform.x;
+        // var yDiff = transform.y - this.lastTransform.y;
+        // var kDiffFactor = transform.k / this.lastTransform.k;
         this.lastTransform = transform;
 
         this.sharex.forEach(function(sharedAxes) {
-            var xTransform = sharedAxes.lastTransform.translate(xDiff, 0).scale(kDiff);
-            sharedAxes.doZoom(false, xTransform, duration);
+            sharedAxes.doZoom(false, transform, duration);
+            // var xTransform = sharedAxes.lastTransform.translate(xDiff, 0).scale(kDiffFactor);
+            // sharedAxes.doZoom(false, xTransform, duration);
         });
 
         this.sharey.forEach(function(sharedAxes) {
-            var yTransform = sharedAxes.lastTransform.translate(0, yDiff).scale(kDiff);
-            sharedAxes.doZoom(false, yTransform, duration);
+            sharedAxes.doZoom(false, transform, duration);
+            // var yTransform = sharedAxes.lastTransform.translate(0, yDiff).scale(kDiffFactor);
+            // sharedAxes.doZoom(false, yTransform, duration);
         });
     } else {
         this.lastTransform = transform;
