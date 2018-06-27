@@ -310,7 +310,8 @@ class PointHTMLTooltip(PluginBase):
     HtmlTooltipPlugin.prototype.defaultProps = {labels:null,
                                                 target:null,
                                                 hoffset:0,
-                                                voffset:10};
+                                                voffset:10,
+                                                targets:null};
     function HtmlTooltipPlugin(fig, props){
         mpld3.Plugin.call(this, fig, props);
     };

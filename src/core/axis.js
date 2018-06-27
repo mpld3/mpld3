@@ -17,7 +17,8 @@ mpld3_Axis.prototype.defaultProps = {
     axiscolor: "black",
     scale: "linear",
     grid: {},
-    zorder: 0
+    zorder: 0,
+    visible: true
 };
 
 function mpld3_Axis(ax, props) {
