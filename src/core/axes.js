@@ -228,13 +228,11 @@ mpld3_Axes.prototype.draw = function() {
 mpld3_Axes.prototype.bindZoom = function() {
     this.zoom.on('zoom', this.zoomed.bind(this));
     this.axes.call(this.zoom);
-    this.axes.style('cursor', 'move');
 };
 
 mpld3_Axes.prototype.unbindZoom = function() {
     this.zoom.on('zoom', null);
     this.axes.on('.zoom', null);
-    this.axes.style('cursor', null);
 };
 
 mpld3_Axes.prototype.reset = function() {
@@ -280,14 +278,16 @@ mpld3_Axes.prototype.disableBoxzoom = function() {
 
 mpld3_Axes.prototype.enableZoom = function() {
     this.isZoomEnabled = true;
+    this.axes.style('cursor', 'move');
 };
 
 mpld3_Axes.prototype.disableZoom = function() {
     this.isZoomEnabled = false;
+    this.axes.style('cursor', null);
 };
 
 mpld3_Axes.prototype.doZoom = function(propagate, transform, duration) {
-    if (!(this.props.zoomable && (this.isZoomEnabled || this.isBoxzoomEnabled))) {
+    if (!this.props.zoomable) {
         return;
     }
 
