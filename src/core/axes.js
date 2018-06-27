@@ -53,13 +53,14 @@ function mpld3_Axes(fig, props) {
     this.height = bbox[3] * this.fig.height;
 
     this.isZoomEnabled = null;
-    this.zoom = d3.zoom();
+    this.zoom = null;
     this.lastTransform = d3.zoomIdentity;
 
     this.isBoxzoomEnabled = null;
 
     this.isLinkedBrushEnabled = null;
     this.isCurrentLinkedBrushTarget = false;
+    this.brushG = null;
 
     // In the case of date scales, set the domain
 
@@ -214,45 +215,88 @@ mpld3_Axes.prototype.draw = function() {
             d3.select(window).on('keydown.brush keyup.brush', null);
         });
 
-    this.brushG = null;
-
-    // We use this.zoom both for zoom and boxzoom, and potentially for other
-    // things too, so we'll just enable it here and leave it enabled.
-    this.bindZoom();
-
     for (var i = 0; i < this.elements.length; i++) {
         this.elements[i].draw();
     }
 };
 
 mpld3_Axes.prototype.bindZoom = function() {
-    this.zoom.on('zoom', this.zoomed.bind(this));
-    this.axes.call(this.zoom);
+    if (!this.zoom) {
+        this.zoom = d3.zoom();
+        this.zoom.on('zoom', this.zoomed.bind(this));
+        this.axes.call(this.zoom);
+    }
 };
 
 mpld3_Axes.prototype.unbindZoom = function() {
-    this.zoom.on('zoom', null);
-    this.axes.on('.zoom', null);
+    if (this.zoom) {
+        this.zoom.on('zoom', null);
+        this.axes.on('.zoom', null);
+        this.zoom = null;
+    }
+};
+
+mpld3_Axes.prototype.bindBrush = function() {
+    if (!this.brushG) {
+        this.brushG = this.axes
+            .append('g')
+            .attr('class', 'mpld3-brush')
+            .call(this.brush);
+    }
+};
+
+mpld3_Axes.prototype.unbindBrush = function() {
+    if (this.brushG) {
+        this.brushG.remove();
+        this.brushG.on('.brush', null);
+        this.brushG = null;
+    }
 };
 
 mpld3_Axes.prototype.reset = function() {
-    this.doZoom(false, d3.zoomIdentity, 750);
+    if (this.zoom) {
+        this.doZoom(false, d3.zoomIdentity, 750);
+    } else {
+        this.bindZoom();
+        this.doZoom(false, d3.zoomIdentity, 750, function() {
+            /*
+            (@vladh)
+
+            If zoom was not bound before, but we now have some type
+            of zoom enabled, what probably happened is that the user enabled
+            zoom/boxzoom during this transition, in which case we don't want
+            to disable zoom anymore.
+
+            BUG: If the user does this, there will be a weird break in the
+            animation until they zoom again. This is because of the toolbar
+            behaviour and can't be fixed here. We should fix it in the future
+            though.
+            */
+            if (this.isSomeTypeOfZoomEnabled) {
+                return;
+            }
+            this.unbindZoom();
+        }.bind(this));
+    }
 };
 
 mpld3_Axes.prototype.enableOrDisableBrushing = function() {
     if (this.isBoxzoomEnabled || this.isLinkedBrushEnabled) {
-        if (!this.brushG) {
-            this.brushG = this.axes
-                .append('g')
-                .attr('class', 'mpld3-brush')
-                .call(this.brush);
-        }
+        this.bindBrush();
     } else {
-        if (this.brushG) {
-            this.brushG.remove();
-            this.brushG.on('.brush', null);
-            this.brushG = null;
-        }
+        this.unbindBrush();
+    }
+};
+
+mpld3_Axes.prototype.isSomeTypeOfZoomEnabled = function() {
+    return this.isZoomEnabled || this.isBoxzoomEnabled;
+};
+
+mpld3_Axes.prototype.enableOrDisableZooming = function() {
+    if (this.isSomeTypeOfZoomEnabled()) {
+        this.bindZoom();
+    } else {
+        this.unbindZoom();
     }
 };
 
@@ -269,33 +313,42 @@ mpld3_Axes.prototype.disableLinkedBrush = function() {
 mpld3_Axes.prototype.enableBoxzoom = function() {
     this.isBoxzoomEnabled = true;
     this.enableOrDisableBrushing();
+    this.enableOrDisableZooming();
 };
 
 mpld3_Axes.prototype.disableBoxzoom = function() {
     this.isBoxzoomEnabled = false;
     this.enableOrDisableBrushing();
+    this.enableOrDisableZooming();
 };
 
 mpld3_Axes.prototype.enableZoom = function() {
     this.isZoomEnabled = true;
+    this.enableOrDisableZooming();
     this.axes.style('cursor', 'move');
 };
 
 mpld3_Axes.prototype.disableZoom = function() {
     this.isZoomEnabled = false;
+    this.enableOrDisableZooming();
     this.axes.style('cursor', null);
 };
 
-mpld3_Axes.prototype.doZoom = function(propagate, transform, duration) {
-    if (!this.props.zoomable) {
+mpld3_Axes.prototype.doZoom = function(
+    propagate, transform, duration, onTransitionEnd
+) {
+    if (!this.props.zoomable || !this.zoom) {
         return;
     }
 
     if (duration) {
-        this.axes
+        var transition = this.axes
             .transition()
             .duration(duration)
             .call(this.zoom.transform, transform);
+        if (onTransitionEnd) {
+            transition.on('end', onTransitionEnd);
+        }
     } else {
         this.axes
             .call(this.zoom.transform, transform);
@@ -323,10 +376,11 @@ mpld3_Axes.prototype.doZoom = function(propagate, transform, duration) {
 };
 
 mpld3_Axes.prototype.zoomed = function() {
-    // If called from an event (i.e. actual mouse movement).
-    if (d3.event.sourceEvent && d3.event.sourceEvent.constructor.name != 'ZoomEvent') {
+    var isProgrammatic =
+        (d3.event.sourceEvent && d3.event.sourceEvent.constructor.name != 'ZoomEvent');
+
+    if (isProgrammatic) {
         this.doZoom(true, d3.event.transform, false);
-    // If called programmatically.
     } else {
         var transform = d3.event.transform;
         this.paths.attr('transform', transform);
