@@ -101,9 +101,15 @@ mpld3_PathCollection.prototype.allFinite = function(d) {
 }
 
 mpld3_PathCollection.prototype.draw = function() {
-    this.group = this.ax.paths.append("svg:g");
+    // TODO: (@vladh) Don't fully understand this.
+    if (this.offsetcoords.zoomable || this.pathcoords.zoomable) {
+        this.group = this.ax.paths.append("svg:g");
+    } else {
+        this.group = this.ax.staticPaths.append("svg:g");
+    }
+
     this.pathsobj = this.group.selectAll("paths")
-    .data(this.offsets.filter(this.allFinite))
+        .data(this.offsets.filter(this.allFinite))
         .enter().append("svg:path")
         .attr("d", this.pathFunc.bind(this))
         .attr("class", "mpld3-path")

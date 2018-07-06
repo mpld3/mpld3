@@ -50,7 +50,14 @@ mpld3_Path.prototype.draw = function() {
             return this.pathcoords.y(d[this.props.yindex]);
         }.bind(this));
 
-    this.path = this.ax.paths.append("svg:path")
+    // TODO: (@vladh) Don't fully understand this.
+    if (this.pathcoords.zoomable) {
+        this.path = this.ax.paths.append("svg:path")
+    } else {
+        this.path = this.ax.staticPaths.append("svg:path")
+    }
+
+    this.path = this.path
         .attr("d", this.datafunc(this.data, this.pathcodes))
         .attr('class', "mpld3-path")
         .style("stroke", this.props.edgecolor)

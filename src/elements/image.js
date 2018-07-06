@@ -17,6 +17,8 @@ function mpld3_Image(ax, props) {
 
 mpld3_Image.prototype.draw = function() {
     this.image = this.ax.paths.append("svg:image")
+
+    this.image = this.image
         .attr('class', 'mpld3-image')
         .attr('xlink:href', "data:image/png;base64," + this.props.data)
         .style('opacity', this.props.alpha)

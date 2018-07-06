@@ -443,6 +443,7 @@
   };
   mpld3.Coordinates = mpld3_Coordinates;
   function mpld3_Coordinates(trans, ax) {
+    this.trans = trans;
     if (typeof ax === "undefined") {
       this.ax = null;
       this.fig = null;
@@ -451,10 +452,10 @@
       this.ax = ax;
       this.fig = ax.fig;
     }
-    this.zoomable = trans === "data";
-    this.x = this["x_" + trans];
-    this.y = this["y_" + trans];
-    if (typeof this.x === "undefined" || typeof this.y === "undefined") throw "unrecognized coordinate code: " + trans;
+    this.zoomable = this.trans === "data";
+    this.x = this["x_" + this.trans];
+    this.y = this["y_" + this.trans];
+    if (typeof this.x === "undefined" || typeof this.y === "undefined") throw "unrecognized coordinate code: " + this.trans;
   }
   mpld3_Coordinates.prototype.xy = function(d, ix, iy) {
     ix = typeof ix === "undefined" ? 0 : ix;
@@ -520,7 +521,12 @@
     }.bind(this)).y(function(d) {
       return this.pathcoords.y(d[this.props.yindex]);
     }.bind(this));
-    this.path = this.ax.paths.append("svg:path").attr("d", this.datafunc(this.data, this.pathcodes)).attr("class", "mpld3-path").style("stroke", this.props.edgecolor).style("stroke-width", this.props.edgewidth).style("stroke-dasharray", this.props.dasharray).style("stroke-opacity", this.props.alpha).style("fill", this.props.facecolor).style("fill-opacity", this.props.alpha).attr("vector-effect", "non-scaling-stroke");
+    if (this.pathcoords.zoomable) {
+      this.path = this.ax.paths.append("svg:path");
+    } else {
+      this.path = this.ax.staticPaths.append("svg:path");
+    }
+    this.path = this.path.attr("d", this.datafunc(this.data, this.pathcodes)).attr("class", "mpld3-path").style("stroke", this.props.edgecolor).style("stroke-width", this.props.edgewidth).style("stroke-dasharray", this.props.dasharray).style("stroke-opacity", this.props.alpha).style("fill", this.props.facecolor).style("fill-opacity", this.props.alpha).attr("vector-effect", "non-scaling-stroke");
     if (this.props.offset !== null) {
       var offset = this.offsetcoords.xy(this.props.offset);
       this.path.attr("transform", "translate(" + offset + ")");
@@ -601,7 +607,11 @@
     }
   };
   mpld3_PathCollection.prototype.draw = function() {
-    this.group = this.ax.paths.append("svg:g");
+    if (this.offsetcoords.zoomable || this.pathcoords.zoomable) {
+      this.group = this.ax.paths.append("svg:g");
+    } else {
+      this.group = this.ax.staticPaths.append("svg:g");
+    }
     this.pathsobj = this.group.selectAll("paths").data(this.offsets.filter(this.allFinite)).enter().append("svg:path").attr("d", this.pathFunc.bind(this)).attr("class", "mpld3-path").attr("transform", this.transformFunc.bind(this)).attr("style", this.styleFunc.bind(this)).attr("vector-effect", "non-scaling-stroke");
   };
   mpld3_PathCollection.prototype.elements = function(d) {
@@ -710,7 +720,8 @@
     this.coords = new mpld3_Coordinates(this.props.coordinates, this.ax);
   }
   mpld3_Image.prototype.draw = function() {
-    this.image = this.ax.paths.append("svg:image").attr("class", "mpld3-image").attr("xlink:href", "data:image/png;base64," + this.props.data).style("opacity", this.props.alpha).attr("preserveAspectRatio", "none");
+    this.image = this.ax.paths.append("svg:image");
+    this.image = this.image.attr("class", "mpld3-image").attr("xlink:href", "data:image/png;base64," + this.props.data).style("opacity", this.props.alpha).attr("preserveAspectRatio", "none");
   };
   mpld3_Image.prototype.elements = function(d) {
     return d3.select(this.image);
@@ -737,7 +748,11 @@
   }
   mpld3_Text.prototype.draw = function() {
     if (this.props.coordinates == "data") {
-      this.obj = this.ax.paths.append("text");
+      if (this.coords.zoomable) {
+        this.obj = this.ax.paths.append("text");
+      } else {
+        this.obj = this.ax.staticPaths.append("text");
+      }
     } else {
       this.obj = this.ax.baseaxes.append("text");
     }
@@ -869,6 +884,7 @@
     this.axes = this.baseaxes.append("g").attr("class", "mpld3-axes").attr("clip-path", "url(#" + this.clipid + ")");
     this.axesbg = this.axes.append("svg:rect").attr("width", this.width).attr("height", this.height).attr("class", "mpld3-axesbg").style("fill", this.props.axesbg).style("fill-opacity", this.props.axesbgalpha);
     this.paths = this.axes.append("g").attr("class", "mpld3-paths");
+    this.staticPaths = this.axes.append("g").attr("class", "mpld3-staticpaths");
     this.brush = d3.brush().extent([ [ 0, 0 ], [ this.fig.width, this.fig.height ] ]).on("start", this.brushStart.bind(this)).on("brush", this.brushMove.bind(this)).on("end", this.brushEnd.bind(this)).on("start.nokey", function() {
       d3.select(window).on("keydown.brush keyup.brush", null);
     });

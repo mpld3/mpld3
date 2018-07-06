@@ -205,6 +205,9 @@ mpld3_Axes.prototype.draw = function() {
     this.paths = this.axes.append("g")
         .attr("class", "mpld3-paths");
 
+    this.staticPaths = this.axes.append("g")
+        .attr("class", "mpld3-staticpaths");
+
     this.brush = d3.brush().extent([
         [0, 0], [this.fig.width, this.fig.height],
     ])
