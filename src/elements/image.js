@@ -23,19 +23,22 @@ mpld3_Image.prototype.draw = function() {
         .attr('xlink:href', "data:image/png;base64," + this.props.data)
         .style('opacity', this.props.alpha)
         .attr("preserveAspectRatio", "none");
-    // this.zoomed();
+    this.updateDimensions();
 };
 
 mpld3_Image.prototype.elements = function(d) {
     return d3.select(this.image);
 };
 
-// TODO: (@vladh) Remove legacy zooming code
+mpld3_Image.prototype.updateDimensions = function() {
+    var extent = this.props.extent;
+    this.image
+        .attr("x", this.coords.x(extent[0]))
+        .attr("y", this.coords.y(extent[3]))
+        .attr("width", this.coords.x(extent[1]) - this.coords.x(extent[0]))
+        .attr("height", this.coords.y(extent[2]) - this.coords.y(extent[3]));
+};
+
 // mpld3_Image.prototype.zoomed = function() {
-//     var extent = this.props.extent;
-//     this.image
-//         .attr("x", this.coords.x(extent[0]))
-//         .attr("y", this.coords.y(extent[3]))
-//         .attr("width", this.coords.x(extent[1]) - this.coords.x(extent[0]))
-//         .attr("height", this.coords.y(extent[2]) - this.coords.y(extent[3]));
+//     this.updateDimensions();
 // };
