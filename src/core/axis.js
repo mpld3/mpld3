@@ -120,9 +120,9 @@ mpld3_Axis.prototype.draw = function() {
 
 function mpld3_tickFormat(tickformat, tickvalues) {
     if (tickformat === "" || tickformat === null) {
-        return tickformat;
-    }
-    else {
+        // Use `return tickformat;` here to use default d3 formatting.
+        return function(d) { return d; }
+    } else {
         // tickvalues is an array of tick locations
         // tickformat is an array of tick labels
         return d3.scaleThreshold()

@@ -351,8 +351,10 @@
     zorder: 0,
     visible: true
   };
+  THE_AX = null;
   function mpld3_Axis(ax, props) {
     mpld3_PlotElement.call(this, ax, props);
+    THE_AX = ax;
     var trans = {
       bottom: [ 0, this.ax.height ],
       top: [ 0, 0 ],
@@ -418,7 +420,9 @@
   };
   function mpld3_tickFormat(tickformat, tickvalues) {
     if (tickformat === "" || tickformat === null) {
-      return tickformat;
+      return function(d) {
+        return d;
+      };
     } else {
       return d3.scaleThreshold().domain(tickvalues.slice(1)).range(tickformat);
     }
@@ -722,9 +726,14 @@
   mpld3_Image.prototype.draw = function() {
     this.image = this.ax.paths.append("svg:image");
     this.image = this.image.attr("class", "mpld3-image").attr("xlink:href", "data:image/png;base64," + this.props.data).style("opacity", this.props.alpha).attr("preserveAspectRatio", "none");
+    this.updateDimensions();
   };
   mpld3_Image.prototype.elements = function(d) {
     return d3.select(this.image);
+  };
+  mpld3_Image.prototype.updateDimensions = function() {
+    var extent = this.props.extent;
+    this.image.attr("x", this.coords.x(extent[0])).attr("y", this.coords.y(extent[3])).attr("width", this.coords.x(extent[1]) - this.coords.x(extent[0])).attr("height", this.coords.y(extent[2]) - this.coords.y(extent[3]));
   };
   mpld3.Text = mpld3_Text;
   mpld3_Text.prototype = Object.create(mpld3_PlotElement.prototype);
