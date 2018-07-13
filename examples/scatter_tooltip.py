@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import mpld3
 
-fig, ax = plt.subplots(subplot_kw=dict(axisbg='#EEEEEE'))
+fig, ax = plt.subplots(subplot_kw=dict(facecolor='#EEEEEE'))
 N = 100
 
 scatter = ax.scatter(np.random.normal(size=N),
