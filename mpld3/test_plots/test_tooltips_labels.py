@@ -7,7 +7,7 @@ from mpld3 import plugins
 
 def create_plot():
     fig, ax = plt.subplots()
-    colors = plt.rcParams['axes.color_cycle']
+    colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
     points = []
 
     for i, color in enumerate(colors):

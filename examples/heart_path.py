@@ -36,12 +36,12 @@ class LinkedDragPlugin(plugins.PluginBase):
         var ptsobj = mpld3.get_element(this.props.idpts, this.fig);
         var lineobj = mpld3.get_element(this.props.idline, this.fig);
 
-        var drag = d3.behavior.drag()
-            .origin(function(d) { return {x:ptsobj.ax.x(d[0]),
+        var drag = d3.drag()
+            .subject(function(d) { return {x:ptsobj.ax.x(d[0]),
                                           y:ptsobj.ax.y(d[1])}; })
-            .on("dragstart", dragstarted)
+            .on("start", dragstarted)
             .on("drag", dragged)
-            .on("dragend", dragended);
+            .on("end", dragended);
 
         lineobj.path.attr("d", lineobj.datafunc(ptsobj.offsets));
         patchobj.path.attr("d", patchobj.datafunc(ptsobj.offsets,

@@ -13,6 +13,8 @@ __all__ = ["D3_URL", "MPLD3_URL", "MPLD3MIN_URL",
 
 WWW_JS_DIR = "https://mpld3.github.io/js/"
 D3_URL = WWW_JS_DIR + "d3.v3.min.js"
+# TODO: Add this to GitHub pages
+D3_URL = 'https://d3js.org/d3.v5.js'
 MPLD3_URL = WWW_JS_DIR + "mpld3.v{0}.js".format(__version__)
 MPLD3MIN_URL = WWW_JS_DIR + "mpld3.v{0}.min.js".format(__version__)
 

@@ -56,7 +56,7 @@ function mpld3_PathCollection(ax, props) {
 mpld3_PathCollection.prototype.transformFunc = function(d, i) {
     var t = this.props.pathtransforms;
     var transform = (t.length == 0) ? "" :
-        d3.transform("matrix(" + getMod(t, i) + ")").toString();
+        mpld3.getTransformation("matrix(" + getMod(t, i) + ")").toString();
 
     var offset = (d === null || typeof(d) === "undefined") ?
         "translate(0, 0)" :
@@ -94,16 +94,22 @@ mpld3_PathCollection.prototype.styleFunc = function(d, i) {
 
 mpld3_PathCollection.prototype.allFinite = function(d) {
     if (d instanceof Array) {
-	return (d.length == d.filter(isFinite).length);
+        return (d.length == d.filter(isFinite).length);
     } else {
-	return true;
+        return true;
     }
 }
 
 mpld3_PathCollection.prototype.draw = function() {
-    this.group = this.ax.axes.append("svg:g");
+    // TODO: (@vladh) Don't fully understand this.
+    if (this.offsetcoords.zoomable || this.pathcoords.zoomable) {
+        this.group = this.ax.paths.append("svg:g");
+    } else {
+        this.group = this.ax.staticPaths.append("svg:g");
+    }
+
     this.pathsobj = this.group.selectAll("paths")
-    .data(this.offsets.filter(this.allFinite))
+        .data(this.offsets.filter(this.allFinite))
         .enter().append("svg:path")
         .attr("d", this.pathFunc.bind(this))
         .attr("class", "mpld3-path")
@@ -116,11 +122,12 @@ mpld3_PathCollection.prototype.elements = function(d) {
     return this.group.selectAll("path");
 };
 
-mpld3_PathCollection.prototype.zoomed = function() {
-    if (this.props.pathcoordinates === "data") {
-        this.pathsobj.attr("d", this.pathFunc.bind(this));
-    }
-    if (this.props.offsetcoordinates === "data") {
-        this.pathsobj.attr("transform", this.transformFunc.bind(this));
-    }
-};
+// TODO: (@vladh) Remove legacy zooming code.
+// mpld3_PathCollection.prototype.zoomed = function() {
+//     if (this.props.pathcoordinates === "data") {
+//         this.pathsobj.attr("d", this.pathFunc.bind(this));
+//     }
+//     if (this.props.offsetcoordinates === "data") {
+//         this.pathsobj.attr("transform", this.transformFunc.bind(this));
+//     }
+// };

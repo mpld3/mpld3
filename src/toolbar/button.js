@@ -10,7 +10,7 @@ function mpld3_Button(toolbar, key) {
     this.fig = this.toolbar.fig;
     this.cssclass = "mpld3-" + key + "button";
     this.active = false;
-}
+    }
 
 mpld3_Button.prototype.setState = function(state) {
     (state) ? this.activate() : this.deactivate();
@@ -21,24 +21,24 @@ mpld3_Button.prototype.click = function() {
 };
 
 mpld3_Button.prototype.activate = function() {
+    // This will also deactivate itself. A bit silly, but should be ok, maybe.
     this.toolbar.deactivate_by_action(this.actions);
     this.onActivate();
     this.active = true;
-    this.toolbar.toolbar.select('.' + this.cssclass)
-        .classed({
-            pressed: true
-        });
-    if (!this.sticky)
+    this.toolbar.toolbar
+        .select('.' + this.cssclass)
+        .classed('pressed', true);
+    if (!this.sticky) {
         this.deactivate();
+    }
 };
 
 mpld3_Button.prototype.deactivate = function() {
     this.onDeactivate();
     this.active = false;
-    this.toolbar.toolbar.select('.' + this.cssclass)
-        .classed({
-            pressed: false
-        });
+    this.toolbar.toolbar
+        .select('.' + this.cssclass)
+        .classed('pressed', false);
 }
 mpld3_Button.prototype.sticky = false;
 mpld3_Button.prototype.actions = [];
@@ -59,8 +59,8 @@ mpld3.ButtonFactory = function(members) {
     }
     B.prototype = Object.create(mpld3_Button.prototype);
     B.prototype.constructor = B;
-    for (var key in members){
-	B.prototype[key] = members[key];
+    for (var key in members) {
+        B.prototype[key] = members[key];
     }
     return B;
 }

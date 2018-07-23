@@ -24,12 +24,17 @@ function mpld3_Text(ax, props) {
 
 mpld3_Text.prototype.draw = function() {
     if (this.props.coordinates == "data") {
-        this.obj = this.ax.axes.append("text");
+        if (this.coords.zoomable) {
+            this.obj = this.ax.paths.append("text");
+        } else {
+            this.obj = this.ax.staticPaths.append("text");
+        }
     } else {
         this.obj = this.ax.baseaxes.append("text");
     }
 
-    this.obj.attr("class", "mpld3-text")
+    this.obj
+        .attr("class", "mpld3-text")
         .text(this.text)
         .style("text-anchor", this.props.h_anchor)
         .style("dominant-baseline", this.props.v_baseline)
@@ -51,7 +56,8 @@ mpld3_Text.prototype.applyTransform = function() {
         this.obj.attr("transform", "rotate(" + this.props.rotation + "," + pos + ")");
 }
 
-mpld3_Text.prototype.zoomed = function() {
-    if (this.coords.zoomable)
-        this.applyTransform();
-};
+// TODO: (@vladh) Remove legacy zooming code.
+// mpld3_Text.prototype.zoomed = function() {
+//     if (this.coords.zoomable)
+//         this.applyTransform();
+// };

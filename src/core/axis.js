@@ -17,7 +17,8 @@ mpld3_Axis.prototype.defaultProps = {
     axiscolor: "black",
     scale: "linear",
     grid: {},
-    zorder: 0
+    zorder: 0,
+    visible: true
 };
 
 function mpld3_Axis(ax, props) {
@@ -63,7 +64,7 @@ mpld3_Axis.prototype.draw = function() {
         this.parent.props.xscale : this.parent.props.yscale;
 
     if (scale === 'date' && this.props.tickvalues) {
-        // Convert tick locations from floating point ordinal values 
+        // Convert tick locations from floating point ordinal values
         // to JavaScript Dates
         var domain = (this.props.xy === 'x') ?
             this.parent.x.domain() :
@@ -71,7 +72,7 @@ mpld3_Axis.prototype.draw = function() {
         var range = (this.props.xy === 'x') ?
             this.parent.xdom.domain() :
             this.parent.ydom.domain();
-        var ordinal_to_js_date = d3.scale.linear()
+        var ordinal_to_js_date = d3.scaleLinear()
             .domain(domain)
             .range(range);
         this.props.tickvalues = this.props.tickvalues.map(function(value) {
@@ -81,9 +82,14 @@ mpld3_Axis.prototype.draw = function() {
 
     var tickformat = mpld3_tickFormat(this.props.tickformat, this.props.tickvalues);
 
-    this.axis = d3.svg.axis()
-        .scale(this.scale)
-        .orient(this.props.position)
+    var scaleMethod = {
+        left: 'axisLeft',
+        right: 'axisRight',
+        top: 'axisTop',
+        bottom: 'axisBottom',
+    }[this.props.position];
+
+    this.axis = d3[scaleMethod](this.scale)
         .ticks(this.props.nticks)
         .tickValues(this.props.tickvalues)
         .tickFormat(tickformat);
@@ -114,22 +120,30 @@ mpld3_Axis.prototype.draw = function() {
 
 function mpld3_tickFormat(tickformat, tickvalues) {
     if (tickformat === "" || tickformat === null) {
-        return tickformat;
-    }
-    else {
+        // Use `return tickformat;` here to use default d3 formatting.
+        return function(d) { return d; }
+    } else {
         // tickvalues is an array of tick locations
         // tickformat is an array of tick labels
-        return d3.scale.threshold()
+        return d3.scaleThreshold()
             .domain(tickvalues.slice(1))
             .range(tickformat);
     }
 }
 
-mpld3_Axis.prototype.zoomed = function() {
+mpld3_Axis.prototype.zoomed = function(transform) {
     // if we set tickValues for the axis, we are responsible for
     // updating them when they pan or zoom off of the chart
-    this.filter_ticks(this.axis.tickValues, this.axis.scale().domain());
-    this.elem.call(this.axis);
+    // this.filter_ticks(this.axis.tickValues, this.axis.scale().domain());
+    if (transform) {
+        if (this.props.xy == 'x') {
+            this.elem.call(this.axis.scale(transform.rescaleX(this.scale)));
+        } else {
+            this.elem.call(this.axis.scale(transform.rescaleY(this.scale)));
+        }
+    } else {
+        this.elem.call(this.axis);
+    }
 };
 
 mpld3_Axis.prototype.filter_ticks = function(tickValues, domain) {

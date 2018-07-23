@@ -25,9 +25,10 @@
   "readmeFilename": "README.md",
   "dependencies": {
     "d3": "3.5.12",
+    "jsdom": "11",
+    "npm": "^6.0.0",
     "smash": "0.0",
     "uglify-js": "2.6.1",
-    "vows": "0.8",
-    "jsdom": "3"
+    "vows": "0.8"
   }
 }
