@@ -16,21 +16,21 @@ function mpld3_Image(ax, props) {
 }
 
 mpld3_Image.prototype.draw = function() {
-    this.image = this.ax.axes.append("svg:image")
+    this.image = this.ax.paths.append("svg:image")
+
+    this.image = this.image
         .attr('class', 'mpld3-image')
         .attr('xlink:href', "data:image/png;base64," + this.props.data)
-        .style({
-            'opacity': this.props.alpha
-        })
+        .style('opacity', this.props.alpha)
         .attr("preserveAspectRatio", "none");
-    this.zoomed();
+    this.updateDimensions();
 };
 
 mpld3_Image.prototype.elements = function(d) {
     return d3.select(this.image);
 };
 
-mpld3_Image.prototype.zoomed = function() {
+mpld3_Image.prototype.updateDimensions = function() {
     var extent = this.props.extent;
     this.image
         .attr("x", this.coords.x(extent[0]))
@@ -38,3 +38,7 @@ mpld3_Image.prototype.zoomed = function() {
         .attr("width", this.coords.x(extent[1]) - this.coords.x(extent[0]))
         .attr("height", this.coords.y(extent[2]) - this.coords.y(extent[3]));
 };
+
+// mpld3_Image.prototype.zoomed = function() {
+//     this.updateDimensions();
+// };

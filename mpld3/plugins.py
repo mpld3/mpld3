@@ -310,7 +310,8 @@ class PointHTMLTooltip(PluginBase):
     HtmlTooltipPlugin.prototype.defaultProps = {labels:null,
                                                 target:null,
                                                 hoffset:0,
-                                                voffset:10};
+                                                voffset:10,
+                                                targets:null};
     function HtmlTooltipPlugin(fig, props){
         mpld3.Plugin.call(this, fig, props);
     };
@@ -593,7 +594,7 @@ class InteractiveLegendPlugin(PluginBase):
                     var current_alpha = d.mpld3_elements[i].props.alpha;
                     var current_alpha_unsel = current_alpha * alpha_unsel;
                     var current_alpha_over = current_alpha * alpha_over;
-                    d3.select(d.mpld3_elements[i].path[0][0])
+                    d3.select(d.mpld3_elements[i].path.nodes()[0])
                         .style("stroke-opacity", is_over ? current_alpha_over :
                                                 (d.visible ? current_alpha : current_alpha_unsel))
                         .style("stroke-width", is_over ? 

@@ -52,6 +52,16 @@ function mpld3_Axes(fig, props) {
     this.width = bbox[2] * this.fig.width;
     this.height = bbox[3] * this.fig.height;
 
+    this.isZoomEnabled = null;
+    this.zoom = null;
+    this.lastTransform = d3.zoomIdentity;
+
+    this.isBoxzoomEnabled = null;
+
+    this.isLinkedBrushEnabled = null;
+    this.isCurrentLinkedBrushTarget = false;
+    this.brushG = null;
+
     // In the case of date scales, set the domain
 
     function buildDate(d) {
@@ -74,7 +84,7 @@ function mpld3_Axes(fig, props) {
            - data domain
     The data range and domain are only different in the case of
     date axes.  For log or linear axes, the two are identical.
-  
+
     To convert between these, we have the following mappings:
      - [x,y]dom     : map from domain to screen
      - [x,y]        : map from range to screen
@@ -82,8 +92,8 @@ function mpld3_Axes(fig, props) {
   *****************************************************************/
 
     function build_scale(scale, domain, range) {
-        var dom = (scale === 'date') ? d3.time.scale() :
-            (scale === 'log') ? d3.scale.log() : d3.scale.linear();
+        var dom = (scale === 'date') ? d3.scaleTime() :
+            (scale === 'log') ? d3.scaleLog() : d3.scaleLinear();
         return dom.domain(domain).range(range);
     }
 
@@ -94,14 +104,14 @@ function mpld3_Axes(fig, props) {
         this.props.ydomain, [this.height, 0]);
 
     if (this.props.xscale === "date") {
-        this.x = mpld3.multiscale(d3.scale.linear()
+        this.x = mpld3.multiscale(d3.scaleLinear()
                                     .domain(this.props.xlim)
                                     .range(this.props.xdomain.map(Number)),
                                   this.xdom);
     }
 
     if (this.props.yscale === "date") {
-        this.y = mpld3.multiscale(d3.scale.linear()
+        this.y = mpld3.multiscale(d3.scaleLinear()
                                     .domain(this.props.ylim)
                                     .range(this.props.ydomain.map(Number)),
                                   this.ydom);
@@ -163,18 +173,9 @@ mpld3_Axes.prototype.draw = function() {
     for (var i = 0; i < this.props.sharex.length; i++) {
         this.sharex.push(mpld3.get_element(this.props.sharex[i]));
     }
-
     for (var i = 0; i < this.props.sharey.length; i++) {
         this.sharey.push(mpld3.get_element(this.props.sharey[i]));
     }
-
-    this.zoom = d3.behavior.zoom();
-
-    this.zoom.last_t = this.zoom.translate()
-    this.zoom.last_s = this.zoom.scale()
-
-    this.zoom_x = d3.behavior.zoom().x(this.xdom);
-    this.zoom_y = d3.behavior.zoom().y(this.ydom);
 
     this.baseaxes = this.fig.canvas.append("g")
         .attr('transform', 'translate(' + this.position[0] + ',' + this.position[1] + ')')
@@ -201,122 +202,251 @@ mpld3_Axes.prototype.draw = function() {
         .style("fill", this.props.axesbg)
         .style("fill-opacity", this.props.axesbgalpha);
 
+    this.paths = this.axes.append("g")
+        .attr("class", "mpld3-paths");
+
+    this.staticPaths = this.axes.append("g")
+        .attr("class", "mpld3-staticpaths");
+
+    this.brush = d3.brush().extent([
+        [0, 0], [this.fig.width, this.fig.height],
+    ])
+        .on('start', this.brushStart.bind(this))
+        .on('brush', this.brushMove.bind(this))
+        .on('end', this.brushEnd.bind(this))
+        .on('start.nokey', function() {
+            d3.select(window).on('keydown.brush keyup.brush', null);
+        });
+
     for (var i = 0; i < this.elements.length; i++) {
         this.elements[i].draw();
     }
 };
 
-mpld3_Axes.prototype.enable_zoom = function() {
-    if (this.props.zoomable) {
-        this.zoom.on("zoom", this.zoomed.bind(this, true));
+mpld3_Axes.prototype.bindZoom = function() {
+    if (!this.zoom) {
+        this.zoom = d3.zoom();
+        this.zoom.on('zoom', this.zoomed.bind(this));
         this.axes.call(this.zoom);
-        this.axes.style("cursor", 'move');
     }
 };
 
-mpld3_Axes.prototype.disable_zoom = function() {
-    if (this.props.zoomable) {
-        this.zoom.on("zoom", null);
-        this.axes.on('.zoom', null)
-        this.axes.style('cursor', null);
+mpld3_Axes.prototype.unbindZoom = function() {
+    if (this.zoom) {
+        this.zoom.on('zoom', null);
+        this.axes.on('.zoom', null);
+        this.zoom = null;
     }
 };
 
-mpld3_Axes.prototype.zoomed = function(propagate) {
-    // propagate is a boolean specifying whether to propagate movements
-    // to shared axes, specified by sharex and sharey.  Default is true.
-    propagate = (typeof propagate == 'undefined') ? true : propagate;
+mpld3_Axes.prototype.bindBrush = function() {
+    if (!this.brushG) {
+        this.brushG = this.axes
+            .append('g')
+            .attr('class', 'mpld3-brush')
+            .call(this.brush);
+    }
+};
+
+mpld3_Axes.prototype.unbindBrush = function() {
+    if (this.brushG) {
+        this.brushG.remove();
+        this.brushG.on('.brush', null);
+        this.brushG = null;
+    }
+};
+
+mpld3_Axes.prototype.reset = function() {
+    if (this.zoom) {
+        this.doZoom(false, d3.zoomIdentity, 750);
+    } else {
+        this.bindZoom();
+        this.doZoom(false, d3.zoomIdentity, 750, function() {
+            /*
+            (@vladh)
+
+            If zoom was not bound before, but we now have some type
+            of zoom enabled, what probably happened is that the user enabled
+            zoom/boxzoom during this transition, in which case we don't want
+            to disable zoom anymore.
+
+            BUG: If the user does this, there will be a weird break in the
+            animation until they zoom again. This is because of the toolbar
+            behaviour and can't be fixed here. We should fix it in the future
+            though.
+            */
+            if (this.isSomeTypeOfZoomEnabled) {
+                return;
+            }
+            this.unbindZoom();
+        }.bind(this));
+    }
+};
+
+mpld3_Axes.prototype.enableOrDisableBrushing = function() {
+    if (this.isBoxzoomEnabled || this.isLinkedBrushEnabled) {
+        this.bindBrush();
+    } else {
+        this.unbindBrush();
+    }
+};
+
+mpld3_Axes.prototype.isSomeTypeOfZoomEnabled = function() {
+    return this.isZoomEnabled || this.isBoxzoomEnabled;
+};
+
+mpld3_Axes.prototype.enableOrDisableZooming = function() {
+    if (this.isSomeTypeOfZoomEnabled()) {
+        this.bindZoom();
+    } else {
+        this.unbindZoom();
+    }
+};
+
+mpld3_Axes.prototype.enableLinkedBrush = function() {
+    this.isLinkedBrushEnabled = true;
+    this.enableOrDisableBrushing();
+};
+
+mpld3_Axes.prototype.disableLinkedBrush = function() {
+    this.isLinkedBrushEnabled = false;
+    this.enableOrDisableBrushing();
+};
+
+mpld3_Axes.prototype.enableBoxzoom = function() {
+    this.isBoxzoomEnabled = true;
+    this.enableOrDisableBrushing();
+    this.enableOrDisableZooming();
+};
+
+mpld3_Axes.prototype.disableBoxzoom = function() {
+    this.isBoxzoomEnabled = false;
+    this.enableOrDisableBrushing();
+    this.enableOrDisableZooming();
+};
+
+mpld3_Axes.prototype.enableZoom = function() {
+    this.isZoomEnabled = true;
+    this.enableOrDisableZooming();
+    this.axes.style('cursor', 'move');
+};
+
+mpld3_Axes.prototype.disableZoom = function() {
+    this.isZoomEnabled = false;
+    this.enableOrDisableZooming();
+    this.axes.style('cursor', null);
+};
+
+mpld3_Axes.prototype.doZoom = function(
+    propagate, transform, duration, onTransitionEnd
+) {
+    if (!this.props.zoomable || !this.zoom) {
+        return;
+    }
+
+    if (duration) {
+        var transition = this.axes
+            .transition()
+            .duration(duration)
+            .call(this.zoom.transform, transform);
+        if (onTransitionEnd) {
+            transition.on('end', onTransitionEnd);
+        }
+    } else {
+        this.axes
+            .call(this.zoom.transform, transform);
+    }
 
     if (propagate) {
-        // update scale and translation of zoom_x and zoom_y,
-        // based on change in this.zoom scale and translation values
-        var dt0 = this.zoom.translate()[0] - this.zoom.last_t[0];
-        var dt1 = this.zoom.translate()[1] - this.zoom.last_t[1];
-        var ds = this.zoom.scale() / this.zoom.last_s;
+        // var xDiff = transform.x - this.lastTransform.x;
+        // var yDiff = transform.y - this.lastTransform.y;
+        // var kDiffFactor = transform.k / this.lastTransform.k;
+        this.lastTransform = transform;
 
-        this.zoom_x.translate([this.zoom_x.translate()[0] + dt0, 0]);
-        this.zoom_x.scale(this.zoom_x.scale() * ds)
-
-        this.zoom_y.translate([0, this.zoom_y.translate()[1] + dt1]);
-        this.zoom_y.scale(this.zoom_y.scale() * ds)
-
-        // update last translate and scale values for future use
-        this.zoom.last_t = this.zoom.translate();
-        this.zoom.last_s = this.zoom.scale();
-
-        // update shared axes objects
-        this.sharex.forEach(function(ax) {
-            ax.zoom_x.translate(this.zoom_x.translate())
-                .scale(this.zoom_x.scale());
-        }.bind(this));
-        this.sharey.forEach(function(ax) {
-            ax.zoom_y.translate(this.zoom_y.translate())
-                .scale(this.zoom_y.scale());
-        }.bind(this));
-
-        // render updates
-        this.sharex.forEach(function(ax) {
-            ax.zoomed(false);
+        this.sharex.forEach(function(sharedAxes) {
+            sharedAxes.doZoom(false, transform, duration);
+            // var xTransform = sharedAxes.lastTransform.translate(xDiff, 0).scale(kDiffFactor);
+            // sharedAxes.doZoom(false, xTransform, duration);
         });
-        this.sharey.forEach(function(ax) {
-            ax.zoomed(false);
-        });
-    }
 
-    for (var i = 0; i < this.elements.length; i++) {
-        this.elements[i].zoomed();
+        this.sharey.forEach(function(sharedAxes) {
+            sharedAxes.doZoom(false, transform, duration);
+            // var yTransform = sharedAxes.lastTransform.translate(0, yDiff).scale(kDiffFactor);
+            // sharedAxes.doZoom(false, yTransform, duration);
+        });
+    } else {
+        this.lastTransform = transform;
     }
 };
 
-mpld3_Axes.prototype.reset = function(duration, propagate) {
-    this.set_axlim(this.props.xdomain, this.props.ydomain,
-        duration, propagate);
+mpld3_Axes.prototype.zoomed = function() {
+    var isProgrammatic =
+        (d3.event.sourceEvent && d3.event.sourceEvent.constructor.name != 'ZoomEvent');
+
+    if (isProgrammatic) {
+        this.doZoom(true, d3.event.transform, false);
+    } else {
+        var transform = d3.event.transform;
+        this.paths.attr('transform', transform);
+        this.elements.forEach(function(element) {
+            if (element.zoomed) {
+                element.zoomed(transform);
+            }
+        }.bind(this));
+    }
 };
 
-mpld3_Axes.prototype.set_axlim = function(xlim, ylim,
-                                          duration, propagate) {
-    xlim = isUndefinedOrNull(xlim) ? this.xdom.domain() : xlim;
-    ylim = isUndefinedOrNull(ylim) ? this.ydom.domain() : ylim;
-    duration = isUndefinedOrNull(duration) ? 750 : duration;
-    propagate = isUndefined(propagate) ? true : propagate;
+mpld3_Axes.prototype.resetBrush = function() {
+    this.brushG.call(this.brush.move, null);
+};
 
-    // Create a transition function which will interpolate
-    // from the current axes limits to the final limits
-    var interpX = (this.props.xscale === 'date') ?
-        mpld3.interpolateDates(this.xdom.domain(), xlim) :
-        d3.interpolate(this.xdom.domain(), xlim);
-
-    var interpY = (this.props.yscale === 'date') ?
-        mpld3.interpolateDates(this.ydom.domain(), ylim) :
-        d3.interpolate(this.ydom.domain(), ylim);
-
-    var transition = function(t) {
-        this.zoom_x.x(this.xdom.domain(interpX(t)));
-        this.zoom_y.y(this.ydom.domain(interpY(t)));
-        this.zoomed(false); // don't propagate here; propagate below.
-    }.bind(this);
-
-    // select({}) is a trick to make transitions run concurrently
-    d3.select({})
-        .transition().duration(duration)
-        .tween("zoom", function() {
-            return transition;
-        });
-
-    // propagate axis limits to shared axes
-    if (propagate) {
-        this.sharex.forEach(function(ax) {
-            ax.set_axlim(xlim, null, duration, false);
-        });
-        this.sharey.forEach(function(ax) {
-            ax.set_axlim(null, ylim, duration, false);
-        });
+mpld3_Axes.prototype.doBoxzoom = function(selection) {
+    if (!selection || !this.brushG) {
+        return;
     }
 
-    // finalize the reset operation.
-    this.zoom.scale(1).translate([0, 0]);
-    this.zoom.last_t = this.zoom.translate();
-    this.zoom.last_s = this.zoom.scale();
-    this.zoom_x.scale(1).translate([0, 0]);
-    this.zoom_y.scale(1).translate([0, 0]);
+    var sel = selection.map(this.lastTransform.invert, this.lastTransform);
+
+    var dx = sel[1][0] - sel[0][0];
+    var dy = sel[1][1] - sel[0][1];
+    var cx = (sel[0][0] + sel[1][0]) / 2;
+    var cy = (sel[0][1] + sel[1][1]) / 2;
+
+    var scale = (dx > dy) ? this.width / dx : this.height / dy;
+    var transX = this.width / 2 - scale * cx;
+    var transY = this.height / 2 - scale * cy;
+    var transform = d3.zoomIdentity.translate(transX, transY).scale(scale);
+
+    this.doZoom(true, transform, 750);
+    this.resetBrush();
+}
+
+mpld3_Axes.prototype.brushStart = function() {
+    if (this.isLinkedBrushEnabled) {
+        this.isCurrentLinkedBrushTarget =
+            (d3.event.sourceEvent.constructor.name == 'MouseEvent');
+        if (this.isCurrentLinkedBrushTarget) {
+            this.fig.resetBrushForOtherAxes(this.axid);
+        }
+    }
+};
+
+mpld3_Axes.prototype.brushMove = function() {
+    var selection = d3.event.selection;
+    if (this.isLinkedBrushEnabled) {
+        this.fig.updateLinkedBrush(selection);
+    }
+};
+
+mpld3_Axes.prototype.brushEnd = function() {
+    var selection = d3.event.selection;
+    if (this.isBoxzoomEnabled) {
+        this.doBoxzoom(selection);
+    }
+    if (this.isLinkedBrushEnabled) {
+        if (!selection) {
+            this.fig.endLinkedBrush();
+        }
+        this.isCurrentLinkedBrushTarget = false;
+    }
 };
