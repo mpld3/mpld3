@@ -381,7 +381,7 @@ mpld3_Axes.prototype.doZoom = function(
 
 mpld3_Axes.prototype.zoomed = function() {
     var isProgrammatic =
-        (d3.event.sourceEvent && d3.event.sourceEvent.constructor.name != 'ZoomEvent');
+        (d3.event.sourceEvent && d3.event.sourceEvent.type != 'zoom');
 
     if (isProgrammatic) {
         this.doZoom(true, d3.event.transform, false);
