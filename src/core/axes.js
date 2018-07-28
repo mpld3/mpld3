@@ -193,7 +193,8 @@ mpld3_Axes.prototype.draw = function() {
 
     this.axes = this.baseaxes.append("g")
         .attr("class", "mpld3-axes")
-        .attr("clip-path", "url(#" + this.clipid + ")");
+        .attr("clip-path", "url(#" + this.clipid + ")")
+        .style("pointer-events", "visiblefill");
 
     this.axesbg = this.axes.append("svg:rect")
         .attr("width", this.width)
