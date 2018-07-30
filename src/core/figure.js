@@ -169,6 +169,20 @@ mpld3_Figure.prototype.toggleZoom = function() {
     }
 };
 
+mpld3_Figure.prototype.setTicks = function(xy, nr, format) {
+    this.axes.forEach(function(axes) {
+        axes.setTicks(xy, nr, format);
+    });
+};
+
+mpld3_Figure.prototype.setXTicks = function(nr, format) {
+    this.setTicks('x', nr, format);
+};
+
+mpld3_Figure.prototype.setYTicks = function(nr, format) {
+    this.setTicks('y', nr, format);
+};
+
 mpld3_Figure.prototype.get_data = function(data) {
     if (data === null || typeof(data) === "undefined") {
         return null;

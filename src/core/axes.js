@@ -46,6 +46,7 @@ function mpld3_Axes(fig, props) {
     this.sharey = [];
 
     this.elements = [];
+    this.axisList = []; // Badly named, to avoid conflicts.
 
     var bbox = this.props.bbox;
     this.position = [bbox[0] * this.fig.width, (1 - bbox[1] - bbox[3]) * this.fig.height];
@@ -121,6 +122,7 @@ function mpld3_Axes(fig, props) {
     var axes = this.props.axes;
     for (var i = 0; i < axes.length; i++) {
         var axis = new mpld3.Axis(this, axes[i])
+        this.axisList.push(axis);
         this.elements.push(axis);
         if (this.props.gridOn || axis.props.grid.gridOn) {
             this.elements.push(axis.getGrid());
@@ -457,4 +459,12 @@ mpld3_Axes.prototype.brushEnd = function() {
         }
         this.isCurrentLinkedBrushTarget = false;
     }
+};
+
+mpld3_Axes.prototype.setTicks = function(xy, nr, format) {
+    this.axisList.forEach(function(axis) {
+        if (axis.props.xy == xy) {
+            axis.setTicks(nr, format);
+        }
+    });
 };

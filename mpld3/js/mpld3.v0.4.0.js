@@ -369,6 +369,8 @@
     this.props.xy = xy[this.props.position];
     this.cssclass = "mpld3-" + this.props.xy + "axis";
     this.scale = this.ax[this.props.xy + "dom"];
+    this.tickNr = null;
+    this.tickFormat = null;
   }
   mpld3_Axis.prototype.getGrid = function() {
     var gridprop = {
@@ -401,8 +403,7 @@
       top: "axisTop",
       bottom: "axisBottom"
     }[this.props.position];
-    this.axis = d3[scaleMethod](this.scale).ticks(this.props.nticks).tickValues(this.props.tickvalues).tickFormat(tickformat);
-    this.filter_ticks(this.axis.tickValues, this.axis.scale().domain());
+    this.axis = d3[scaleMethod](this.scale).ticks(this.tickNr).tickFormat(this.tickFormat);
     this.elem = this.ax.baseaxes.append("g").attr("transform", this.transform).attr("class", this.cssclass).call(this.axis);
     mpld3.insert_css("div#" + this.ax.fig.figid + " ." + this.cssclass + " line, " + " ." + this.cssclass + " path", {
       "shape-rendering": "crispEdges",
@@ -417,6 +418,7 @@
     });
   };
   function mpld3_tickFormat(tickformat, tickvalues) {
+    return null;
     if (tickformat === "" || tickformat === null) {
       return function(d) {
         return d;
@@ -435,6 +437,11 @@
     } else {
       this.elem.call(this.axis);
     }
+  };
+  mpld3_Axis.prototype.setTicks = function(nr, format) {
+    console.log("[axis#setTicks] xy, nr, format", this.props.xy, nr, format);
+    this.tickNr = nr;
+    this.tickFormat = format;
   };
   mpld3_Axis.prototype.filter_ticks = function(tickValues, domain) {
     if (this.props.tickvalues != null) {
@@ -812,6 +819,7 @@
     this.sharex = [];
     this.sharey = [];
     this.elements = [];
+    this.axisList = [];
     var bbox = this.props.bbox;
     this.position = [ bbox[0] * this.fig.width, (1 - bbox[1] - bbox[3]) * this.fig.height ];
     this.width = bbox[2] * this.fig.width;
@@ -846,6 +854,7 @@
     var axes = this.props.axes;
     for (var i = 0; i < axes.length; i++) {
       var axis = new mpld3.Axis(this, axes[i]);
+      this.axisList.push(axis);
       this.elements.push(axis);
       if (this.props.gridOn || axis.props.grid.gridOn) {
         this.elements.push(axis.getGrid());
@@ -1066,6 +1075,13 @@
       }
       this.isCurrentLinkedBrushTarget = false;
     }
+  };
+  mpld3_Axes.prototype.setTicks = function(xy, nr, format) {
+    this.axisList.forEach(function(axis) {
+      if (axis.props.xy == xy) {
+        axis.setTicks(nr, format);
+      }
+    });
   };
   mpld3.Toolbar = mpld3_Toolbar;
   mpld3_Toolbar.prototype = Object.create(mpld3_PlotElement.prototype);
@@ -1604,6 +1620,17 @@
     } else {
       this.enableZoom();
     }
+  };
+  mpld3_Figure.prototype.setTicks = function(xy, nr, format) {
+    this.axes.forEach(function(axes) {
+      axes.setTicks(xy, nr, format);
+    });
+  };
+  mpld3_Figure.prototype.setXTicks = function(nr, format) {
+    this.setTicks("x", nr, format);
+  };
+  mpld3_Figure.prototype.setYTicks = function(nr, format) {
+    this.setTicks("y", nr, format);
   };
   mpld3_Figure.prototype.get_data = function(data) {
     if (data === null || typeof data === "undefined") {

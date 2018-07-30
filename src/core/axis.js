@@ -41,6 +41,9 @@ function mpld3_Axis(ax, props) {
     this.props.xy = xy[this.props.position];
     this.cssclass = "mpld3-" + this.props.xy + "axis";
     this.scale = this.ax[this.props.xy + "dom"];
+
+    this.tickNr = null;
+    this.tickFormat = null;
 }
 
 mpld3_Axis.prototype.getGrid = function() {
@@ -80,8 +83,6 @@ mpld3_Axis.prototype.draw = function() {
         });
     }
 
-    var tickformat = mpld3_tickFormat(this.props.tickformat, this.props.tickvalues);
-
     var scaleMethod = {
         left: 'axisLeft',
         right: 'axisRight',
@@ -89,10 +90,13 @@ mpld3_Axis.prototype.draw = function() {
         bottom: 'axisBottom',
     }[this.props.position];
 
-    this.axis = d3[scaleMethod](this.scale)
-        .ticks(this.props.nticks)
-        .tickValues(this.props.tickvalues)
-        .tickFormat(tickformat);
+    this.axis = d3[scaleMethod](this.scale);
+    if (this.tickNr) {
+        this.axis = this.axis.ticks(this.tickNr);
+    }
+    if (this.tickFormat) {
+        this.axis = this.axis.tickFormat(this.tickFormat);
+    }
 
     this.filter_ticks(this.axis.tickValues, this.axis.scale().domain());
 
@@ -118,19 +122,6 @@ mpld3_Axis.prototype.draw = function() {
     });
 };
 
-function mpld3_tickFormat(tickformat, tickvalues) {
-    if (tickformat === "" || tickformat === null) {
-        // Use `return tickformat;` here to use default d3 formatting.
-        return function(d) { return d; }
-    } else {
-        // tickvalues is an array of tick locations
-        // tickformat is an array of tick labels
-        return d3.scaleThreshold()
-            .domain(tickvalues.slice(1))
-            .range(tickformat);
-    }
-}
-
 mpld3_Axis.prototype.zoomed = function(transform) {
     // if we set tickValues for the axis, we are responsible for
     // updating them when they pan or zoom off of the chart
@@ -144,6 +135,11 @@ mpld3_Axis.prototype.zoomed = function(transform) {
     } else {
         this.elem.call(this.axis);
     }
+};
+
+mpld3_Axis.prototype.setTicks = function(nr, format) {
+    this.tickNr = nr;
+    this.tickFormat = format;
 };
 
 mpld3_Axis.prototype.filter_ticks = function(tickValues, domain) {
