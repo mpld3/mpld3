@@ -183,18 +183,17 @@ mpld3_Axes.prototype.draw = function() {
         .attr('height', this.height)
         .attr('class', "mpld3-baseaxes");
 
-    this.clip = this.baseaxes.append("svg:clipPath")
+    this.axes = this.baseaxes.append("g")
+        .attr("class", "mpld3-axes")
+        .style("pointer-events", "visiblefill");
+
+    this.clip = this.axes.append("svg:clipPath")
         .attr("id", this.clipid)
         .append("svg:rect")
         .attr("x", 0)
         .attr("y", 0)
         .attr("width", this.width)
         .attr("height", this.height)
-
-    this.axes = this.baseaxes.append("g")
-        .attr("class", "mpld3-axes")
-        // .attr("clip-path", "url(#" + this.clipid + ")")
-        .style("pointer-events", "visiblefill");
 
     this.axesbg = this.axes.append("svg:rect")
         .attr("width", this.width)
@@ -203,7 +202,15 @@ mpld3_Axes.prototype.draw = function() {
         .style("fill", this.props.axesbg)
         .style("fill-opacity", this.props.axesbgalpha);
 
-    this.paths = this.axes.append("g")
+    this.pathsContainer = this.axes.append("g")
+        .attr("clip-path", "url(#" + this.clipid + ")")
+        .attr("x", 0)
+        .attr("y", 0)
+        .attr("width", this.width)
+        .attr("height", this.height)
+        .attr("class", "mpld3-paths-container");
+
+    this.paths = this.pathsContainer.append("g")
         .attr("class", "mpld3-paths");
 
     this.staticPaths = this.axes.append("g")
