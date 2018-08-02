@@ -326,6 +326,9 @@
     mpld3.insert_css("div#" + this.ax.fig.figid + " ." + this.cssclass + " path", {
       "stroke-width": 0
     });
+    mpld3.insert_css("div#" + this.ax.fig.figid + " ." + this.cssclass + " .domain", {
+      "pointer-events": "none"
+    });
   };
   mpld3_Grid.prototype.zoomed = function(transform) {
     if (transform) {

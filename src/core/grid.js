@@ -66,6 +66,11 @@ mpld3_Grid.prototype.draw = function() {
         " ." + this.cssclass + " path", {
             "stroke-width": 0
         });
+    // Pass pointer events through so as not to break hovering.
+    mpld3.insert_css("div#" + this.ax.fig.figid +
+        " ." + this.cssclass + " .domain", {
+            "pointer-events": "none"
+        });
 };
 
 mpld3_Grid.prototype.zoomed = function(transform) {
