@@ -317,28 +317,31 @@ class PointHTMLTooltip(PluginBase):
     };
 
     HtmlTooltipPlugin.prototype.draw = function(){
-       var obj = mpld3.get_element(this.props.id);
-       var labels = this.props.labels;
-       var targets = this.props.targets;
-       var tooltip = d3.select("body").append("div")
-                    .attr("class", "mpld3-tooltip")
-                    .style("position", "absolute")
-                    .style("z-index", "10")
-                    .style("visibility", "hidden");
+        var obj = mpld3.get_element(this.props.id);
+        var labels = this.props.labels;
+        var targets = this.props.targets;
+        var tooltip = d3.select("body").append("div")
+            .attr("class", "mpld3-tooltip")
+            .style("position", "absolute")
+            .style("z-index", "10")
+            .style("visibility", "hidden");
 
-       obj.elements()
-           .on("mouseover", function(d, i){
-                              tooltip.html(labels[i])
-                                     .style("visibility", "visible");})
-           .on("mousemove", function(d, i){
-                  tooltip
-                    .style("top", d3.event.pageY + this.props.voffset + "px")
-                    .style("left",d3.event.pageX + this.props.hoffset + "px");
-                 }.bind(this))
-           .on("mousedown.callout",  function(d, i){
-                           window.open(targets[i],"_blank");})
-           .on("mouseout",  function(d, i){
-                           tooltip.style("visibility", "hidden");});
+        obj.elements()
+            .on("mouseover", function(d, i){
+                tooltip.html(labels[i])
+                    .style("visibility", "visible");
+            })
+            .on("mousemove", function(d, i){
+                tooltip
+                .style("top", d3.event.pageY + this.props.voffset + "px")
+                .style("left",d3.event.pageX + this.props.hoffset + "px");
+            }.bind(this))
+            .on("mousedown.callout", function(d, i){
+                window.open(targets[i],"_blank");
+            })
+            .on("mouseout", function(d, i){
+                tooltip.style("visibility", "hidden");
+            });
     };
     """
 
