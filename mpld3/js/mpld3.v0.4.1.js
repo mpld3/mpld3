@@ -393,6 +393,22 @@
     return new mpld3_Grid(this.ax, gridprop);
   };
   mpld3_Axis.prototype.draw = function() {
+    function wrap(text, width) {
+      text.each(function() {
+        var text = d3.select(this), words = text.text().split(/\s+/).reverse(), word, line = [], lineNumber = 0, lineHeight = 1.1, y = text.attr("y"), dy = parseFloat(text.attr("dy")), tspan = text.text(null).append("tspan").attr("x", 0).attr("y", y).attr("dy", dy + "em");
+        while (word = words.pop()) {
+          line.push(word);
+          tspan.text(line.join(" "));
+          if (tspan.node().getComputedTextLength() > width) {
+            line.pop();
+            tspan.text(line.join(" "));
+            line = [ word ];
+            tspan = text.append("tspan").attr("x", 0).attr("y", y).attr("dy", ++lineNumber * lineHeight + dy + "em").text(word);
+          }
+        }
+      });
+    }
+    var TEXT_WIDTH = 80;
     var scale = this.props.xy === "x" ? this.parent.props.xscale : this.parent.props.yscale;
     if (scale === "date" && this.props.tickvalues) {
       var domain = this.props.xy === "x" ? this.parent.x.domain() : this.parent.y.domain();
@@ -423,6 +439,7 @@
     }
     this.filter_ticks(this.axis.tickValues, this.axis.scale().domain());
     this.elem = this.ax.baseaxes.append("g").attr("transform", this.transform).attr("class", this.cssclass).call(this.axis);
+    this.elem.selectAll("text").call(wrap, TEXT_WIDTH);
     mpld3.insert_css("div#" + this.ax.fig.figid + " ." + this.cssclass + " line, " + " ." + this.cssclass + " path", {
       "shape-rendering": "crispEdges",
       stroke: this.props.axiscolor,
