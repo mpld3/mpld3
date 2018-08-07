@@ -91,11 +91,18 @@ mpld3_Axis.prototype.draw = function() {
     }[this.props.position];
 
     this.axis = d3[scaleMethod](this.scale);
-    if (this.tickNr) {
-        this.axis = this.axis.ticks(this.tickNr);
-    }
-    if (this.tickFormat) {
-        this.axis = this.axis.tickFormat(this.tickFormat);
+
+    if (this.props.tickformat && this.props.tickvalues) {
+        this.axis = this.axis
+            .tickValues(this.props.tickvalues)
+            .tickFormat((d) => this.props.tickformat[d])
+    } else {
+        if (this.tickNr) {
+            this.axis = this.axis.ticks(this.tickNr);
+        }
+        if (this.tickFormat) {
+            this.axis = this.axis.tickFormat(this.tickFormat);
+        }
     }
 
     this.filter_ticks(this.axis.tickValues, this.axis.scale().domain());
