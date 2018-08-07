@@ -412,7 +412,7 @@
     if (this.props.tickformat && this.props.tickvalues) {
       this.axis = this.axis.tickValues(this.props.tickvalues).tickFormat(function(d) {
         return this.props.tickformat[d];
-      });
+      }.bind(this));
     } else {
       if (this.tickNr) {
         this.axis = this.axis.ticks(this.tickNr);
