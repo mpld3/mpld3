@@ -1574,6 +1574,9 @@
     this.pluginsByType[pluginInfo.type] = pluginInstance;
   };
   mpld3_Figure.prototype.draw = function() {
+    mpld3.insert_css("div#" + this.figid, {
+      "font-family": "Helvetica, sans-serif"
+    });
     this.canvas = this.root.append("svg:svg").attr("class", "mpld3-figure").attr("width", this.width).attr("height", this.height);
     for (var i = 0; i < this.axes.length; i++) {
       this.axes[i].draw();

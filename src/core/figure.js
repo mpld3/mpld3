@@ -78,6 +78,10 @@ mpld3_Figure.prototype.addPlugin = function(pluginInfo) {
 };
 
 mpld3_Figure.prototype.draw = function() {
+    mpld3.insert_css('div#' + this.figid, {
+        'font-family': 'Helvetica, sans-serif',
+    });
+
     this.canvas = this.root.append('svg:svg')
         .attr('class', 'mpld3-figure')
         .attr('width', this.width)
