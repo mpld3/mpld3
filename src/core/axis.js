@@ -139,7 +139,9 @@ mpld3_Axis.prototype.draw = function() {
         .attr("class", this.cssclass)
         .call(this.axis);
 
-    this.elem.selectAll('text').call(wrap, TEXT_WIDTH);
+    if (this.props.xy == 'x') {
+        this.elem.selectAll('text').call(wrap, TEXT_WIDTH);
+    }
 
     // We create header-level CSS to style these elements, because
     // zooming/panning creates new elements with these classes.
