@@ -69,7 +69,7 @@ mpld3_Axis.prototype.draw = function() {
     @param lineHeight {Number=1.1} Height of a line in percentage, so 1.1 is 110% line height.
     */
     function wrap(text, width, lineHeight) {
-        lineHeight = lineHeight || 1.3;
+        lineHeight = lineHeight || 1.2;
         text.each(function() {
             var text = d3.select(this);
             var bbox = text.node().getBBox();

@@ -394,7 +394,7 @@
   };
   mpld3_Axis.prototype.draw = function() {
     function wrap(text, width, lineHeight) {
-      lineHeight = lineHeight || 1.3;
+      lineHeight = lineHeight || 1.2;
       text.each(function() {
         var text = d3.select(this);
         var bbox = text.node().getBBox();
