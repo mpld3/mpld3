@@ -393,9 +393,19 @@
     return new mpld3_Grid(this.ax, gridprop);
   };
   mpld3_Axis.prototype.draw = function() {
-    function wrap(text, width) {
+    function wrap(text, width, lineHeight) {
+      lineHeight = lineHeight || 1.3;
       text.each(function() {
-        var text = d3.select(this), words = text.text().split(/\s+/).reverse(), word, line = [], lineNumber = 0, lineHeight = 1.1, y = text.attr("y"), dy = parseFloat(text.attr("dy")), tspan = text.text(null).append("tspan").attr("x", 0).attr("y", y).attr("dy", dy + "em");
+        var text = d3.select(this);
+        var bbox = text.node().getBBox();
+        var textHeight = bbox.height;
+        var words = text.text().split(/\s+/).reverse();
+        var word;
+        var line = [];
+        var lineNumber = 0;
+        var y = text.attr("y");
+        var dy = textHeight;
+        var tspan = text.text(null).append("tspan").attr("x", 0).attr("y", y).attr("dy", dy);
         while (word = words.pop()) {
           line.push(word);
           tspan.text(line.join(" "));
@@ -403,7 +413,7 @@
             line.pop();
             tspan.text(line.join(" "));
             line = [ word ];
-            tspan = text.append("tspan").attr("x", 0).attr("y", y).attr("dy", ++lineNumber * lineHeight + dy + "em").text(word);
+            tspan = text.append("tspan").attr("x", 0).attr("y", y).attr("dy", ++lineNumber * (textHeight * lineHeight) + dy).text(word);
           }
         }
       });
@@ -426,8 +436,8 @@
     }[this.props.position];
     this.axis = d3[scaleMethod](this.scale);
     if (this.props.tickformat && this.props.tickvalues) {
-      this.axis = this.axis.tickValues(this.props.tickvalues).tickFormat(function(d) {
-        return this.props.tickformat[d];
+      this.axis = this.axis.tickValues(this.props.tickvalues).tickFormat(function(d, i) {
+        return this.props.tickformat[i];
       }.bind(this));
     } else {
       if (this.tickNr) {
