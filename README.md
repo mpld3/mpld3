@@ -32,7 +32,7 @@ the JSON description readable by mpld3.js.
 Installation
 ------------
 mpld3 is compatible with python 2.6-2.7 and 3.3-3.4. It requires
-[matplotlib](http://matplotlib.org) version 1.3 and
+[matplotlib](http://matplotlib.org) version 2.2.2 and
 [jinja2](http://jinja.pocoo.org/) version 2.7+.
 
 Optionally, mpld3 can be used with [IPython](http://ipython.org) notebook,
