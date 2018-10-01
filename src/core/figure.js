@@ -35,102 +35,53 @@ function mpld3_Figure(figid, props) {
 
     // Connect the plugins to the figure
     this.plugins = [];
-    for (var i = 0; i < this.props.plugins.length; i++)
-        this.add_plugin(this.props.plugins[i]);
+    this.pluginsByType = {};
+    this.props.plugins.forEach(function(plugin) {
+        this.addPlugin(plugin);
+    }.bind(this));
 
-    // Create the figure toolbar
-    //  do this last because plugins may modify the button list
+    // Create the figure toolbar. Do this last because plugins may modify the
+    // button list.
     this.toolbar = new mpld3.Toolbar(this, {
         buttons: this.buttons
     });
 }
 
-// getBrush contains boilerplate for defining a d3 brush over the axes
-mpld3_Figure.prototype.getBrush = function() {
-    if (typeof this._brush === "undefined"){
-        // use temporary linear scales here: we'll replace
-        // with the real x and y scales below.
-        var brush = d3.svg.brush()
-            .x(d3.scale.linear())
-            .y(d3.scale.linear());
-    
-	// this connects the axes instance to the brush elements
-	this.root.selectAll(".mpld3-axes")
-	    .data(this.axes)
-	    .call(brush);
-
-        // need to call the brush on each axes with correct x/y domains
-        this.axes.forEach(function(ax){
-            brush.x(ax.xdom).y(ax.ydom);
-            ax.axes.call(brush);
-	})
-
-        this._brush = brush;
-	this.hideBrush();
-    }
-    return this._brush;
-};
-
-mpld3_Figure.prototype.showBrush = function(extentClass) {
-    extentClass = (typeof extentClass === "undefined") ? "" : extentClass;
-    var brush = this.getBrush();
-    brush.on("brushstart", function(d){brush.x(d.xdom).y(d.ydom);});
-    this.canvas.selectAll("rect.background")
-        .style("cursor", "crosshair")
-        .style("pointer-events", null);
-    this.canvas.selectAll("rect.extent, rect.resize")
-        .style("display", null)
-        .classed(extentClass, true);
-};
-
-mpld3_Figure.prototype.hideBrush = function(extentClass) {
-    extentClass = (typeof extentClass === "undefined") ? "" : extentClass;
-    var brush = this.getBrush();
-    brush.on("brushstart", null)
-         .on("brush", null)
-         .on("brushend", function(d){d.axes.call(brush.clear());});
-    this.canvas.selectAll("rect.background")
-        .style("cursor", null)
-        .style("pointer-events", "visible");
-    this.canvas.selectAll("rect.extent, rect.resize")
-        .style("display", "none")
-        .classed(extentClass, false);
-};
-
-mpld3_Figure.prototype.add_plugin = function(props) {
-    var plug = props.type;
-    if (typeof plug === "undefined"){
-        console.warn("unspecified plugin type. Skipping this");
-        return;
+mpld3_Figure.prototype.addPlugin = function(pluginInfo) {
+    if (!pluginInfo.type) {
+        return console.warn("unspecified plugin type. Skipping this");
     }
 
-    // clone props without the "type" argument
-    props = mpld3_cloneObj(props);
-    delete props.type;
-
-    if (plug in mpld3.plugin_map)
-        plug = mpld3.plugin_map[plug];
-    if (typeof(plug) !== "function") {
-        console.warn("Skipping unrecognized plugin: " + plug);
-        return;
+    var plugin;
+    if (pluginInfo.type in mpld3.plugin_map) {
+        plugin = mpld3.plugin_map[pluginInfo.type];
+    } else {
+        return console.warn("Skipping unrecognized plugin: " + plugin);
     }
 
-    if (props.clear_toolbar) {
-        this.props.toolbar = [];
+    if (pluginInfo.clear_toolbar || pluginInfo.buttons) {
+        console.warn(
+            'DEPRECATION WARNING: ' +
+            'You are using pluginInfo.clear_toolbar or pluginInfo, which ' +
+            'have been deprecated. Please see the build-in plugins for the new ' +
+            'method to add buttons, otherwise contact the mpld3 maintainers.'
+        );
     }
-    if ("buttons" in props) {
-        if (typeof(props.buttons) === "string") {
-            this.props.toolbar.push(props.buttons);
-        } else {
-            for (var i = 0; i < props.buttons.length; i++) {
-                this.props.toolbar.push(props.buttons[i]);
-            }
-        }
-    }
-    this.plugins.push(new plug(this, props));
+
+    // Not sure why we need to take the type out.
+    var pluginInfoNoType = mpld3_cloneObj(pluginInfo);
+    delete pluginInfoNoType.type;
+
+    var pluginInstance = new plugin(this, pluginInfoNoType);
+    this.plugins.push(pluginInstance);
+    this.pluginsByType[pluginInfo.type] = pluginInstance;
 };
 
 mpld3_Figure.prototype.draw = function() {
+    mpld3.insert_css('div#' + this.figid, {
+        'font-family': 'Helvetica, sans-serif',
+    });
+
     this.canvas = this.root.append('svg:svg')
         .attr('class', 'mpld3-figure')
         .attr('width', this.width)
@@ -141,7 +92,7 @@ mpld3_Figure.prototype.draw = function() {
     }
 
     // disable zoom by default; plugins or toolbar items might change this.
-    this.disable_zoom();
+    this.disableZoom();
 
     for (var i = 0; i < this.plugins.length; i++) {
         this.plugins[i].draw();
@@ -150,32 +101,90 @@ mpld3_Figure.prototype.draw = function() {
     this.toolbar.draw();
 };
 
-mpld3_Figure.prototype.reset = function(duration) {
-    this.axes.forEach(function(ax) {
-        ax.reset(duration, false);
+mpld3_Figure.prototype.resetBrushForOtherAxes = function(currentAxid) {
+    this.axes.forEach(function(axes) {
+        if (axes.axid != currentAxid) {
+            axes.resetBrush();
+        }
     });
 };
 
-mpld3_Figure.prototype.enable_zoom = function() {
-    for (var i = 0; i < this.axes.length; i++) {
-        this.axes[i].enable_zoom();
+mpld3_Figure.prototype.updateLinkedBrush = function(selection) {
+    if (!this.pluginsByType.linkedbrush) {
+        return;
     }
-    this.zoom_on = true;
+    this.pluginsByType.linkedbrush.update(selection);
 };
 
-mpld3_Figure.prototype.disable_zoom = function() {
-    for (var i = 0; i < this.axes.length; i++) {
-        this.axes[i].disable_zoom();
+mpld3_Figure.prototype.endLinkedBrush = function() {
+    if (!this.pluginsByType.linkedbrush) {
+        return;
     }
-    this.zoom_on = false;
+    this.pluginsByType.linkedbrush.end();
 };
 
-mpld3_Figure.prototype.toggle_zoom = function() {
-    if (this.zoom_on) {
-        this.disable_zoom();
+mpld3_Figure.prototype.reset = function(duration) {
+    this.axes.forEach(function(axes) {
+        axes.reset();
+    });
+};
+
+mpld3_Figure.prototype.enableLinkedBrush = function() {
+    this.axes.forEach(function(axes) {
+        axes.enableLinkedBrush();
+    });
+};
+
+mpld3_Figure.prototype.disableLinkedBrush = function() {
+    this.axes.forEach(function(axes) {
+        axes.disableLinkedBrush();
+    });
+};
+
+mpld3_Figure.prototype.enableBoxzoom = function() {
+    this.axes.forEach(function(axes) {
+        axes.enableBoxzoom();
+    });
+};
+
+mpld3_Figure.prototype.disableBoxzoom = function() {
+    this.axes.forEach(function(axes) {
+        axes.disableBoxzoom();
+    });
+};
+
+mpld3_Figure.prototype.enableZoom = function() {
+    this.axes.forEach(function(axes) {
+        axes.enableZoom();
+    });
+};
+
+mpld3_Figure.prototype.disableZoom = function() {
+    this.axes.forEach(function(axes) {
+        axes.disableZoom();
+    });
+};
+
+mpld3_Figure.prototype.toggleZoom = function() {
+    if (this.isZoomEnabled) {
+        this.disableZoom();
     } else {
-        this.enable_zoom();
+        this.enableZoom();
     }
+};
+
+mpld3_Figure.prototype.setTicks = function(xy, nr, format) {
+    this.axes.forEach(function(axes) {
+        axes.setTicks(xy, nr, format);
+    });
+};
+
+mpld3_Figure.prototype.setXTicks = function(nr, format) {
+    this.setTicks('x', nr, format);
+};
+
+mpld3_Figure.prototype.setYTicks = function(nr, format) {
+    this.setTicks('y', nr, format);
 };
 
 mpld3_Figure.prototype.get_data = function(data) {

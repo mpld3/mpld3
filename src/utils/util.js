@@ -6,12 +6,15 @@ mpld3.register_plugin = function(name, obj){
 
 /**********************************************************************/
 /* Data Parsing Functions */
-mpld3.draw_figure = function(figid, spec) {
+mpld3.draw_figure = function(figid, spec, process) {
     var element = document.getElementById(figid);
     if (element === null) {
         throw (figid + " is not a valid id");
     }
     var fig = new mpld3.Figure(figid, spec);
+    if (process) {
+        process(fig, element);
+    }
     mpld3.figures.push(fig);
     fig.draw();
     return fig;
@@ -29,6 +32,61 @@ function mpld3_cloneObj(oldObj) {
        newObj[key] = oldObj[key];
    }
    return newObj;
+}
+
+mpld3.boundsToTransform = function(fig, bounds) {
+    // https://bl.ocks.org/iamkevinv/0a24e9126cd2fa6b283c6f2d774b69a2
+    var width = fig.width;
+    var height = fig.height;
+    var dx = bounds[1][0] - bounds[0][0];
+    var dy = bounds[1][1] - bounds[0][1];
+    var x = (bounds[0][0] + bounds[1][0]) / 2;
+    var y = (bounds[0][1] + bounds[1][1]) / 2;
+    var scale = Math.max(1, Math.min(8, 0.9 / Math.max(dx / width, dy / height)));
+    var translate = [width / 2 - scale * x, height / 2 - scale * y];
+    return {translate: translate, scale: scale}
+}
+
+mpld3.getTransformation = function(transform) {
+    // https://stackoverflow.com/questions/38224875/replacing-d3-transform-in-d3-v4
+    // Create a dummy g for calculation purposes only. This will never
+    // be appended to the DOM and will be discarded once this function
+    // returns.
+    var g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+
+    // Set the transform attribute to the provided string value.
+    g.setAttributeNS(null, "transform", transform);
+
+    // consolidate the SVGTransformList containing all transformations
+    // to a single SVGTransform of type SVG_TRANSFORM_MATRIX and get
+    // its SVGMatrix.
+    var matrix = g.transform.baseVal.consolidate().matrix;
+
+    // Below calculations are taken and adapted from the private function
+    // transform/decompose.js of D3's module d3-interpolate.
+    var a = matrix.a, b = matrix.b, c = matrix.c, d = matrix.d, e = matrix.e, f = matrix.f;
+    var scaleX, scaleY, skewX;
+    if (scaleX = Math.sqrt(a * a + b * b)) a /= scaleX, b /= scaleX;
+    if (skewX = a * c + b * d) c -= a * skewX, d -= b * skewX;
+    if (scaleY = Math.sqrt(c * c + d * d)) c /= scaleY, d /= scaleY, skewX /= scaleY;
+    if (a * d < b * c) a = -a, b = -b, skewX = -skewX, scaleX = -scaleX;
+
+    var transformObj = {
+        translateX: e,
+        translateY: f,
+        rotate: Math.atan2(b, a) * 180 / Math.PI,
+        skewX: Math.atan(skewX) * 180 / Math.PI,
+        scaleX: scaleX,
+        scaleY: scaleY
+    };
+
+    var transformStr = '' +
+        'translate(' + transformObj.translateX + ',' + transformObj.translateY + ')' +
+        'rotate(' + transformObj.rotate + ')' +
+        'skewX(' + transformObj.skewX + ')' +
+        'scale(' + transformObj.scaleX + ',' + transformObj.scaleY + ')';
+
+    return transformStr;
 }
 
 mpld3.merge_objects = function(_) {
@@ -186,8 +244,12 @@ function mpld3_path(_) {
     };
 
     function path(vertices, pathcodes) {
-        var fx = d3.functor(x),
-            fy = d3.functor(y);
+        var functor = function(x) {
+            if (typeof x == "function") { return x; }
+            return function() { return x; }
+        }
+        var fx = functor(x),
+            fy = functor(y);
         var points = [],
             segments = [],
             i_v = 0,

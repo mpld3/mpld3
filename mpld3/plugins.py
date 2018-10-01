@@ -310,34 +310,38 @@ class PointHTMLTooltip(PluginBase):
     HtmlTooltipPlugin.prototype.defaultProps = {labels:null,
                                                 target:null,
                                                 hoffset:0,
-                                                voffset:10};
+                                                voffset:10,
+                                                targets:null};
     function HtmlTooltipPlugin(fig, props){
         mpld3.Plugin.call(this, fig, props);
     };
 
     HtmlTooltipPlugin.prototype.draw = function(){
-       var obj = mpld3.get_element(this.props.id);
-       var labels = this.props.labels;
-       var targets = this.props.targets;
-       var tooltip = d3.select("body").append("div")
-                    .attr("class", "mpld3-tooltip")
-                    .style("position", "absolute")
-                    .style("z-index", "10")
-                    .style("visibility", "hidden");
+        var obj = mpld3.get_element(this.props.id);
+        var labels = this.props.labels;
+        var targets = this.props.targets;
+        var tooltip = d3.select("body").append("div")
+            .attr("class", "mpld3-tooltip")
+            .style("position", "absolute")
+            .style("z-index", "10")
+            .style("visibility", "hidden");
 
-       obj.elements()
-           .on("mouseover", function(d, i){
-                              tooltip.html(labels[i])
-                                     .style("visibility", "visible");})
-           .on("mousemove", function(d, i){
-                  tooltip
-                    .style("top", d3.event.pageY + this.props.voffset + "px")
-                    .style("left",d3.event.pageX + this.props.hoffset + "px");
-                 }.bind(this))
-           .on("mousedown.callout",  function(d, i){
-                           window.open(targets[i],"_blank");})
-           .on("mouseout",  function(d, i){
-                           tooltip.style("visibility", "hidden");});
+        obj.elements()
+            .on("mouseover", function(d, i){
+                tooltip.html(labels[i])
+                    .style("visibility", "visible");
+            })
+            .on("mousemove", function(d, i){
+                tooltip
+                .style("top", d3.event.pageY + this.props.voffset + "px")
+                .style("left",d3.event.pageX + this.props.hoffset + "px");
+            }.bind(this))
+            .on("mousedown.callout", function(d, i){
+                window.open(targets[i],"_blank");
+            })
+            .on("mouseout", function(d, i){
+                tooltip.style("visibility", "hidden");
+            });
     };
     """
 
@@ -593,7 +597,7 @@ class InteractiveLegendPlugin(PluginBase):
                     var current_alpha = d.mpld3_elements[i].props.alpha;
                     var current_alpha_unsel = current_alpha * alpha_unsel;
                     var current_alpha_over = current_alpha * alpha_over;
-                    d3.select(d.mpld3_elements[i].path[0][0])
+                    d3.select(d.mpld3_elements[i].path.nodes()[0])
                         .style("stroke-opacity", is_over ? current_alpha_over :
                                                 (d.visible ? current_alpha : current_alpha_unsel))
                         .style("stroke-width", is_over ? 

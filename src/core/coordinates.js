@@ -4,6 +4,7 @@
 mpld3.Coordinates = mpld3_Coordinates;
 
 function mpld3_Coordinates(trans, ax) {
+    this.trans = trans;
     if (typeof(ax) === "undefined") {
         this.ax = null;
         this.fig = null;
@@ -13,11 +14,11 @@ function mpld3_Coordinates(trans, ax) {
         this.ax = ax;
         this.fig = ax.fig;
     }
-    this.zoomable = (trans === "data");
-    this.x = this["x_" + trans];
-    this.y = this["y_" + trans];
+    this.zoomable = (this.trans === "data");
+    this.x = this["x_" + this.trans];
+    this.y = this["y_" + this.trans];
     if (typeof(this.x) === "undefined" || typeof(this.y) === "undefined")
-        throw "unrecognized coordinate code: " + trans;
+        throw "unrecognized coordinate code: " + this.trans;
 }
 
 mpld3_Coordinates.prototype.xy = function(d, ix, iy) {

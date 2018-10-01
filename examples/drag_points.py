@@ -30,12 +30,12 @@ class DragPlugin(plugins.PluginBase):
     DragPlugin.prototype.draw = function(){
         var obj = mpld3.get_element(this.props.id);
 
-        var drag = d3.behavior.drag()
-            .origin(function(d) { return {x:obj.ax.x(d[0]),
+        var drag = d3.drag()
+            .subject(function(d) { return {x:obj.ax.x(d[0]),
                                           y:obj.ax.y(d[1])}; })
-            .on("dragstart", dragstarted)
+            .on("start", dragstarted)
             .on("drag", dragged)
-            .on("dragend", dragended);
+            .on("end", dragended);
 
         obj.elements()
            .data(obj.offsets)

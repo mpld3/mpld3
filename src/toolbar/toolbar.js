@@ -74,14 +74,10 @@ mpld3_Toolbar.prototype.draw = function() {
             d.click();
         })
         .on("mouseenter", function() {
-            d3.select(this).classed({
-                active: 1
-            })
+            d3.select(this).classed('active', true);
         })
         .on("mouseleave", function() {
-            d3.select(this).classed({
-                active: 0
-            })
+            d3.select(this).classed('active', false);
         });
 
     for (var i = 0; i < this.buttons.length; i++)
