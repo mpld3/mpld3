@@ -57,3 +57,12 @@ node_modules
 # testing outputs
 _pngs
 _test_plots.html
+
+# vim
+*.sw*
+
+# OSX
+.DS_Store
+
+# virtualenv
+virtualenv/
