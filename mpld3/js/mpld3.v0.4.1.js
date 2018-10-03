@@ -349,6 +349,7 @@
     nticks: 10,
     tickvalues: null,
     tickformat: null,
+    tickformat_formatter: null,
     fontsize: "11px",
     fontcolor: "black",
     axiscolor: "black",
@@ -435,17 +436,17 @@
       bottom: "axisBottom"
     }[this.props.position];
     this.axis = d3[scaleMethod](this.scale);
-    if (this.props.tickformat && this.props.tickvalues) {
-      this.axis = this.axis.tickValues(this.props.tickvalues).tickFormat(function(d, i) {
-        return this.props.tickformat[i];
-      }.bind(this));
-    } else {
-      if (this.tickNr) {
-        this.axis = this.axis.ticks(this.tickNr);
-      }
-      if (this.tickFormat) {
-        this.axis = this.axis.tickFormat(this.tickFormat);
-      }
+    var that = this;
+    if (this.props.tickformat_formatter == "index") {
+      this.axis = this.axis.tickFormat(function(d, i) {
+        return that.props.tickformat[d];
+      });
+    } else if (this.props.tickformat_formatter == "fixed") {
+      this.axis = this.axis.tickFormat(function(d, i) {
+        return that.props.tickformat[d];
+      });
+    } else if (this.tickNr) {
+      this.axis = this.axis.ticks(this.tickNr);
     }
     this.filter_ticks(this.axis.tickValues, this.axis.scale().domain());
     this.elem = this.ax.baseaxes.append("g").attr("transform", this.transform).attr("class", this.cssclass).call(this.axis);
