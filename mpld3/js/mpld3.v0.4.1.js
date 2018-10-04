@@ -383,7 +383,7 @@
     var gridprop = {
       nticks: this.props.nticks,
       zorder: this.props.zorder,
-      tickvalues: this.props.tickvalues,
+      tickvalues: null,
       xy: this.props.xy
     };
     if (this.props.grid) {
@@ -441,14 +441,19 @@
       this.axis = this.axis.tickFormat(function(d, i) {
         return that.props.tickformat[d];
       });
+    } else if (this.props.tickformat_formatter == "str_method") {
+      this.axis = this.axis.tickFormat(function(d, i) {
+        formatted_string = d3.format(that.props.tickformat.format_string)(d);
+        return that.props.tickformat.prefix + formatted_string + that.props.tickformat.suffix;
+      });
     } else if (this.props.tickformat_formatter == "fixed") {
       this.axis = this.axis.tickFormat(function(d, i) {
         return that.props.tickformat[d];
       });
-    } else if (this.tickNr) {
+    }
+    if (this.tickNr) {
       this.axis = this.axis.ticks(this.tickNr);
     }
-    this.filter_ticks(this.axis.tickValues, this.axis.scale().domain());
     this.elem = this.ax.baseaxes.append("g").attr("transform", this.transform).attr("class", this.cssclass).call(this.axis);
     if (this.props.xy == "x") {
       this.elem.selectAll("text").call(wrap, TEXT_WIDTH);

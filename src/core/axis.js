@@ -51,7 +51,7 @@ mpld3_Axis.prototype.getGrid = function() {
     var gridprop = {
         nticks: this.props.nticks,
         zorder: this.props.zorder,
-        tickvalues: this.props.tickvalues,
+        tickvalues: null, 
         xy: this.props.xy
     }
     if (this.props.grid) {
@@ -139,17 +139,23 @@ mpld3_Axis.prototype.draw = function() {
     var that = this;
     if (this.props.tickformat_formatter == "index") {
       this.axis = this.axis.tickFormat(function(d, i) { 
-        return that.props.tickformat[d] 
-      })
+        return that.props.tickformat[d];
+      })  
+    } else if (this.props.tickformat_formatter == "str_method"){
+      this.axis = this.axis.tickFormat(function(d, i) { 
+        formatted_string = d3.format(that.props.tickformat.format_string)(d);
+        return that.props.tickformat.prefix + formatted_string + that.props.tickformat.suffix;
+      })  
     } else if (this.props.tickformat_formatter == "fixed"){
       this.axis = this.axis.tickFormat(function(d, i) { 
         return that.props.tickformat[d] 
-      })
-    } else if (this.tickNr) {
+      })  
+    }   
+    if (this.tickNr) {
       this.axis = this.axis.ticks(this.tickNr);
-    }
+    }   
 
-    this.filter_ticks(this.axis.tickValues, this.axis.scale().domain());
+    // this.filter_ticks(this.axis.tickValues, this.axis.scale().domain());
 
 // good tips: http://bl.ocks.org/mbostock/3048166 in response to http://stackoverflow.com/questions/11286872/how-do-i-make-a-custom-axis-formatter-for-hours-minutes-in-d3-js
 
