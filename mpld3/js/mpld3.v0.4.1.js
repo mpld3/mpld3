@@ -441,6 +441,13 @@
       this.axis = this.axis.tickFormat(function(d, i) {
         return that.props.tickformat[d];
       });
+    } else if (this.props.tickformat_formatter == "percent") {
+      this.axis = this.axis.tickFormat(function(d, i) {
+        var value = d / that.props.tickformat.xmax * 100;
+        var decimals = that.props.tickformat.decimals || 2;
+        formatted_string = d3.format("." + decimals + "f")(value);
+        return formatted_string + that.props.tickformat.symbol;
+      });
     } else if (this.props.tickformat_formatter == "str_method") {
       this.axis = this.axis.tickFormat(function(d, i) {
         formatted_string = d3.format(that.props.tickformat.format_string)(d);
