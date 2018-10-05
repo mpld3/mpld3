@@ -188,7 +188,11 @@ mpld3_Axis.prototype.draw = function() {
       this.axis = this.axis.tickFormat(function(d, i) { 
         return that.props.tickformat[d] 
       })  
-    }   
+    } else {
+      // Incase there is a plugin for the tick formatting present 
+      this.axis = this.axis.tickFormat(this.tickFormat);
+    } 
+
     if (this.tickNr) {
       this.axis = this.axis.ticks(this.tickNr);
     }   

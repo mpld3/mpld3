@@ -457,6 +457,8 @@
       this.axis = this.axis.tickFormat(function(d, i) {
         return that.props.tickformat[d];
       });
+    } else {
+      this.axis = this.axis.tickFormat(this.tickFormat);
     }
     if (this.tickNr) {
       this.axis = this.axis.ticks(this.tickNr);
