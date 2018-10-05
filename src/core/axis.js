@@ -175,7 +175,7 @@ mpld3_Axis.prototype.draw = function() {
     } else if (this.props.tickformat_formatter == "percent"){
       this.axis = this.axis.tickFormat(function(d, i) { 
         var value = (d / that.props.tickformat.xmax) * 100;
-        var decimals = that.props.tickformat.decimals || 2;
+        var decimals = that.props.tickformat.decimals || 0;
         formatted_string = d3.format("."+decimals+"f")(value);
         return formatted_string + that.props.tickformat.symbol;
       })  
@@ -186,7 +186,7 @@ mpld3_Axis.prototype.draw = function() {
       })  
     } else if (this.props.tickformat_formatter == "fixed"){
       this.axis = this.axis.tickFormat(function(d, i) { 
-        return that.props.tickformat[d] 
+        return that.props.tickformat[i] 
       })  
     } else {
       // Incase there is a plugin for the tick formatting present 
