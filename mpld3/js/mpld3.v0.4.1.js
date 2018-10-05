@@ -461,6 +461,10 @@
     if (this.tickNr) {
       this.axis = this.axis.ticks(this.tickNr);
     }
+    if (this.props.tickvalues) {
+      this.axis = this.axis.tickValues(this.props.tickvalues);
+      this.filter_ticks(this.axis.tickValues, this.axis.scale().domain());
+    }
     this.elem = this.ax.baseaxes.append("g").attr("transform", this.transform).attr("class", this.cssclass).call(this.axis);
     if (this.props.xy == "x") {
       this.elem.selectAll("text").call(wrap, TEXT_WIDTH);
@@ -478,6 +482,9 @@
     });
   };
   mpld3_Axis.prototype.zoomed = function(transform) {
+    if (this.props.tickvalues) {
+      this.filter_ticks(this.axis.tickValues, this.axis.scale().domain());
+    }
     if (transform) {
       if (this.props.xy == "x") {
         this.elem.call(this.axis.scale(transform.rescaleX(this.scale)));
