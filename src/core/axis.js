@@ -4,6 +4,37 @@ import "../utils/";
 
 /**********************************************************************/
 /* Axis Object: */
+/** 
+ * Props:
+ * `tickformat_formatter`: the variable comes from `sciris/mplextractor` and 
+ *  defines which has been used. Depending on the class used different `tickformat` will be supplied. 
+ *  The variables include:
+ *    - `percent`     = matplotlib.ticker.PercentFormatter
+ *    - `index`       = matplotlib.ticker.IndexFormatter
+ *    - `fixed`       = matplotlib.ticker.FixedFormatter
+ *    - `str_method`  = matplotlib.ticker.StrMethodFormatter
+ *
+ * `tickformat`: the variable comes from `sciris/mplextractor` and defines 
+ * the variables inside of each `matplotlib.ticker`. The variable inside this changes 
+ * depending on `tickformat_formatter` used.
+ *    - tickformat_formatter: `percent` 
+ *      tickformat: {
+ *        "xmax": formatter.xmax,
+ *        "decimals": formatter.decimals,
+ *        "symbol": formatter.symbol,
+ *      } <- variables defined in matplotlib.ticker.PercentFormatter
+ *    - tickformat_formatter: `index` 
+ *      tickformat: [...] <- array of ticks e.g. ["a", "b", "c"]
+ *    - tickformat_formatter: `fixed` 
+ *      tickformat: [...] <- array of ticks e.g. ["a", "b", "c"] similar to `index`
+ *    - tickformat_formatter: `str_method` 
+ *      tickformat: "..." <- format accepted by https://github.com/d3/d3-format 
+ *
+ * `tickvalue`: values from `ticker.FixedLocator` if set the axis lables will become fixed and 
+ * will not scale
+ *
+ **/
+
 mpld3.Axis = mpld3_Axis;
 mpld3_Axis.prototype = Object.create(mpld3_PlotElement.prototype);
 mpld3_Axis.prototype.constructor = mpld3_Axis;
@@ -12,6 +43,7 @@ mpld3_Axis.prototype.defaultProps = {
     nticks: 10,
     tickvalues: null,
     tickformat: null,
+    tickformat_formatter: null, 
     fontsize: "11px",
     fontcolor: "black",
     axiscolor: "black",
@@ -50,7 +82,7 @@ mpld3_Axis.prototype.getGrid = function() {
     var gridprop = {
         nticks: this.props.nticks,
         zorder: this.props.zorder,
-        tickvalues: this.props.tickvalues,
+        tickvalues: null, 
         xy: this.props.xy
     }
     if (this.props.grid) {
@@ -135,20 +167,39 @@ mpld3_Axis.prototype.draw = function() {
 
     this.axis = d3[scaleMethod](this.scale);
 
-    if (this.props.tickformat && this.props.tickvalues) {
-        this.axis = this.axis
-            .tickValues(this.props.tickvalues)
-            .tickFormat(function(d, i) { return this.props.tickformat[i] }.bind(this));
+    var that = this;
+    if (this.props.tickformat_formatter == "index") {
+      this.axis = this.axis.tickFormat(function(d, i) { 
+        return that.props.tickformat[d];
+      })  
+    } else if (this.props.tickformat_formatter == "percent"){
+      this.axis = this.axis.tickFormat(function(d, i) { 
+        var value = (d / that.props.tickformat.xmax) * 100;
+        var decimals = that.props.tickformat.decimals || 0;
+        formatted_string = d3.format("."+decimals+"f")(value);
+        return formatted_string + that.props.tickformat.symbol;
+      })  
+    } else if (this.props.tickformat_formatter == "str_method"){
+      this.axis = this.axis.tickFormat(function(d, i) { 
+        formatted_string = d3.format(that.props.tickformat.format_string)(d);
+        return that.props.tickformat.prefix + formatted_string + that.props.tickformat.suffix;
+      })  
+    } else if (this.props.tickformat_formatter == "fixed"){
+      this.axis = this.axis.tickFormat(function(d, i) { 
+        return that.props.tickformat[i] 
+      })  
     } else {
-        if (this.tickNr) {
-            this.axis = this.axis.ticks(this.tickNr);
-        }
-        if (this.tickFormat) {
-            this.axis = this.axis.tickFormat(this.tickFormat);
-        }
-    }
+      // Incase there is a plugin for the tick formatting present 
+      this.axis = this.axis.tickFormat(this.tickFormat);
+    } 
 
-    this.filter_ticks(this.axis.tickValues, this.axis.scale().domain());
+    if (this.tickNr) {
+      this.axis = this.axis.ticks(this.tickNr);
+    }   
+    if (this.props.tickvalues) {
+      this.axis = this.axis.tickValues(this.props.tickvalues)
+      this.filter_ticks(this.axis.tickValues, this.axis.scale().domain());
+    }
 
 // good tips: http://bl.ocks.org/mbostock/3048166 in response to http://stackoverflow.com/questions/11286872/how-do-i-make-a-custom-axis-formatter-for-hours-minutes-in-d3-js
 
@@ -179,7 +230,9 @@ mpld3_Axis.prototype.draw = function() {
 mpld3_Axis.prototype.zoomed = function(transform) {
     // if we set tickValues for the axis, we are responsible for
     // updating them when they pan or zoom off of the chart
-    // this.filter_ticks(this.axis.tickValues, this.axis.scale().domain());
+    if (this.props.tickvalues) {
+      this.filter_ticks(this.axis.tickValues, this.axis.scale().domain());
+    }
     if (transform) {
         if (this.props.xy == 'x') {
             this.elem.call(this.axis.scale(transform.rescaleX(this.scale)));

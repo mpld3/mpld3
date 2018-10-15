@@ -32,6 +32,7 @@ def create_plot():
                         s=500, alpha=0.3)
 
     plugins.clear(fig)
+    ax.set_title('Click info', size=14)
     plugins.connect(fig, plugins.Reset(), plugins.Zoom(), ClickInfo(points))
     return fig
 

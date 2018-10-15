@@ -13,7 +13,7 @@ import itertools
 
 import numpy as np
 
-from .mplexporter.utils import color_to_hex
+from .mplexporter.utils import export_color
 from .mplexporter.exporter import Exporter
 from .mplexporter.renderers import Renderer
 
@@ -212,9 +212,9 @@ class MPLD3Renderer(Renderer):
                              styles, mplobj=None):
         if len(paths) != 0:
             styles = dict(alphas=[styles['alpha']],
-                          edgecolors=[color_to_hex(ec)
+                          edgecolors=[export_color(ec)
                                       for ec in styles['edgecolor']],
-                          facecolors=[color_to_hex(fc)
+                          facecolors=[export_color(fc)
                                       for fc in styles['facecolor']],
                           edgewidths=styles['linewidth'],
                           offsetcoordinates=offset_coordinates,
