@@ -33,6 +33,10 @@ Functions: IPython Notebook
 """
 
 import os
+import matplotlib
+
+if os.environ.get('HIDE_PLOTS', False):
+    matplotlib.use('Agg') 
 
 BASE_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 

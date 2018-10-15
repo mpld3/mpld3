@@ -1,14 +1,11 @@
-import matplotlib
 import uuid
-from functools import partial
-matplotlib.use('Agg')  # don't display plots
-import matplotlib.pyplot as plt
 import subprocess
 import mpld3
 import multiprocessing
-from visualize_tests import ExecFile
 import os
 import diffimg
+import visualize_tests 
+from functools import partial
 
 HTML_TEMPLATE = """
 <html>
@@ -52,13 +49,13 @@ function(mpld3){{
 }},
 """
 
-def identical_images_test(image_path_1, image_path_2):
+def is_images_identical(image_path_1, image_path_2):
     percentage_diff = diffimg.diff(image_path_1, image_path_2, delete_diff_file=True)
     return True if percentage_diff == 0 else False
 
 def snapshot_mpld3_plot(plot_filename, output_file_path=None, output_folder=mpld3.D3_SNAPSHOT_PATH):
     assert output_file_path or output_folder, "output_file_path or output_folder is required"
-    result = ExecFile(plot_filename)
+    result = visualize_tests.ExecFile(plot_filename)
     figures = {} 
     html_fig_id_format = "fig{fig_id:03d}"
     html_fig_ids = []
@@ -85,13 +82,15 @@ def snapshot_mpld3_plot(plot_filename, output_file_path=None, output_folder=mpld
         extra_css=""
     )
     
-    output_html_path = os.path.join(output_folder, "temp/", "_snapshot_{id}.html".format(id=uuid.uuid4().hex))
+    temp_folder = os.path.join(output_folder, "temp/")
+    output_html_path = os.path.join(temp_folder, "_snapshot_{id}.html".format(id=uuid.uuid4().hex))
+    if not os.path.exists(temp_folder):
+        os.makedirs(temp_folder)
     with open(output_html_path, 'w+') as f:
         f.write(rendered)
 
     if not output_file_path:
-        export_filename = ".".join(plot_filename.split("/")[-1].split(".")[0:-1])+".jpeg"
-        output_file_path = os.path.join(output_folder, export_filename) 
+        output_file_path = snapshot_path(plot_filename, output_folder) 
 
     command = [
         mpld3.SCREENSHOT_BIN, 
@@ -104,8 +103,14 @@ def snapshot_mpld3_plot(plot_filename, output_file_path=None, output_folder=mpld
     os.remove(output_html_path) if os.path.exists(output_html_path) else None
     return output_file_path
 
+def snapshot_path(plot_filename, base_path=None):
+    filename = ".".join(plot_filename.split("/")[-1].split(".")[0:-1])+".jpeg"
+    return os.path.join(base_path, filename) 
+
 def snapshot_multiple_mpld3_plots(plot_filenames, output_folder=mpld3.D3_SNAPSHOT_PATH):
+    if not os.path.exists(output_folder):
+        os.makedirs(output_folder)
     pool = multiprocessing.Pool(multiprocessing.cpu_count()) 
-    pool.map(partial(snapshot_mpld3_plot, **{
+    return pool.map(partial(snapshot_mpld3_plot, **{
         "output_folder": output_folder
     }), plot_filenames)
