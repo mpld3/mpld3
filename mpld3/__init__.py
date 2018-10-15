@@ -32,6 +32,23 @@ Functions: IPython Notebook
     disable automatic D3 display of figures in the IPython
 """
 
+import os
+import matplotlib
+
+if os.environ.get('HIDE_PLOTS', False):
+    matplotlib.use('Agg') 
+
+BASE_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+
+BIN_PATH = os.path.join(BASE_PATH, "bin/") 
+
+SCREENSHOT_BIN = os.path.join(BIN_PATH, "screenshot")
+
+D3_SNAPSHOT_PATH = os.path.join(BASE_PATH, "_d3_snapshots/") 
+
+if not os.path.exists(D3_SNAPSHOT_PATH):
+    os.makedirs(D3_SNAPSHOT_PATH)
+
 __all__ = ["__version__",
            "fig_to_html", "fig_to_dict", "fig_to_d3", "display_d3",
            "display", "show_d3", "show", "save_html", "save_json",
@@ -41,3 +58,4 @@ from .__about__ import __version__
 from . import plugins
 from . import urls
 from ._display import *
+from . import export
