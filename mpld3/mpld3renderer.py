@@ -216,7 +216,7 @@ class MPLD3Renderer(Renderer):
                                       for ec in styles['edgecolor']],
                           facecolors=[color_to_hex(fc)
                                       for fc in styles['facecolor']],
-                          edgewidths=styles['linewidth'],
+                          edgewidths=[lw for lw in styles['linewidth']],
                           offsetcoordinates=offset_coordinates,
                           pathcoordinates=path_coordinates,
                           zorder=styles['zorder'])
