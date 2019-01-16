@@ -2,7 +2,7 @@
 Visualizing Random Walks
 ========================
 This shows the use of transparent lines to visualize random walk data.
-Thre is also a custom plugin defined which causes lines to be highlighted
+There is also a custom plugin defined which causes lines to be highlighted
 when the mouse hovers over them.
 Use the toolbar buttons at the bottom-right of the plot to enable zooming
 and panning, and to reset the view.
