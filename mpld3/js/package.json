@@ -1,0 +1,21 @@
+{
+  "name": "mpld3",
+  "version": "0.4.11",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "http://github.com/sciris/mpld3"
+  },
+  "scripts": {
+    "build": "npx browserify mpld3.v0.4.1.min.js --standalone mpld3 -o dist/mpld3.js"
+  },
+  "main": "dist/mpld3.js",
+  "files": [
+    "dist/mpld3.js"
+  ],
+  "bundleDependencies": false,
+  "dependencies": {},
+  "devDependencies": {
+    "browserify": "^16.2.3"
+  }
+}

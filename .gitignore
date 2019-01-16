@@ -53,7 +53,10 @@ mpld3/mplexporter
 
 # npm
 node_modules
+package-lock.json
 
 # testing outputs
 _pngs
 _test_plots.html
+
+*.sw*
