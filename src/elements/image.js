@@ -7,6 +7,7 @@ mpld3_Image.prototype.requiredProps = ["data", "extent"];
 mpld3_Image.prototype.defaultProps = {
     alpha: 1.0,
     coordinates: "data",
+    drawstyle: "none",
     zorder: 1
 };
 

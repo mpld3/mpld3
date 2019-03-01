@@ -20,6 +20,7 @@ mpld3_Path.prototype.defaultProps = {
     offset: null,
     offsetcoordinates: "data",
     alpha: 1.0,
+    drawstyle: "none",
     zorder: 1
 };
 

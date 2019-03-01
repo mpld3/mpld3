@@ -10,6 +10,7 @@ mpld3_Text.prototype.defaultProps = {
     v_baseline: "auto",
     rotation: 0,
     fontsize: 11,
+    drawstyle: "none",
     color: "black",
     alpha: 1.0,
     zorder: 3
