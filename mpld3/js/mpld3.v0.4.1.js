@@ -445,12 +445,12 @@
       this.axis = this.axis.tickFormat(function(d, i) {
         var value = d / that.props.tickformat.xmax * 100;
         var decimals = that.props.tickformat.decimals || 0;
-        formatted_string = d3.format("." + decimals + "f")(value);
+        var formatted_string = d3.format("." + decimals + "f")(value);
         return formatted_string + that.props.tickformat.symbol;
       });
     } else if (this.props.tickformat_formatter == "str_method") {
       this.axis = this.axis.tickFormat(function(d, i) {
-        formatted_string = d3.format(that.props.tickformat.format_string)(d);
+        var formatted_string = d3.format(that.props.tickformat.format_string)(d);
         return that.props.tickformat.prefix + formatted_string + that.props.tickformat.suffix;
       });
     } else if (this.props.tickformat_formatter == "fixed") {
@@ -569,6 +569,7 @@
     offset: null,
     offsetcoordinates: "data",
     alpha: 1,
+    drawstyle: "none",
     zorder: 1
   };
   function mpld3_Path(ax, props) {
@@ -614,6 +615,7 @@
     offsetcoordinates: "data",
     offsetorder: "before",
     edgecolors: [ "#000000" ],
+    drawstyle: "none",
     edgewidths: [ 1 ],
     facecolors: [ "#0000FF" ],
     alphas: [ 1 ],
@@ -707,7 +709,7 @@
     delete pathProps.color;
     pathProps.edgewidth = pathProps.linewidth;
     delete pathProps.linewidth;
-    drawstyle = pathProps.drawstyle;
+    const drawstyle = pathProps.drawstyle;
     delete pathProps.drawstyle;
     this.defaultProps = mpld3_Path.prototype.defaultProps;
     mpld3_Path.call(this, ax, pathProps);
@@ -743,6 +745,7 @@
     alpha: 1,
     markersize: 6,
     markername: "circle",
+    drawstyle: "none",
     markerpath: null,
     zorder: 3
   };
@@ -780,6 +783,7 @@
   mpld3_Image.prototype.defaultProps = {
     alpha: 1,
     coordinates: "data",
+    drawstyle: "none",
     zorder: 1
   };
   function mpld3_Image(ax, props) {
@@ -808,6 +812,7 @@
     v_baseline: "auto",
     rotation: 0,
     fontsize: 11,
+    drawstyle: "none",
     color: "black",
     alpha: 1,
     zorder: 3

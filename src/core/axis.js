@@ -176,12 +176,12 @@ mpld3_Axis.prototype.draw = function() {
       this.axis = this.axis.tickFormat(function(d, i) { 
         var value = (d / that.props.tickformat.xmax) * 100;
         var decimals = that.props.tickformat.decimals || 0;
-        formatted_string = d3.format("."+decimals+"f")(value);
+        var formatted_string = d3.format("."+decimals+"f")(value);
         return formatted_string + that.props.tickformat.symbol;
       })  
     } else if (this.props.tickformat_formatter == "str_method"){
       this.axis = this.axis.tickFormat(function(d, i) { 
-        formatted_string = d3.format(that.props.tickformat.format_string)(d);
+        var formatted_string = d3.format(that.props.tickformat.format_string)(d);
         return that.props.tickformat.prefix + formatted_string + that.props.tickformat.suffix;
       })  
     } else if (this.props.tickformat_formatter == "fixed"){
