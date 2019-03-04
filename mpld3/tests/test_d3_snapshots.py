@@ -1,6 +1,8 @@
 import mpld3
 import os
 import glob
+import matplotlib
+matplotlib.use('Agg')
 
 TEST_PLOT_FILES  = os.path.join(mpld3.BASE_PATH, 'mpld3/test_plots/*.py')
 
@@ -17,7 +19,7 @@ def test_snapshots():
             continue
         expected_snapshots[plot_snapshot] = plot_file
 
-    got = mpld3.export.snapshot_multiple_mpld3_plots(expected_snapshots.values())
+    got = mpld3.export.snapshot_mpld3_plots_consecutive(expected_snapshots.values())
     expected = expected_snapshots.keys()
     message_frmt = "Unexpected plot output in d3: {plot_file}"
     for got, expected in zip(got, expected):  
