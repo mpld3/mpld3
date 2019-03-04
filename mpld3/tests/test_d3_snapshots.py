@@ -21,9 +21,11 @@ def test_snapshots():
 
     got = mpld3.export.snapshot_mpld3_plots_consecutive(expected_snapshots.values())
     expected = expected_snapshots.keys()
-    message_frmt = "Unexpected plot output in d3: {plot_file}"
+    message_frmt = "Unexpected plot output in d3: {plot_file} {percent}"
     message_frmt_success  = "Plot test passed: {plot_file}"
     for got, expected in zip(got, expected):  
-        message = message_frmt.format(plot_file=expected_snapshots.get(expected))
-        assert mpld3.export.is_images_identical(got, expected), message 
-        print(message_frmt_success.format(plot_file=expected_snapshots.get(expected)))
+        percent_diff = mpld3.export.is_images_identical(got, expected, output_bool=False)
+        if percent_diff == 0:
+            print(message_frmt_success.format(plot_file=expected_snapshots.get(expected)))
+        else:
+            print(message_frmt.format(plot_file=expected_snapshots.get(expected), percent=percent_diff))

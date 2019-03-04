@@ -49,9 +49,11 @@ function(mpld3){{
 }},
 """
 
-def is_images_identical(image_path_1, image_path_2):
+def is_images_identical(image_path_1, image_path_2, output_bool=True):
     percentage_diff = diffimg.diff(image_path_1, image_path_2, delete_diff_file=True)
-    return True if percentage_diff == 0 else False
+    if output_bool:
+        return True if percentage_diff == 0 else False
+    return percentage_diff 
 
 def snapshot_mpld3_plot(plot_filename, output_file_path=None, output_folder=mpld3.D3_SNAPSHOT_PATH):
     assert output_file_path or output_folder, "output_file_path or output_folder is required"
