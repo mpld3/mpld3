@@ -372,6 +372,7 @@
       left: "y",
       right: "y"
     };
+    this.ax = ax;
     this.transform = "translate(" + trans[this.props.position] + ")";
     this.props.xy = xy[this.props.position];
     this.cssclass = "mpld3-" + this.props.xy + "axis";
@@ -457,7 +458,7 @@
       this.axis = this.axis.tickFormat(function(d, i) {
         return that.props.tickformat[i];
       });
-    } else {
+    } else if (this.tickFormat) {
       this.axis = this.axis.tickFormat(this.tickFormat);
     }
     if (this.tickNr) {
