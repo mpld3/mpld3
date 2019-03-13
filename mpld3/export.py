@@ -120,7 +120,6 @@ def snapshot_multiple_mpld3_plots(plot_filenames, output_folder=mpld3.D3_SNAPSHO
 def snapshot_mpld3_plots_consecutive(plot_filenames, output_folder=mpld3.D3_SNAPSHOT_PATH):
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)
-    pool = multiprocessing.Pool(multiprocessing.cpu_count()) 
     results = []
     for plot_filename in plot_filenames:
         results.append(snapshot_mpld3_plot(plot_filename, output_folder=output_folder))
