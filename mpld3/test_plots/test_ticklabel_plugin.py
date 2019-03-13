@@ -1,4 +1,4 @@
-"""Plot to test date axis"""
+"""Plot to test ticklabel plugin"""
 import matplotlib.pyplot as plt
 import mpld3
 from mpld3 import plugins
