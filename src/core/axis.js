@@ -94,12 +94,12 @@ mpld3_Axis.prototype.getGrid = function() {
     return new mpld3_Grid(this.ax, gridprop);
 };
 
-mpld3_Axis.prototype.draw = function() {
+mpld3_Axis.prototype.wrapTicks = function() {
     /*
     Wraps text in a certain element.
     @param text {Element} The text element.
     @param width {Number} Maximum width in pixels.
-    @param lineHeight {Number=1.1} Height of a line in percentage, so 1.1 is 110% line height.
+    @param lineHeight {Number=1.2} Height of a line in percentage, so 1.2 is 120% line height.
     */
     function wrap(text, width, lineHeight) {
         lineHeight = lineHeight || 1.2;
@@ -139,6 +139,12 @@ mpld3_Axis.prototype.draw = function() {
 
     var TEXT_WIDTH = 80;
 
+    if (this.props.xy == 'x') {
+        this.elem.selectAll('text').call(wrap, TEXT_WIDTH);
+    }
+};
+
+mpld3_Axis.prototype.draw = function() {
     var scale = (this.props.xy === 'x') ?
         this.parent.props.xscale : this.parent.props.yscale;
 
@@ -202,16 +208,19 @@ mpld3_Axis.prototype.draw = function() {
         this.filter_ticks(this.axis.tickValues, this.axis.scale().domain());
     }
 
-// good tips: http://bl.ocks.org/mbostock/3048166 in response to http://stackoverflow.com/questions/11286872/how-do-i-make-a-custom-axis-formatter-for-hours-minutes-in-d3-js
+    /*
+    Good tips:
+    http://bl.ocks.org/mbostock/3048166
+    in response to
+    http://stackoverflow.com/questions/11286872/how-do-i-make-a-custom-axis-formatter-for-hours-minutes-in-d3-js
+    */
 
     this.elem = this.ax.baseaxes.append('g')
         .attr("transform", this.transform)
         .attr("class", this.cssclass)
         .call(this.axis);
 
-    if (this.props.xy == 'x') {
-        this.elem.selectAll('text').call(wrap, TEXT_WIDTH);
-    }
+    this.wrapTicks();
 
     // We create header-level CSS to style these elements, because
     // zooming/panning creates new elements with these classes.
@@ -240,6 +249,7 @@ mpld3_Axis.prototype.zoomed = function(transform) {
         } else {
             this.elem.call(this.axis.scale(transform.rescaleY(this.scale)));
         }
+        this.wrapTicks();
     } else {
         this.elem.call(this.axis);
     }

@@ -394,7 +394,7 @@
     }
     return new mpld3_Grid(this.ax, gridprop);
   };
-  mpld3_Axis.prototype.draw = function() {
+  mpld3_Axis.prototype.wrapTicks = function() {
     function wrap(text, width, lineHeight) {
       lineHeight = lineHeight || 1.2;
       text.each(function() {
@@ -421,6 +421,11 @@
       });
     }
     var TEXT_WIDTH = 80;
+    if (this.props.xy == "x") {
+      this.elem.selectAll("text").call(wrap, TEXT_WIDTH);
+    }
+  };
+  mpld3_Axis.prototype.draw = function() {
     var scale = this.props.xy === "x" ? this.parent.props.xscale : this.parent.props.yscale;
     if (scale === "date" && this.props.tickvalues) {
       var domain = this.props.xy === "x" ? this.parent.x.domain() : this.parent.y.domain();
@@ -469,9 +474,7 @@
       this.filter_ticks(this.axis.tickValues, this.axis.scale().domain());
     }
     this.elem = this.ax.baseaxes.append("g").attr("transform", this.transform).attr("class", this.cssclass).call(this.axis);
-    if (this.props.xy == "x") {
-      this.elem.selectAll("text").call(wrap, TEXT_WIDTH);
-    }
+    this.wrapTicks();
     mpld3.insert_css("div#" + this.ax.fig.figid + " ." + this.cssclass + " line, " + " ." + this.cssclass + " path", {
       "shape-rendering": "crispEdges",
       stroke: this.props.axiscolor,
@@ -494,6 +497,7 @@
       } else {
         this.elem.call(this.axis.scale(transform.rescaleY(this.scale)));
       }
+      this.wrapTicks();
     } else {
       this.elem.call(this.axis);
     }
