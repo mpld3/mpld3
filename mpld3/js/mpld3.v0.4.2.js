@@ -8,8 +8,12 @@
   mpld3.register_plugin = function(name, obj) {
     mpld3.plugin_map[name] = obj;
   };
-  mpld3.draw_figure = function(figid, spec, process) {
+  mpld3.draw_figure = function(figid, spec, process, clearElem) {
+    clearElem = typeof clearElem !== "undefined" ? clearElem : false;
     var element = document.getElementById(figid);
+    if (clearElem) {
+      element.innerHTML = "";
+    }
     if (element === null) {
       throw figid + " is not a valid id";
     }
