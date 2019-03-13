@@ -16,6 +16,7 @@ mpld3_Markers.prototype.defaultProps = {
     alpha: 1.0,
     markersize: 6,
     markername: "circle",
+    drawstyle: "none",
     markerpath: null,
     zorder: 3
 };

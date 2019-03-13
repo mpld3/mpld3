@@ -9,7 +9,9 @@ def create_plot():
     fig, ax = plt.subplots()
     ax.grid(color='lightgray')
 
-    rcolor = lambda: np.random.random(3)
+    rcolor_1 = [0.7074445660822728, 0.10479000173471098, 0.6414668195780913]
+
+    rcolor_2 = [0.22633933378197624, 0.7236195586385642, 0.5361006106618125]
 
     p = [patches.Arrow(0.75, 0.75, 0.5, 0.5),
          patches.Circle((1, 2), 0.4),
@@ -23,8 +25,8 @@ def create_plot():
          patches.Arc((3, 3), 0.5, 0.5, 270, 90)]
 
     for patch in p:
-        patch.set_facecolor(rcolor())
-        patch.set_edgecolor(rcolor())
+        patch.set_facecolor(rcolor_1)
+        patch.set_edgecolor(rcolor_2)
         patch.set_alpha(0.5)
         patch.set_linewidth(2)
         ax.add_patch(patch)
