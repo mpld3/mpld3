@@ -188,7 +188,7 @@ mpld3_Axis.prototype.draw = function() {
         });
     } else if (this.props.tickformat_formatter == "fixed") {
         this.axis = this.axis.tickFormat(function(d, i) {
-            return that.props.tickformat[i]
+            return that.props.tickformat[i];
         });
     } else if (this.tickFormat) {
         this.axis = this.axis.tickFormat(this.tickFormat);
