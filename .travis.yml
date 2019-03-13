@@ -12,12 +12,14 @@ install:
   - conda create -n testenv --yes python=$TRAVIS_PYTHON_VERSION
   - source activate testenv
   - conda install --yes $DEPS
+  - pip install -r requirements.txt
   - python setup.py install
 
 before_install:
   # install npm packages first, to use system python
   - npm config set python python2.7
   - npm install d3 vows smash jsdom
+  - npm i
   # then install python version to test
   - sudo apt-get update
   # We do this conditionally because it saves us some downloading if the
@@ -39,5 +41,5 @@ before_install:
   - "sh -e /etc/init.d/xvfb start"
 
 script:
-  - nosetests mpld3
+  - HIDE_PLOTS=True nosetests mpld3
   - make test  # Javascript tests

@@ -30,7 +30,7 @@ function mpld3_Line(ax, props) {
     pathProps.edgewidth = pathProps.linewidth;
     delete pathProps.linewidth;
 
-    drawstyle = pathProps.drawstyle;
+    const drawstyle = pathProps.drawstyle;
     delete pathProps.drawstyle;
 
     // Process path properties

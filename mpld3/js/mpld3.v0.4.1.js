@@ -349,6 +349,7 @@
     nticks: 10,
     tickvalues: null,
     tickformat: null,
+    tickformat_formatter: null,
     fontsize: "11px",
     fontcolor: "black",
     axiscolor: "black",
@@ -382,7 +383,7 @@
     var gridprop = {
       nticks: this.props.nticks,
       zorder: this.props.zorder,
-      tickvalues: this.props.tickvalues,
+      tickvalues: null,
       xy: this.props.xy
     };
     if (this.props.grid) {
@@ -435,19 +436,37 @@
       bottom: "axisBottom"
     }[this.props.position];
     this.axis = d3[scaleMethod](this.scale);
-    if (this.props.tickformat && this.props.tickvalues) {
-      this.axis = this.axis.tickValues(this.props.tickvalues).tickFormat(function(d, i) {
-        return this.props.tickformat[i];
-      }.bind(this));
+    var that = this;
+    if (this.props.tickformat_formatter == "index") {
+      this.axis = this.axis.tickFormat(function(d, i) {
+        return that.props.tickformat[d];
+      });
+    } else if (this.props.tickformat_formatter == "percent") {
+      this.axis = this.axis.tickFormat(function(d, i) {
+        var value = d / that.props.tickformat.xmax * 100;
+        var decimals = that.props.tickformat.decimals || 0;
+        var formatted_string = d3.format("." + decimals + "f")(value);
+        return formatted_string + that.props.tickformat.symbol;
+      });
+    } else if (this.props.tickformat_formatter == "str_method") {
+      this.axis = this.axis.tickFormat(function(d, i) {
+        var formatted_string = d3.format(that.props.tickformat.format_string)(d);
+        return that.props.tickformat.prefix + formatted_string + that.props.tickformat.suffix;
+      });
+    } else if (this.props.tickformat_formatter == "fixed") {
+      this.axis = this.axis.tickFormat(function(d, i) {
+        return that.props.tickformat[i];
+      });
     } else {
-      if (this.tickNr) {
-        this.axis = this.axis.ticks(this.tickNr);
-      }
-      if (this.tickFormat) {
-        this.axis = this.axis.tickFormat(this.tickFormat);
-      }
+      this.axis = this.axis.tickFormat(this.tickFormat);
     }
-    this.filter_ticks(this.axis.tickValues, this.axis.scale().domain());
+    if (this.tickNr) {
+      this.axis = this.axis.ticks(this.tickNr);
+    }
+    if (this.props.tickvalues) {
+      this.axis = this.axis.tickValues(this.props.tickvalues);
+      this.filter_ticks(this.axis.tickValues, this.axis.scale().domain());
+    }
     this.elem = this.ax.baseaxes.append("g").attr("transform", this.transform).attr("class", this.cssclass).call(this.axis);
     if (this.props.xy == "x") {
       this.elem.selectAll("text").call(wrap, TEXT_WIDTH);
@@ -465,6 +484,9 @@
     });
   };
   mpld3_Axis.prototype.zoomed = function(transform) {
+    if (this.props.tickvalues) {
+      this.filter_ticks(this.axis.tickValues, this.axis.scale().domain());
+    }
     if (transform) {
       if (this.props.xy == "x") {
         this.elem.call(this.axis.scale(transform.rescaleX(this.scale)));
@@ -547,6 +569,7 @@
     offset: null,
     offsetcoordinates: "data",
     alpha: 1,
+    drawstyle: "none",
     zorder: 1
   };
   function mpld3_Path(ax, props) {
@@ -592,6 +615,7 @@
     offsetcoordinates: "data",
     offsetorder: "before",
     edgecolors: [ "#000000" ],
+    drawstyle: "none",
     edgewidths: [ 1 ],
     facecolors: [ "#0000FF" ],
     alphas: [ 1 ],
@@ -685,7 +709,7 @@
     delete pathProps.color;
     pathProps.edgewidth = pathProps.linewidth;
     delete pathProps.linewidth;
-    drawstyle = pathProps.drawstyle;
+    const drawstyle = pathProps.drawstyle;
     delete pathProps.drawstyle;
     this.defaultProps = mpld3_Path.prototype.defaultProps;
     mpld3_Path.call(this, ax, pathProps);
@@ -721,6 +745,7 @@
     alpha: 1,
     markersize: 6,
     markername: "circle",
+    drawstyle: "none",
     markerpath: null,
     zorder: 3
   };
@@ -758,6 +783,7 @@
   mpld3_Image.prototype.defaultProps = {
     alpha: 1,
     coordinates: "data",
+    drawstyle: "none",
     zorder: 1
   };
   function mpld3_Image(ax, props) {
@@ -786,6 +812,7 @@
     v_baseline: "auto",
     rotation: 0,
     fontsize: 11,
+    drawstyle: "none",
     color: "black",
     alpha: 1,
     zorder: 3
