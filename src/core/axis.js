@@ -4,33 +4,33 @@ import "../utils/";
 
 /**********************************************************************/
 /* Axis Object: */
-/** 
+/**
  * Props:
- * `tickformat_formatter`: the variable comes from `sciris/mplextractor` and 
- *  defines which has been used. Depending on the class used different `tickformat` will be supplied. 
+ * `tickformat_formatter`: the variable comes from `sciris/mplextractor` and
+ *  defines which has been used. Depending on the class used different `tickformat` will be supplied.
  *  The variables include:
  *    - `percent`     = matplotlib.ticker.PercentFormatter
  *    - `index`       = matplotlib.ticker.IndexFormatter
  *    - `fixed`       = matplotlib.ticker.FixedFormatter
  *    - `str_method`  = matplotlib.ticker.StrMethodFormatter
  *
- * `tickformat`: the variable comes from `sciris/mplextractor` and defines 
- * the variables inside of each `matplotlib.ticker`. The variable inside this changes 
+ * `tickformat`: the variable comes from `sciris/mplextractor` and defines
+ * the variables inside of each `matplotlib.ticker`. The variable inside this changes
  * depending on `tickformat_formatter` used.
- *    - tickformat_formatter: `percent` 
+ *    - tickformat_formatter: `percent`
  *      tickformat: {
  *        "xmax": formatter.xmax,
  *        "decimals": formatter.decimals,
  *        "symbol": formatter.symbol,
  *      } <- variables defined in matplotlib.ticker.PercentFormatter
- *    - tickformat_formatter: `index` 
+ *    - tickformat_formatter: `index`
  *      tickformat: [...] <- array of ticks e.g. ["a", "b", "c"]
- *    - tickformat_formatter: `fixed` 
+ *    - tickformat_formatter: `fixed`
  *      tickformat: [...] <- array of ticks e.g. ["a", "b", "c"] similar to `index`
- *    - tickformat_formatter: `str_method` 
- *      tickformat: "..." <- format accepted by https://github.com/d3/d3-format 
+ *    - tickformat_formatter: `str_method`
+ *      tickformat: "..." <- format accepted by https://github.com/d3/d3-format
  *
- * `tickvalue`: values from `ticker.FixedLocator` if set the axis lables will become fixed and 
+ * `tickvalue`: values from `ticker.FixedLocator` if set the axis lables will become fixed and
  * will not scale
  *
  **/
@@ -43,7 +43,7 @@ mpld3_Axis.prototype.defaultProps = {
     nticks: 10,
     tickvalues: null,
     tickformat: null,
-    tickformat_formatter: null, 
+    tickformat_formatter: null,
     fontsize: "11px",
     fontcolor: "black",
     axiscolor: "black",
@@ -69,6 +69,7 @@ function mpld3_Axis(ax, props) {
         right: 'y'
     }
 
+    this.ax = ax;
     this.transform = "translate(" + trans[this.props.position] + ")";
     this.props.xy = xy[this.props.position];
     this.cssclass = "mpld3-" + this.props.xy + "axis";
@@ -82,7 +83,7 @@ mpld3_Axis.prototype.getGrid = function() {
     var gridprop = {
         nticks: this.props.nticks,
         zorder: this.props.zorder,
-        tickvalues: null, 
+        tickvalues: null,
         xy: this.props.xy
     }
     if (this.props.grid) {
@@ -168,37 +169,37 @@ mpld3_Axis.prototype.draw = function() {
     this.axis = d3[scaleMethod](this.scale);
 
     var that = this;
+
     if (this.props.tickformat_formatter == "index") {
-      this.axis = this.axis.tickFormat(function(d, i) { 
-        return that.props.tickformat[d];
-      })  
-    } else if (this.props.tickformat_formatter == "percent"){
-      this.axis = this.axis.tickFormat(function(d, i) { 
-        var value = (d / that.props.tickformat.xmax) * 100;
-        var decimals = that.props.tickformat.decimals || 0;
-        var formatted_string = d3.format("."+decimals+"f")(value);
-        return formatted_string + that.props.tickformat.symbol;
-      })  
-    } else if (this.props.tickformat_formatter == "str_method"){
-      this.axis = this.axis.tickFormat(function(d, i) { 
-        var formatted_string = d3.format(that.props.tickformat.format_string)(d);
-        return that.props.tickformat.prefix + formatted_string + that.props.tickformat.suffix;
-      })  
-    } else if (this.props.tickformat_formatter == "fixed"){
-      this.axis = this.axis.tickFormat(function(d, i) { 
-        return that.props.tickformat[i] 
-      })  
-    } else {
-      // Incase there is a plugin for the tick formatting present 
-      this.axis = this.axis.tickFormat(this.tickFormat);
-    } 
+        this.axis = this.axis.tickFormat(function(d, i) {
+            return that.props.tickformat[d];
+        });
+    } else if (this.props.tickformat_formatter == "percent") {
+        this.axis = this.axis.tickFormat(function(d, i) {
+            var value = (d / that.props.tickformat.xmax) * 100;
+            var decimals = that.props.tickformat.decimals || 0;
+            var formatted_string = d3.format("."+decimals+"f")(value);
+            return formatted_string + that.props.tickformat.symbol;
+        });
+    } else if (this.props.tickformat_formatter == "str_method") {
+        this.axis = this.axis.tickFormat(function(d, i) {
+            var formatted_string = d3.format(that.props.tickformat.format_string)(d);
+            return that.props.tickformat.prefix + formatted_string + that.props.tickformat.suffix;
+        });
+    } else if (this.props.tickformat_formatter == "fixed") {
+        this.axis = this.axis.tickFormat(function(d, i) {
+            return that.props.tickformat[i]
+        });
+    } else if (this.tickFormat) {
+        this.axis = this.axis.tickFormat(this.tickFormat);
+    }
 
     if (this.tickNr) {
-      this.axis = this.axis.ticks(this.tickNr);
-    }   
+        this.axis = this.axis.ticks(this.tickNr);
+    }
     if (this.props.tickvalues) {
-      this.axis = this.axis.tickValues(this.props.tickvalues)
-      this.filter_ticks(this.axis.tickValues, this.axis.scale().domain());
+        this.axis = this.axis.tickValues(this.props.tickvalues)
+        this.filter_ticks(this.axis.tickValues, this.axis.scale().domain());
     }
 
 // good tips: http://bl.ocks.org/mbostock/3048166 in response to http://stackoverflow.com/questions/11286872/how-do-i-make-a-custom-axis-formatter-for-hours-minutes-in-d3-js
