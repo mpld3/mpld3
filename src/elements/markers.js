@@ -31,8 +31,8 @@ function mpld3_Markers(ax, props) {
                 this.props.markerpath[1]);
     } else {
         this.marker = (this.props.markername === null) ? null :
-            d3.svg.symbol(this.props.markername)
-            .size(Math.pow(this.props.markersize, 2))();
+            d3.symbol(this.props.markername)
+              .size(Math.pow(this.props.markersize, 2))();
     }
 
     // Call the PathCollection constructor

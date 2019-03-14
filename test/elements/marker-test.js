@@ -30,7 +30,10 @@ suite.addBatch({
                 return markers;
             },
             "has the expected marker path": function(markers) {
-                assert.equal(markers.marker, "M0,3.385137501286538A3.385137501286538,3.385137501286538 0 1,1 0,-3.385137501286538A3.385137501286538,3.385137501286538 0 1,1 0,3.385137501286538Z");
+                console.log(markers.marker);
+                let expected = "M3.385137501286538,0A3.385137501286538,3.385137501286538,0,1,1,-3.385137501286538,0A3.385137501286538,3.385137501286538,0,1,1,3.385137501286538,0";
+                console.log(expected);
+                assert.equal(markers.marker, expected);
             },
             "has the expected offsets": function(markers) {
                 assert.equal(markers.offsets[0][0], 0);
