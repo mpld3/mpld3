@@ -1,14 +1,24 @@
-var smash = require("smash"),
-    jsdom = require("jsdom");
+var smash = require("smash");
+var jsdom = require("jsdom");
 
-global.document = jsdom.jsdom("<html><head></head><body></body></html>");
+const { JSDOM } = jsdom;
+const { window } = new JSDOM();
+const { document } = (new JSDOM('<!DOCTYPE html><html><body></body></html>')).window;
 
-var d3 = require("d3");
+global.document = document;
+
+var $ = jQuery = require('jquery')(window);
+
+let d3 = require("d3");
 
 module.exports = function() {
+
   var files = [].slice.call(arguments).map(function(d) { return "src/" + d; }),
       expression = "mpld3",
-      sandbox = {console: console, d3: d3}; 
+      sandbox = {
+        console: console, 
+        d3: d3
+      }; 
 
   files.unshift("src/start");
   files.push("src/version");
@@ -46,7 +56,3 @@ module.exports = function() {
 
   return topic;
 };
-
-process.on("uncaughtException", function(e) {
-  console.trace(e.stack);
-});

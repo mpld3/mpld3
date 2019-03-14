@@ -2,7 +2,7 @@
   "name": "mpld3_plottests",
   "version": "0.0.0",
   "description": "D3 Viewer for Matplotlib",
-  "main": "index.js",
+  "main": "tests/load.js",
   "directories": {
     "doc": "doc",
     "example": "examples",
@@ -23,12 +23,13 @@
   "author": "Jake VanderPlas",
   "license": "MIT",
   "dependencies": {
-    "d3": "3.5.12",
-    "jsdom": "11",
+    "d3": "^5.9.1",
+    "jquery": "^3.3.1",
+    "jsdom": "^14.0.0",
     "npm": "^6.0.0",
     "smash": "0.0",
     "uglify-js": "2.6.1",
-    "vows": "0.8"
+    "vows": "^0.8.2"
   },
   "bugs": {
     "url": "https://github.com/jakevdp/mpld3/issues"
