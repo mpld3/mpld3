@@ -2,8 +2,7 @@ language: python
 
 python:
   - 2.7
-  - 3.4
-  - 3.5
+  - 3.7
 
 env:
   - DEPS="numpy=1.11 matplotlib=1.5 jinja2=2.8 pandas=0.18 nose"
