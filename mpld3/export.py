@@ -86,10 +86,12 @@ def snapshot_mpld3_plot(plot_filename, output_file_path=None, output_folder=mpld
     
     temp_folder = os.path.join(output_folder, "temp/")
     output_html_path = os.path.join(temp_folder, "_snapshot_{id}.html".format(id=uuid.uuid4().hex))
+
     if not os.path.exists(temp_folder):
         os.makedirs(temp_folder)
-    with open(output_html_path, 'w+') as f:
-        f.write(rendered)
+    f = open(output_html_path, 'w+')
+    f.write(rendered)
+    f.close()
 
     if not output_file_path:
         output_file_path = snapshot_path(plot_filename, output_folder) 
@@ -101,7 +103,8 @@ def snapshot_mpld3_plot(plot_filename, output_file_path=None, output_folder=mpld
         mpld3.urls.D3_LOCAL,
         mpld3.urls.MPLD3_LOCAL,
     ]
-    subprocess.call(command)
+    subprocess.check_call(command)
+
     os.remove(output_html_path) if os.path.exists(output_html_path) else None
     return output_file_path
 

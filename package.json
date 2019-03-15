@@ -36,6 +36,6 @@
   },
   "homepage": "https://github.com/jakevdp/mpld3#readme",
   "devDependencies": {
-    "puppeteer": "^1.9.0"
+    "puppeteer": "^1.13.0"
   }
 }
