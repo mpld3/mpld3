@@ -6,7 +6,7 @@ python:
   - 3.5
 
 env:
-  - DEPS="numpy=1.11 matplotlib=2.1.1 jinja2=2.8 pandas=0.18 nose"
+  - DEPS="numpy=1.11 matplotlib=2.2.3 jinja2=2.8 pandas=0.18 nose"
 
 install:
   - conda create -n testenv --yes python=$TRAVIS_PYTHON_VERSION
