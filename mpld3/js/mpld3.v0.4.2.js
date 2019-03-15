@@ -763,7 +763,7 @@
     if (this.props.markerpath !== null) {
       this.marker = this.props.markerpath[0].length == 0 ? null : mpld3.path().call(this.props.markerpath[0], this.props.markerpath[1]);
     } else {
-      this.marker = this.props.markername === null ? null : d3.svg.symbol(this.props.markername).size(Math.pow(this.props.markersize, 2))();
+      this.marker = this.props.markername === null ? null : d3.symbol(this.props.markername).size(Math.pow(this.props.markersize, 2))();
     }
     var PCprops = {
       paths: [ this.props.markerpath ],
