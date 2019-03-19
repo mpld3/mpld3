@@ -767,7 +767,7 @@
     }
     var PCprops = {
       paths: [ this.props.markerpath ],
-      offsets: ax.fig.get_data(this.props.data),
+      offsets: ax.fig.parse_offsets(ax.fig.get_data(this.props.data, true)),
       xindex: this.props.xindex,
       yindex: this.props.yindex,
       offsetcoordinates: this.props.coordinates,
@@ -1707,14 +1707,36 @@
   mpld3_Figure.prototype.setYTicks = function(nr, format) {
     this.setTicks("y", nr, format);
   };
+  mpld3_Figure.prototype.removeNaN = function(data) {
+    output = output.map(function(offsets) {
+      return offsets.map(function(value) {
+        if (typeof value == "number" && isNaN(value)) {
+          return 0;
+        } else {
+          return value;
+        }
+      });
+    });
+  };
+  mpld3_Figure.prototype.parse_offsets = function(data) {
+    return data.map(function(offsets) {
+      return offsets.map(function(value) {
+        if (typeof value == "number" && isNaN(value)) {
+          return 0;
+        } else {
+          return value;
+        }
+      });
+    });
+  };
   mpld3_Figure.prototype.get_data = function(data) {
+    var output = data;
     if (data === null || typeof data === "undefined") {
-      return null;
+      output = null;
     } else if (typeof data === "string") {
-      return this.data[data];
-    } else {
-      return data;
+      output = this.data[data];
     }
+    return output;
   };
   mpld3.PlotElement = mpld3_PlotElement;
   function mpld3_PlotElement(parent, props) {

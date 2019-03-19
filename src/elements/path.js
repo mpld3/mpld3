@@ -27,6 +27,7 @@ mpld3_Path.prototype.defaultProps = {
 function mpld3_Path(ax, props) {
     mpld3_PlotElement.call(this, ax, props);
     this.data = ax.fig.get_data(this.props.data);
+
     this.pathcodes = this.props.pathcodes;
 
     this.pathcoords = new mpld3_Coordinates(this.props.coordinates,
