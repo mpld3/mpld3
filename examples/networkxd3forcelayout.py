@@ -177,13 +177,10 @@ class NetworkXD3ForceLayout(mpld3.plugins.PluginBase):
                                                   this.props.maximum_radius)
     }
     NetworkXD3ForceLayoutPlugin.prototype.zoomed = function() {
-            this.tick()
-        }
+        this.tick()
+    }
     NetworkXD3ForceLayoutPlugin.prototype.draw = function(){
-        // TODO: (@vladh) Somehow fix this.
-        return undefined;
         plugin = this
-        brush = this.fig.getBrush();
         DEFAULT_NODE_SIZE = this.props.nominal_radius;
         var height = this.fig.height
         var width = this.fig.width
