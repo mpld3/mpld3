@@ -16,6 +16,7 @@ mpld3_Markers.prototype.defaultProps = {
     alpha: 1.0,
     markersize: 6,
     markername: "circle",
+    drawstyle: "none",
     markerpath: null,
     zorder: 3
 };
@@ -30,14 +31,15 @@ function mpld3_Markers(ax, props) {
                 this.props.markerpath[1]);
     } else {
         this.marker = (this.props.markername === null) ? null :
-            d3.svg.symbol(this.props.markername)
-            .size(Math.pow(this.props.markersize, 2))();
+            d3.symbol(this.props.markername)
+              .size(Math.pow(this.props.markersize, 2))();
     }
 
+    //
     // Call the PathCollection constructor
     var PCprops = {
         paths: [this.props.markerpath],
-        offsets: ax.fig.get_data(this.props.data),
+        offsets: ax.fig.parse_offsets(ax.fig.get_data(this.props.data, true)),
         xindex: this.props.xindex,
         yindex: this.props.yindex,
         offsetcoordinates: this.props.coordinates,

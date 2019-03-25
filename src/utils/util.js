@@ -5,9 +5,29 @@ mpld3.register_plugin = function(name, obj){
 };
 
 /**********************************************************************/
-/* Data Parsing Functions */
-mpld3.draw_figure = function(figid, spec, process) {
+/* Remove root figure from mpld3.figure */
+mpld3.remove_figure = function(figid) {
     var element = document.getElementById(figid);
+    if (element !== null) {
+      element.innerHTML = '';
+    }
+    for (var i = 0; i < mpld3.figures.length; i++) {
+        fig = mpld3.figures[i];
+        if (fig.figid === figid) {
+          mpld3.figures.splice(i, 1);
+        }
+    }
+    return true;
+}
+
+/**********************************************************************/
+/* Data Parsing Functions */
+mpld3.draw_figure = function(figid, spec, process, clearElem) {
+    var element = document.getElementById(figid);
+    clearElem = typeof clearElem !== 'undefined' ? clearElem : false;
+    if (clearElem){
+      mpld3.remove_figure(figid);
+    }
     if (element === null) {
         throw (figid + " is not a valid id");
     }

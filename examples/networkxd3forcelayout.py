@@ -157,7 +157,7 @@ class NetworkXD3ForceLayout(mpld3.plugins.PluginBase):
     function NetworkXD3ForceLayoutPlugin(fig, props){
         mpld3.Plugin.call(this, fig, props);
     };
-    var color = d3.scaleOrdinal(d3.schemeCategory20);
+    var color = d3.scaleOrdinal(d3.schemeCategory10);
     NetworkXD3ForceLayoutPlugin.prototype.zoomScaleProp = function (nominal_prop, minimum_prop, maximum_prop) {
         var zoom = this.ax.zoom;
         scalerFunction = function() {
@@ -177,13 +177,10 @@ class NetworkXD3ForceLayout(mpld3.plugins.PluginBase):
                                                   this.props.maximum_radius)
     }
     NetworkXD3ForceLayoutPlugin.prototype.zoomed = function() {
-            this.tick()
-        }
+        this.tick()
+    }
     NetworkXD3ForceLayoutPlugin.prototype.draw = function(){
-        // TODO: (@vladh) Somehow fix this.
-        return undefined;
         plugin = this
-        brush = this.fig.getBrush();
         DEFAULT_NODE_SIZE = this.props.nominal_radius;
         var height = this.fig.height
         var width = this.fig.width
@@ -199,7 +196,7 @@ class NetworkXD3ForceLayout(mpld3.plugins.PluginBase):
         ax_obj = this.ax;
         var width = d3.max(ax.x.range()) - d3.min(ax.x.range()),
             height = d3.max(ax.y.range()) - d3.min(ax.y.range());
-        var color = d3.scaleOrdinal(d3.schemeCategory20);
+        var color = d3.scaleOrdinal(d3.schemeCategory10);
         this.xScale = d3.scaleLinear().domain([0, 1]).range([0, width]) // ax.x;
         this.yScale = d3.scaleLinear().domain([0, 1]).range([height, 0]) // ax.y;
         this.force = d3.forceSimulation();
@@ -238,7 +235,7 @@ class NetworkXD3ForceLayout(mpld3.plugins.PluginBase):
           .enter().append("circle")
             .attr("class", "node")
             .attr("r", function(d) {return d.size === undefined ? DEFAULT_NODE_SIZE : d.size ;})
-            .style("fill", function (d) { return d.color; });
+            .style("fill", function (d) { return color(d); });
         this.node.append("title")
             .text(function (d) { return d.name; });
         this.force.on("tick", this.tick.bind(this));

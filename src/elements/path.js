@@ -20,12 +20,14 @@ mpld3_Path.prototype.defaultProps = {
     offset: null,
     offsetcoordinates: "data",
     alpha: 1.0,
+    drawstyle: "none",
     zorder: 1
 };
 
 function mpld3_Path(ax, props) {
     mpld3_PlotElement.call(this, ax, props);
     this.data = ax.fig.get_data(this.props.data);
+
     this.pathcodes = this.props.pathcodes;
 
     this.pathcoords = new mpld3_Coordinates(this.props.coordinates,

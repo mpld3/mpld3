@@ -1,0 +1,45 @@
+#!/usr/bin/env node
+
+const puppeteer = require('puppeteer');
+const path = require('path');
+const fs = require('fs');
+
+const args = process.argv.slice(2); 
+const htmlFilePath = args[0];
+const output = args[1];
+const d3FilePath = args[2]
+const mpld3FilePath = args[3];
+
+console.log(htmlFilePath)
+const html = fs.readFileSync(htmlFilePath, 'utf8');
+const d3 = fs.readFileSync(d3FilePath, 'utf8');
+const mpld3 = fs.readFileSync(mpld3FilePath, 'utf8');
+const agent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+  ' (KHTML, like Gecko) Chrome/61.0.3163.100 Safari/537.36';
+
+(async () => {
+  const browser = await puppeteer.launch({args: ['--no-sandbox', '--disable-setuid-sandbox']});
+  try{
+    const page = await browser.newPage();
+    await page.goto('file://'+htmlFilePath);
+    page.setViewport({width: 1000, height: 600, deviceScaleFactor: 2});
+    //await page.goto(`data:text/html,${html}`);
+    await page.evaluate(d3)
+    await page.evaluate(mpld3)
+    await page.setUserAgent(agent);
+
+    await page.evaluate(() => {
+      draw_figures()
+    });
+    await page.waitForSelector("svg");
+
+    await page.screenshot({
+      path: output,
+      fullPage: true
+    });
+  } catch(e) {
+    console.log(e);
+  }
+
+  await browser.close();
+})(html);

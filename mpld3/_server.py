@@ -45,7 +45,10 @@ def generate_handler(html, files=None):
                 self.send_response(200)
                 self.send_header("Content-type", content_type)
                 self.end_headers()
-                self.wfile.write(content.encode())
+                try:
+                    self.wfile.write(content.encode())
+                except UnicodeDecodeError: 
+                    self.wfile.write(content)
             else:
                 self.send_error(404)
 
