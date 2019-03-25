@@ -12,7 +12,7 @@ mpld3.remove_figure = function(figid) {
       element.innerHTML = '';
     }
     for (var i = 0; i < mpld3.figures.length; i++) {
-        fig = mpld3.figures[i];
+        var fig = mpld3.figures[i];
         if (fig.figid === figid) {
           mpld3.figures.splice(i, 1);
         }
