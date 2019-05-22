@@ -14,7 +14,7 @@ import json
 import contextlib
 
 import matplotlib
-matplotlib.use('Agg')  # don't display plots
+#matplotlib.use('Agg')  # don't display plots # WARNING, breaks interactive plotting
 import matplotlib.pyplot as plt
 
 import mpld3
