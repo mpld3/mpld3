@@ -41,5 +41,5 @@ before_install:
   - "sh -e /etc/init.d/xvfb start"
 
 script:
-  - HIDE_PLOTS=True nosetests mpld3
+  - MPLBE=Agg HIDE_PLOTS=True nosetests mpld3
   - make test  # Javascript tests
