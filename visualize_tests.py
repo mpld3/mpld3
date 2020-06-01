@@ -14,7 +14,12 @@ import json
 import contextlib
 
 import matplotlib
-matplotlib.use('Agg')  # don't display plots
+
+MPLBE = os.environ.get('MPLBE', False)
+if MPLBE:
+    import matplotlib
+    matplotlib.use(MPLBE)
+
 import matplotlib.pyplot as plt
 
 import mpld3

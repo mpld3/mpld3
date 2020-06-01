@@ -1,3 +1,7 @@
+try:
+    from . import export
+except ModuleNotFoundError as e:
+    print("Export module not loaded")
 """
 mpld3 tests
 """

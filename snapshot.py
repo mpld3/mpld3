@@ -31,7 +31,7 @@ def main():
         filenames = glob.glob(input_test_files)
     else:
         filenames = itertools.chain(*(glob.glob(w) for w in input_test_files))
-    mpld3.export.snapshot_multiple_mpld3_plots(plot_filenames=filenames)
+    mpld3.tests.export.snapshot_multiple_mpld3_plots(plot_filenames=filenames)
 
 if __name__ == '__main__':
      main()
