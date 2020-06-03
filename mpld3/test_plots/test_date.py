@@ -1,4 +1,9 @@
-"""Plot to test date axis"""
+"""
+Plot to test date axis
+
+NOTE (@vladh): Because we're automatically formatting the date, it will most likely look
+different in mpl and d3. This is okay.
+"""
 import matplotlib.pyplot as plt
 import numpy as np
 import matplotlib

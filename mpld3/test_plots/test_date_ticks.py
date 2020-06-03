@@ -1,7 +1,7 @@
 """
 Plot to test custom date axis tick locations and labels
 
-NOTE (@vladh): We may see different behaviour in mpld3 vs d3 for the y axis, because we never
+NOTE (@vladh): We may see different behaviour in mpl vs d3 for the y axis, because we never
 specified exactly how we want the y axis formatted. This is ok.
 """
 from datetime import datetime
