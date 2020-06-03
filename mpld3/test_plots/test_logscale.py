@@ -1,4 +1,9 @@
-"""Plot to test logscale"""
+"""
+Plot to test logscale
+
+TODO (@vladh): `sharex` and `sharey` seem to cause the tick labels to go nuts. This needs to
+be fixed.
+"""
 import matplotlib.pyplot as plt
 import numpy as np
 import mpld3
