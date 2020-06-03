@@ -7,7 +7,7 @@ from mpld3 import plugins
 def create_plot():
     fig, ax = plt.subplots()
     ax.plot([1, 3], [1, 2])
-    fmtr = matplotlib.ticker.StrMethodFormatter("{x:.2f}")
+    fmtr = matplotlib.ticker.StrMethodFormatter("{x:.2f} :)")
     ax.xaxis.set_major_formatter(fmtr)
     ax.set_title('Tickformat str method test', size=14)
     return fig
