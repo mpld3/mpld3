@@ -2,6 +2,7 @@ import mpld3
 import os
 import glob
 import matplotlib
+from . import export
 
 from nose.plugins.skip import SkipTest
 matplotlib.use('Agg')
@@ -16,17 +17,17 @@ def test_snapshots():
 
     expected_snapshots = {}
     for plot_file in plot_files:
-        plot_snapshot = mpld3.export.snapshot_path(plot_file, TEST_PLOT_SNAPSHOT_DIR) 
+        plot_snapshot = export.snapshot_path(plot_file, TEST_PLOT_SNAPSHOT_DIR) 
         if not os.path.isfile(plot_snapshot):
             continue
         expected_snapshots[plot_snapshot] = plot_file
 
-    got = mpld3.export.snapshot_mpld3_plots_consecutive(expected_snapshots.values())
+    got = export.snapshot_mpld3_plots_consecutive(expected_snapshots.values())
     expected = expected_snapshots.keys()
     message_frmt = "Unexpected plot output in d3: {plot_file} {percent}"
     message_frmt_success  = "Plot test passed: {plot_file}"
     for got, expected in zip(got, expected):  
-        percent_diff = mpld3.export.is_images_identical(got, expected, output_bool=False)
+        percent_diff = export.is_images_identical(got, expected, output_bool=False)
         if percent_diff == 0:
             print(message_frmt_success.format(plot_file=expected_snapshots.get(expected)))
         else:
