@@ -79,13 +79,6 @@ function mpld3_Axis(ax, props) {
 
     this.tickNr = null;
     this.tickFormat = null;
-
-    // TODO: Remove
-    if (!window.debug) {
-        window.debug = {};
-    }
-    this.debug_key = this.ax.fig.figid + '-' + this.cssclass;
-    window.debug[this.debug_key] = {};
 }
 
 mpld3_Axis.prototype.getGrid = function() {
@@ -184,9 +177,6 @@ mpld3_Axis.prototype.draw = function() {
     this.axis = d3[scaleMethod](this.scale);
 
     var that = this;
-
-    // TODO: Remove
-    window.debug[this.debug_key].props = this.props;
 
     this.filter_ticks(this.axis.scale().domain());
 
