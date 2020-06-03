@@ -1,4 +1,10 @@
-"""Plot to test date axis"""
+"""
+Plot to test date axis
+
+TODO (@vladh): This test is misleading and needs to be updated. It should test
+dates, but it only plots numbers in [2000, 2050], which will of course get
+thousands separators automatically added.
+"""
 import matplotlib.pyplot as plt
 import matplotlib
 import mpld3
