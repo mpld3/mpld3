@@ -43,6 +43,8 @@ mpld3_Axis.prototype.defaultProps = {
     nticks: 10,
     tickvalues: null,
     tickformat: null,
+    filtered_tickvalues: null,
+    filtered_tickformat: null,
     tickformat_formatter: null,
     fontsize: "11px",
     fontcolor: "black",
@@ -77,6 +79,13 @@ function mpld3_Axis(ax, props) {
 
     this.tickNr = null;
     this.tickFormat = null;
+
+    // TODO: Remove
+    if (!window.debug) {
+        window.debug = {};
+    }
+    this.debug_key = this.ax.fig.figid + '-' + this.cssclass;
+    window.debug[this.debug_key] = {};
 }
 
 mpld3_Axis.prototype.getGrid = function() {
@@ -176,9 +185,14 @@ mpld3_Axis.prototype.draw = function() {
 
     var that = this;
 
+    // TODO: Remove
+    window.debug[this.debug_key].props = this.props;
+
+    this.filter_ticks(this.axis.scale().domain());
+
     if (this.props.tickformat_formatter == "index") {
         this.axis = this.axis.tickFormat(function(d, i) {
-            return that.props.tickformat[d];
+            return that.props.filtered_tickformat[d];
         });
     } else if (this.props.tickformat_formatter == "percent") {
         this.axis = this.axis.tickFormat(function(d, i) {
@@ -194,7 +208,7 @@ mpld3_Axis.prototype.draw = function() {
         });
     } else if (this.props.tickformat_formatter == "fixed") {
         this.axis = this.axis.tickFormat(function(d, i) {
-            return that.props.tickformat[i];
+            return that.props.filtered_tickformat[i];
         });
     } else if (this.tickFormat) {
         this.axis = this.axis.tickFormat(this.tickFormat);
@@ -203,10 +217,10 @@ mpld3_Axis.prototype.draw = function() {
     if (this.tickNr) {
         this.axis = this.axis.ticks(this.tickNr);
     }
-    if (this.props.tickvalues) {
-        this.axis = this.axis.tickValues(this.props.tickvalues)
-        this.filter_ticks(this.axis.tickValues, this.axis.scale().domain());
-    }
+
+    // NOTE (@vladh): Since we're always using `filtered_tickvalues`, let's
+    // always filter on the axes. Is this a good idea? Well, I hope so!
+    this.axis = this.axis.tickValues(this.props.filtered_tickvalues)
 
     /*
     Good tips:
@@ -240,9 +254,8 @@ mpld3_Axis.prototype.draw = function() {
 mpld3_Axis.prototype.zoomed = function(transform) {
     // if we set tickValues for the axis, we are responsible for
     // updating them when they pan or zoom off of the chart
-    if (this.props.tickvalues) {
-      this.filter_ticks(this.axis.tickValues, this.axis.scale().domain());
-    }
+    this.filter_ticks(this.axis.scale().domain());
+    this.axis = this.axis.tickValues(this.props.filtered_tickvalues)
     if (transform) {
         if (this.props.xy == 'x') {
             this.elem.call(this.axis.scale(transform.rescaleX(this.scale)));
@@ -260,10 +273,28 @@ mpld3_Axis.prototype.setTicks = function(nr, format) {
     this.tickFormat = format;
 };
 
-mpld3_Axis.prototype.filter_ticks = function(tickValues, domain) {
+mpld3_Axis.prototype.filter_ticks = function(domain) {
     //Remove ticks outside axis limits.
-    if (this.props.tickvalues != null) {
-        tickValues(this.props.tickvalues.filter(
-            function (v) { return (v >= domain[0]) && (v <= domain[1]); }));
+    if (this.props.tickvalues) {
+        const that = this;
+        const filteredTickIndices = this.props.tickvalues.map(function(d, i) {
+            return i;
+        }).filter(function(d, i) {
+            const v = that.props.tickvalues[d];
+            return (v >= domain[0]) && (v <= domain[1]);
+        });
+        this.props.filtered_tickvalues = this.props.tickvalues.filter(function(d, i) {
+            return filteredTickIndices.includes(i);
+        });
+        if (this.props.tickformat) {
+            this.props.filtered_tickformat = this.props.tickformat.filter(function(d, i) {
+                return filteredTickIndices.includes(i);
+            });
+        } else {
+            this.props.filtered_tickformat = this.props.tickformat;
+        }
+    } else {
+        this.props.filtered_tickvalues = this.props.tickvalues;
+        this.props.filtered_tickformat = this.props.tickformat;
     }
 }
