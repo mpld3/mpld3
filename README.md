@@ -1,10 +1,7 @@
 mpld3: A D3 Viewer for Matplotlib
 =================================
 
-**Note: mpld3 is in the process of switching maintainers: feature requests & bug reports are likely to be delayed. If you are interested in contributing to this project, please contact one of the repository owners.**
-
----
-
+- Maintainers: @cliffckerr and @vladh
 - Author: Jake Vanderplas <jakevdp@cs.washington.edu>
 - License: BSD 3-clause
 
