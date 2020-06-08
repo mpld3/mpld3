@@ -1,4 +1,5 @@
 *.py[cod]
+venv/
 
 # C extensions
 *.so
@@ -10,7 +11,6 @@ dist
 build
 eggs
 parts
-bin
 var
 sdist
 develop-eggs
@@ -26,6 +26,8 @@ pip-log.txt
 .coverage
 .tox
 nosetests.xml
+
+_d3_snapshots/
 
 # Translations
 *.mo
@@ -53,7 +55,17 @@ mpld3/mplexporter
 
 # npm
 node_modules
+package-lock.json
 
 # testing outputs
 _pngs
 _test_plots.html
+
+# vim
+*.sw*
+
+# OSX
+.DS_Store
+
+# virtualenv
+virtualenv/

@@ -1,18 +1,19 @@
 {
-  "name": "mpld3",
+  "name": "mpld3_plottests",
   "version": "0.0.0",
   "description": "D3 Viewer for Matplotlib",
-  "main": "index.js",
+  "main": "tests/load.js",
   "directories": {
     "doc": "doc",
-    "example": "examples"
+    "example": "examples",
+    "test": "test"
   },
   "scripts": {
-    "test": "./node_modules/.bin/vows"
+    "test": "vows"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/jakevdp/mpld3.git"
+    "url": "git+https://github.com/jakevdp/mpld3.git"
   },
   "keywords": [
     "d3",
@@ -20,14 +21,21 @@
     "python"
   ],
   "author": "Jake VanderPlas",
-  "license": "BSD 3-clause",
-  "gitHead": "ec7da08f78fb58860eb14c945d0924dc81543cde",
-  "readmeFilename": "README.md",
+  "license": "MIT",
   "dependencies": {
-    "d3": "3.5.12",
+    "d3": "^5.9.1",
+    "jquery": "^3.3.1",
+    "jsdom": "^15.1.1",
+    "npm": "^6.0.0",
     "smash": "0.0",
     "uglify-js": "2.6.1",
-    "vows": "0.8",
-    "jsdom": "^15.1.1"
+    "vows": "^0.8.2"
+  },
+  "bugs": {
+    "url": "https://github.com/jakevdp/mpld3/issues"
+  },
+  "homepage": "https://github.com/jakevdp/mpld3#readme",
+  "devDependencies": {
+    "puppeteer": "^1.13.0"
   }
 }

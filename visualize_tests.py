@@ -14,7 +14,12 @@ import json
 import contextlib
 
 import matplotlib
-matplotlib.use('Agg')  # don't display plots
+
+MPLBE = os.environ.get('MPLBE', False)
+if MPLBE:
+    import matplotlib
+    matplotlib.use(MPLBE)
+
 import matplotlib.pyplot as plt
 
 import mpld3
@@ -43,8 +48,9 @@ TEMPLATE = """
 }}
 
 .fig {{
-  height: 500px;
+  height: 850px;
 }}
+
 
 {extra_css}
 
@@ -68,7 +74,7 @@ TEMPLATE = """
 """
 
 MPLD3_TEMPLATE = """
-<div class="fig" id="fig{figid:03d}"></div>
+<div>{fname}</div><div class="fig" id="fig{figid:03d}"></div>
 """
 
 JS_TEMPLATE = """
@@ -185,18 +191,21 @@ def combine_testplots(wildcard='mpld3/test_plots/*.py',
 
     fig_png = []
     fig_json = []
+    fig_name = []
     for filename in filenames:
         result = ExecFile(filename, pngdir=pngdir)
         fig_png.extend(result.iter_png())
-        fig_json.extend(result.iter_json())
+        for r in result.iter_json():
+            fig_json.append(r)
+            fig_name.append(filename)
 
-    left_col = [MPLD3_TEMPLATE.format(figid=i)
+    left_col = [MPLD3_TEMPLATE.format(figid=i, fname=fig_name[i])
                 for i in range(len(fig_json))]
     js_commands = [JS_TEMPLATE.format(figid=figid,
                                       figure_json=figjson,
                                       extra_js=figjs)
                    for figid, (figjson, figjs, _) in enumerate(fig_json)]
-    right_col = ['<div class="fig"><img src="{0}"></div>\n'.format(fig)
+    right_col = ['<div>png version</div><div class="fig"><img src="{0}"></div>\n'.format(fig)
                  for fig in fig_png]
     extra_css = [tup[2] for tup in fig_json]
 
@@ -237,7 +246,10 @@ def run_main():
     if args.d3_url is None:
         args.d3_url = urls.D3_URL
     if args.mpld3_url is None:
-        args.mpld3_url = urls.MPLD3_URL
+        # NOTE: Not sure why this used the web URL before, but we want to see
+        # our code changes when developing/running tests.
+        # args.mpld3_url = urls.MPLD3_URL
+        args.mpld3_url = urls.MPLD3_LOCAL
 
     if args.local:
         args.d3_url = urls.D3_LOCAL

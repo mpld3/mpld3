@@ -310,34 +310,38 @@ class PointHTMLTooltip(PluginBase):
     HtmlTooltipPlugin.prototype.defaultProps = {labels:null,
                                                 target:null,
                                                 hoffset:0,
-                                                voffset:10};
+                                                voffset:10,
+                                                targets:null};
     function HtmlTooltipPlugin(fig, props){
         mpld3.Plugin.call(this, fig, props);
     };
 
     HtmlTooltipPlugin.prototype.draw = function(){
-       var obj = mpld3.get_element(this.props.id);
-       var labels = this.props.labels;
-       var targets = this.props.targets;
-       var tooltip = d3.select("body").append("div")
-                    .attr("class", "mpld3-tooltip")
-                    .style("position", "absolute")
-                    .style("z-index", "10")
-                    .style("visibility", "hidden");
+        var obj = mpld3.get_element(this.props.id);
+        var labels = this.props.labels;
+        var targets = this.props.targets;
+        var tooltip = d3.select("body").append("div")
+            .attr("class", "mpld3-tooltip")
+            .style("position", "absolute")
+            .style("z-index", "10")
+            .style("visibility", "hidden");
 
-       obj.elements()
-           .on("mouseover", function(d, i){
-                              tooltip.html(labels[i])
-                                     .style("visibility", "visible");})
-           .on("mousemove", function(d, i){
-                  tooltip
-                    .style("top", d3.event.pageY + this.props.voffset + "px")
-                    .style("left",d3.event.pageX + this.props.hoffset + "px");
-                 }.bind(this))
-           .on("mousedown.callout",  function(d, i){
-                           window.open(targets[i],"_blank");})
-           .on("mouseout",  function(d, i){
-                           tooltip.style("visibility", "hidden");});
+        obj.elements()
+            .on("mouseover", function(d, i){
+                tooltip.html(labels[i])
+                    .style("visibility", "visible");
+            })
+            .on("mousemove", function(d, i){
+                tooltip
+                .style("top", d3.event.pageY + this.props.voffset + "px")
+                .style("left",d3.event.pageX + this.props.hoffset + "px");
+            }.bind(this))
+            .on("mousedown.callout", function(d, i){
+                window.open(targets[i],"_blank");
+            })
+            .on("mouseout", function(d, i){
+                tooltip.style("visibility", "hidden");
+            });
     };
     """
 
@@ -463,6 +467,13 @@ class InteractiveLegendPlugin(PluginBase):
         Default is 1 (no effect), 1.5 works nicely !
     start_visible : boolean, optional (could be a list of booleans)
         defines if objects should start selected on not.
+    font_size : int, optional
+        defines legend font-size.
+        Default is 10.
+    legend_offset : list of int (length: 2)
+        defines horizontal offset and vertical offset of legend.
+        Default is (0, 0).
+
     Examples
     --------
     >>> import matplotlib.pyplot as plt
@@ -479,7 +490,9 @@ class InteractiveLegendPlugin(PluginBase):
     ...                                                      labels,
     ...                                                      alpha_unsel=0.2,
     ...                                                      alpha_over=1.5,
-    ...                                                      start_visible=True)
+    ...                                                      start_visible=True,
+    ...                                                      font_size=14,
+    ...                                                      legend_offset=(-100,20))
     >>> plugins.connect(fig, interactive_legend)
     >>> fig_to_html(fig)
     """
@@ -492,7 +505,9 @@ class InteractiveLegendPlugin(PluginBase):
     InteractiveLegend.prototype.defaultProps = {"ax":null,
                                                 "alpha_unsel":0.2,
                                                 "alpha_over":1.0,
-                                                "start_visible":true}
+                                                "start_visible":true,
+                                                "font_size": 10,
+                                                "legend_offset": [0,0]}
     function InteractiveLegend(fig, props){
         mpld3.Plugin.call(this, fig, props);
     };
@@ -500,6 +515,8 @@ class InteractiveLegendPlugin(PluginBase):
     InteractiveLegend.prototype.draw = function(){
         var alpha_unsel = this.props.alpha_unsel;
         var alpha_over = this.props.alpha_over;
+        var font_size = this.props.font_size;
+        var legend_offset = this.props.legend_offset;
 
         var legendItems = new Array();
         for(var i=0; i<this.props.labels.length; i++){
@@ -541,11 +558,11 @@ class InteractiveLegendPlugin(PluginBase):
         legend.selectAll("rect")
                 .data(legendItems)
                 .enter().append("rect")
-                .attr("height", 10)
-                .attr("width", 25)
-                .attr("x", ax.width + ax.position[0] + 25)
+                .attr("height", 0.7*font_size)
+                .attr("width", 1.6*font_size)
+                .attr("x", ax.width + ax.position[0] + 15 + legend_offset[0])
                 .attr("y",function(d,i) {
-                           return ax.position[1] + i * 25 + 10;})
+                           return ax.position[1] + i * (font_size+5) + 10 + legend_offset[1];})
                 .attr("stroke", get_color)
                 .attr("class", "legend-box")
                 .style("fill", function(d, i) {
@@ -556,11 +573,13 @@ class InteractiveLegendPlugin(PluginBase):
         legend.selectAll("text")
               .data(legendItems)
               .enter().append("text")
+              .attr("font-size", font_size)
               .attr("x", function (d) {
-                           return ax.width + ax.position[0] + 25 + 40;})
+                           return ax.width + ax.position[0] + (1.9*font_size+15) + legend_offset[0];})
               .attr("y", function(d,i) {
-                           return ax.position[1] + i * 25 + 10 + 10 - 1;})
-              .text(function(d) { return d.label });
+                           return ax.position[1] + i * (font_size+5) + 10 + (0.72*font_size-1) + legend_offset[1];})
+              .text(function(d) { return d.label })
+              .on('mouseover', over).on('mouseout', out);
 
 
         // specify the action on click
@@ -593,17 +612,17 @@ class InteractiveLegendPlugin(PluginBase):
                     var current_alpha = d.mpld3_elements[i].props.alpha;
                     var current_alpha_unsel = current_alpha * alpha_unsel;
                     var current_alpha_over = current_alpha * alpha_over;
-                    d3.select(d.mpld3_elements[i].path[0][0])
+                    d3.select(d.mpld3_elements[i].path.nodes()[0])
                         .style("stroke-opacity", is_over ? current_alpha_over :
                                                 (d.visible ? current_alpha : current_alpha_unsel))
-                        .style("stroke-width", is_over ? 
+                        .style("stroke-width", is_over ?
                                 alpha_over * d.mpld3_elements[i].props.edgewidth : d.mpld3_elements[i].props.edgewidth);
                 } else if((type=="mpld3_PathCollection")||
                          (type=="mpld3_Markers")){
                     var current_alpha = d.mpld3_elements[i].props.alphas[0];
                     var current_alpha_unsel = current_alpha * alpha_unsel;
                     var current_alpha_over = current_alpha * alpha_over;
-                    d3.selectAll(d.mpld3_elements[i].pathsobj[0])
+                    d.mpld3_elements[i].pathsobj
                         .style("stroke-opacity", is_over ? current_alpha_over :
                                                 (d.visible ? current_alpha : current_alpha_unsel))
                         .style("fill-opacity", is_over ? current_alpha_over :
@@ -639,7 +658,7 @@ class InteractiveLegendPlugin(PluginBase):
     """
 
     def __init__(self, plot_elements, labels, ax=None,
-                 alpha_unsel=0.2, alpha_over=1., start_visible=True):
+                 alpha_unsel=0.2, alpha_over=1., start_visible=True, font_size=10, legend_offset=(0,0)):
 
         self.ax = ax
 
@@ -661,7 +680,9 @@ class InteractiveLegendPlugin(PluginBase):
                       "ax": ax,
                       "alpha_unsel": alpha_unsel,
                       "alpha_over": alpha_over,
-                      "start_visible": start_visible}
+                      "start_visible": start_visible,
+                      "font_size": font_size,
+                      "legend_offset": legend_offset}
 
     def _determine_mpld3ids(self, plot_elements):
         """

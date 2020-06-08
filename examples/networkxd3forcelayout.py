@@ -157,7 +157,7 @@ class NetworkXD3ForceLayout(mpld3.plugins.PluginBase):
     function NetworkXD3ForceLayoutPlugin(fig, props){
         mpld3.Plugin.call(this, fig, props);
     };
-    var color = d3.scale.category20();
+    var color = d3.scaleOrdinal(d3.schemeCategory10);
     NetworkXD3ForceLayoutPlugin.prototype.zoomScaleProp = function (nominal_prop, minimum_prop, maximum_prop) {
         var zoom = this.ax.zoom;
         scalerFunction = function() {
@@ -177,11 +177,10 @@ class NetworkXD3ForceLayout(mpld3.plugins.PluginBase):
                                                   this.props.maximum_radius)
     }
     NetworkXD3ForceLayoutPlugin.prototype.zoomed = function() {
-            this.tick()
-        }
+        this.tick()
+    }
     NetworkXD3ForceLayoutPlugin.prototype.draw = function(){
         plugin = this
-        brush = this.fig.getBrush();
         DEFAULT_NODE_SIZE = this.props.nominal_radius;
         var height = this.fig.height
         var width = this.fig.width
@@ -197,11 +196,10 @@ class NetworkXD3ForceLayout(mpld3.plugins.PluginBase):
         ax_obj = this.ax;
         var width = d3.max(ax.x.range()) - d3.min(ax.x.range()),
             height = d3.max(ax.y.range()) - d3.min(ax.y.range());
-        var color = d3.scale.category20();
-        this.xScale = d3.scale.linear().domain([0, 1]).range([0, width]) // ax.x;
-        this.yScale = d3.scale.linear().domain([0, 1]).range([height, 0]) // ax.y;
-        this.force = d3.layout.force()
-                            .size([width, height]);
+        var color = d3.scaleOrdinal(d3.schemeCategory10);
+        this.xScale = d3.scaleLinear().domain([0, 1]).range([0, width]) // ax.x;
+        this.yScale = d3.scaleLinear().domain([0, 1]).range([height, 0]) // ax.y;
+        this.force = d3.forceSimulation();
         this.svg = this.ax.axes.append("g");
         for(var i = 0; i < graph.nodes.length; i++){
             var node = graph.nodes[i];
@@ -213,14 +211,19 @@ class NetworkXD3ForceLayout(mpld3.plugins.PluginBase):
             }
         }
         this.force
-            .nodes(graph.nodes)
-            .links(graph.links)
-            .linkStrength(link_strength)
-            .friction(friction)
-            .linkDistance(link_distance)
-            .charge(charge)
-            .gravity(gravity)
-            .start();
+            .force("link",
+                d3.forceLink()
+                    .id(function(d) { return d.index })
+                    .strength(link_strength)
+                    .distance(link_distance)
+            )
+            .force("collide", d3.forceCollide(function(d){return d.r + 8 }).iterations(16))
+            .force("charge", d3.forceManyBody().strength(charge))
+            .force("center", d3.forceCenter(width / 2, height / 2))
+            .force("y", d3.forceY(0))
+            .force("x", d3.forceX(0));
+        this.force.nodes(graph.nodes);
+        this.force.force("link").links(graph.links);
         this.link = this.svg.selectAll(".link")
             .data(graph.links)
           .enter().append("line")
@@ -232,7 +235,7 @@ class NetworkXD3ForceLayout(mpld3.plugins.PluginBase):
           .enter().append("circle")
             .attr("class", "node")
             .attr("r", function(d) {return d.size === undefined ? DEFAULT_NODE_SIZE : d.size ;})
-            .style("fill", function (d) { return d.color; });
+            .style("fill", function (d) { return color(d); });
         this.node.append("title")
             .text(function (d) { return d.name; });
         this.force.on("tick", this.tick.bind(this));

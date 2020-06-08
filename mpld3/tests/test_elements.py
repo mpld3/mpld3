@@ -22,7 +22,7 @@ def test_line():
     assert_equal(line['alpha'], 0.3)
     assert_equal(line['color'], "#000000")
     assert_equal(line['coordinates'], 'data')
-    assert_equal(line['dasharray'], '6,6')
+    assert_equal(line['dasharray'], '7.4,3.2')
     assert_equal(line['zorder'], 10)
     assert_equal(line['linewidth'], 2)
 
@@ -65,15 +65,15 @@ def test_scatter():
                   'pathtransforms', 'xindex', 'yindex', 'zorder'])
     assert_equal(points['alphas'], [0.3])
     assert_equal(points['zorder'], 10)
-    assert_equal(points['edgecolors'], ['#0000FF'])
-    assert_equal(points['facecolors'], ['#FF0000'])
+    assert_equal(points['edgecolors'], ['rgba(0, 0, 255, 0.3)'])
+    assert_equal(points['facecolors'], ['rgba(255, 0, 0, 0.3)'])
     assert_equal(points['edgewidths'], (2.0,))
     assert_equal(points['paths'][0][0],
                  [[0.0, 0.5], [-0.5, -0.5], [0.5, -0.5]])
     assert_equal(points['paths'][0][1],
                  ['M', 'L', 'L', 'Z'])
     assert_equal(points['pathtransforms'],
-                 [[6.085806194501846, 0.0, 0.0, 6.085806194501846, 0.0, 0.0]])
+                 [[7.607257743127308, 0.0, 0.0, 7.607257743127308, 0.0, 0.0]])
 
 
 def test_patch():
@@ -90,8 +90,8 @@ def test_patch():
                   'xindex', 'yindex', 'zorder'])
 
     assert_equal(path['alpha'], 0.2)
-    assert_equal(path['edgecolor'], "#008000")
-    assert_equal(path['facecolor'], "#FF0000")
+    assert_equal(path['edgecolor'], "rgba(0, 128, 0, 0.2)")
+    assert_equal(path['facecolor'], "rgba(255, 0, 0, 0.2)")
     assert_equal(path['edgewidth'], 2)
     assert_equal(path['zorder'], 3)
 

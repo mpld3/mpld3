@@ -10,10 +10,10 @@ suite.addBatch({
 	topic: load("utils/util").document(),
 	"A multiscale object": {
 	    topic: function(mpld3) {
-		return mpld3.multiscale(d3.scale.linear()
+		return mpld3.multiscale(d3.scaleLinear()
                                           .domain([0, 1])
                                           .range([10, 20]),
-                                        d3.scale.linear()
+                                        d3.scaleLinear()
                                           .domain([10, 20])
                                           .range([100, 200]));
 	    },
@@ -29,10 +29,10 @@ suite.addBatch({
 	},
 	"A modified multiscale object": {
 	    topic: function(mpld3) {
-		var scale1 = d3.scale.linear()
+		var scale1 = d3.scaleLinear()
                                      .domain([0, 1])
                                      .range([10, 20]);
-		var scale2 = d3.scale.linear()
+		var scale2 = d3.scaleLinear()
                                      .domain([10, 20])
                                      .range([100, 200]);
 		return [scale1, scale2, mpld3.multiscale(scale1, scale2)];
@@ -61,4 +61,3 @@ suite.addBatch({
 });
 
 suite.export(module);
-		

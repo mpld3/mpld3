@@ -20,12 +20,14 @@ mpld3_Path.prototype.defaultProps = {
     offset: null,
     offsetcoordinates: "data",
     alpha: 1.0,
+    drawstyle: "none",
     zorder: 1
 };
 
 function mpld3_Path(ax, props) {
     mpld3_PlotElement.call(this, ax, props);
     this.data = ax.fig.get_data(this.props.data);
+
     this.pathcodes = this.props.pathcodes;
 
     this.pathcoords = new mpld3_Coordinates(this.props.coordinates,
@@ -36,8 +38,8 @@ function mpld3_Path(ax, props) {
 }
 
 mpld3_Path.prototype.finiteFilter = function(d, i) {
-    return (isFinite(this.pathcoords.x(d[this.props.xindex]))
-	    && isFinite(this.pathcoords.y(d[this.props.yindex])));
+    return (isFinite(this.pathcoords.x(d[this.props.xindex])) &&
+        isFinite(this.pathcoords.y(d[this.props.yindex])));
 };
 
 mpld3_Path.prototype.draw = function() {
@@ -45,12 +47,19 @@ mpld3_Path.prototype.draw = function() {
         .defined(this.finiteFilter.bind(this))
         .x(function(d) {
             return this.pathcoords.x(d[this.props.xindex]);
-        })
+        }.bind(this))
         .y(function(d) {
             return this.pathcoords.y(d[this.props.yindex]);
-        });
+        }.bind(this));
 
-    this.path = this.ax.axes.append("svg:path")
+    // TODO: (@vladh) Don't fully understand this.
+    if (this.pathcoords.zoomable) {
+        this.path = this.ax.paths.append("svg:path")
+    } else {
+        this.path = this.ax.staticPaths.append("svg:path")
+    }
+
+    this.path = this.path
         .attr("d", this.datafunc(this.data, this.pathcodes))
         .attr('class', "mpld3-path")
         .style("stroke", this.props.edgecolor)
@@ -71,12 +80,15 @@ mpld3_Path.prototype.elements = function(d) {
     return this.path;
 };
 
-mpld3_Path.prototype.zoomed = function() {
-    if (this.pathcoords.zoomable) {
-        this.path.attr("d", this.datafunc(this.data, this.pathcodes));
-    }
-    if (this.props.offset !== null && this.offsetcoords.zoomable) {
-        var offset = this.offsetcoords.xy(this.props.offset);
-        this.path.attr("transform", "translate(" + offset + ")");
-    }
-};
+/*
+TODO: (@vladh) Remove legacy zooming code.
+*/
+// mpld3_Path.prototype.zoomed = function() {
+//     if (this.pathcoords.zoomable) {
+//         this.path.attr("d", this.datafunc(this.data, this.pathcodes));
+//     }
+//     if (this.props.offset !== null && this.offsetcoords.zoomable) {
+//         var offset = this.offsetcoords.xy(this.props.offset);
+//         this.path.attr("transform", "translate(" + offset + ")");
+//     }
+// };
