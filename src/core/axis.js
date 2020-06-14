@@ -6,7 +6,7 @@ import "../utils/";
 /* Axis Object: */
 /**
  * Props:
- * `tickformat_formatter`: the variable comes from `sciris/mplextractor` and
+ * `tickformat_formatter`: the variable comes from `mpld3/mplextractor` and
  *  defines which has been used. Depending on the class used different `tickformat` will be supplied.
  *  The variables include:
  *    - `percent`     = matplotlib.ticker.PercentFormatter
@@ -14,7 +14,7 @@ import "../utils/";
  *    - `fixed`       = matplotlib.ticker.FixedFormatter
  *    - `str_method`  = matplotlib.ticker.StrMethodFormatter
  *
- * `tickformat`: the variable comes from `sciris/mplextractor` and defines
+ * `tickformat`: the variable comes from `mpld3/mplextractor` and defines
  * the variables inside of each `matplotlib.ticker`. The variable inside this changes
  * depending on `tickformat_formatter` used.
  *    - tickformat_formatter: `percent`
