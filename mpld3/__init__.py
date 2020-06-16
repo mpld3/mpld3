@@ -44,11 +44,6 @@ BIN_PATH = os.path.join(BASE_PATH, "bin/")
 
 SCREENSHOT_BIN = os.path.join(BIN_PATH, "screenshot")
 
-D3_SNAPSHOT_PATH = os.path.join(BASE_PATH, "_d3_snapshots/") 
-
-if not os.path.exists(D3_SNAPSHOT_PATH):
-    os.makedirs(D3_SNAPSHOT_PATH)
-
 __all__ = ["__version__",
            "fig_to_html", "fig_to_dict", "fig_to_d3", "display_d3",
            "display", "show_d3", "show", "save_html", "save_json",
