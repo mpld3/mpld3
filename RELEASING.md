@@ -42,7 +42,7 @@ For concreteness, we'll assume we're releasing version 0.3
 
 6. Copy the javascript to the separate website repository
    ```
-   $ cp mpld3/js/mpld3.*.js ../mpld3.github.io/
+   $ cp mpld3/js/mpld3.*.js ../mpld3.github.io/js
    $ cd ../mpld3.github.io/
    $ git commit -m "update javascript version to 0.3"
    $ git push origin master
