@@ -260,7 +260,7 @@ class ExampleGenerator(object):
 
         docstring = ''
         first_par = ''
-        tokens = tokenize.generate_tokens(lines.__iter__().next)
+        tokens = tokenize.generate_tokens(lines.pop)
         for tok_type, tok_content, _, (erow, _), _ in tokens:
             tok_type = token.tok_name[tok_type]
             if tok_type in ('NEWLINE', 'COMMENT', 'NL', 'INDENT', 'DEDENT'):
@@ -287,7 +287,7 @@ class ExampleGenerator(object):
             plt.close('all')
             my_globals = {'pl': plt,
                           'plt': plt}
-            execfile(self.filename, my_globals)
+            exec(compile(open(self.filename, "rb").read(), self.filename, 'exec'), my_globals)
 
         fig = plt.gcf()
         self.html = mpld3.fig_to_html(fig)

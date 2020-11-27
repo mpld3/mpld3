@@ -43,7 +43,7 @@ cmap = colors.LinearSegmentedColormap.from_list("mpld3",
                                                  [0.95, 0.44, 0.34],
                                                  [0.92, 0.51, 0.29],
                                                  [0.68, 0.21, 0.20]])
-mesh = ax.pcolormesh(X, Y, C, cmap=cmap, shading='gourand', zorder=0)
+mesh = ax.pcolormesh(X, Y, C, cmap=cmap, shading='auto', zorder=0)
 mesh.set_clip_path(clip_path)
 
 # cut-off the background to form the "D" and "3" using white patches
