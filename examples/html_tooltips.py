@@ -47,7 +47,7 @@ df['z'] = np.random.randn(N)
 
 labels = []
 for i in range(N):
-    label = df.ix[[i], :].T
+    label = df.iloc[[i], :].T
     label.columns = ['Row {0}'.format(i)]
     # .to_html() is unicode; so make leading 'u' go away with str()
     labels.append(str(label.to_html()))

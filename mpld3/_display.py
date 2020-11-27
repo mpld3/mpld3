@@ -135,7 +135,7 @@ class NumpyEncoder(json.JSONEncoder):
         else:
             return [self.default(item) for item in iterable]
         if isinstance(obj, numpy.generic):
-            return numpy.asscalar(obj)
+            return obj.item()
         elif isinstance(obj, (numpy.ndarray,)):
             return obj.tolist()
         return json.JSONEncoder.default(self, obj)
