@@ -55,7 +55,7 @@ def is_images_identical(image_path_1, image_path_2, output_bool=True):
         return True if percentage_diff == 0 else False
     return percentage_diff 
 
-def snapshot_mpld3_plot(plot_filename, output_file_path=None, output_folder):
+def snapshot_mpld3_plot(plot_filename, output_folder, output_file_path=None):
     assert output_file_path or output_folder, "output_file_path or output_folder is required"
     result = visualize_tests.ExecFile(plot_filename)
     figures = {} 
@@ -117,9 +117,9 @@ def snapshot_multiple_mpld3_plots(plot_filenames, output_folder):
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)
     pool = multiprocessing.Pool(multiprocessing.cpu_count()) 
-    return pool.map(partial(snapshot_mpld3_plot, **{
+    return pool.map(partial(snapshot_mpld3_plot, plot_filenames, **{
         "output_folder": output_folder
-    }), plot_filenames)
+    }))
 
 def snapshot_mpld3_plots_consecutive(plot_filenames, output_folder):
     assert output_folder, "output_folder is required"
