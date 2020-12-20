@@ -25,3 +25,12 @@ def test_html():
         assert urls.MPLD3_URL[:-3] in html1
         assert d3_url[:-3] in html2
         assert mpld3_url[:-3] in html2
+
+def test_no_scripts_added():
+    fig, ax = plt.subplots()
+    ax.plot(np.arange(10), np.random.random(10),
+            '--ok', alpha=0.3, zorder=10, lw=2)
+    html = fig_to_html(fig, include_libraries=False)
+
+    assert urls.D3_URL[:-3] not in html
+    assert urls.MPLD3_URL[:-3] not in html

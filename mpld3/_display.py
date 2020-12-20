@@ -22,8 +22,10 @@ __all__ = ["fig_to_html", "fig_to_dict", "fig_to_d3",
 # but will not work within the IPython notebook due to the presence of
 # requirejs
 SIMPLE_HTML = jinja2.Template("""
+{% if include_libraries %}
 <script type="text/javascript" src="{{ d3_url }}"></script>
 <script type="text/javascript" src="{{ mpld3_url }}"></script>
+{% endif %}
 
 <style>
 {{ extra_css }}
@@ -173,7 +175,7 @@ def fig_to_dict(fig, **kwargs):
 
 
 def fig_to_html(fig, d3_url=None, mpld3_url=None, no_extras=False,
-                template_type="general", figid=None, use_http=False, **kwargs):
+                template_type="general", figid=None, use_http=False, include_libraries=True, **kwargs):
     """Output html representation of the figure
 
     Parameters
@@ -206,6 +208,8 @@ def fig_to_html(fig, d3_url=None, mpld3_url=None, no_extras=False,
         If not specified, a random id will be generated.
     use_http : boolean (optional)
         If true, use http:// instead of https:// for d3_url and mpld3_url.
+    include_libraries: boolean (optional)
+        Whether to inject <script> tag to load JS libraries. Defaults to True.
 
     **kwargs :
         Additional keyword arguments passed to mplexporter.Exporter
@@ -224,6 +228,9 @@ def fig_to_html(fig, d3_url=None, mpld3_url=None, no_extras=False,
     :func:`display` : embed figure within the IPython notebook
     :func:`enable_notebook` : automatically embed figures in IPython notebook
     """
+    if not include_libraries:
+        template_type = "simple"
+
     template = TEMPLATE_DICT[template_type]
 
     # TODO: allow fig to be a list of figures?
@@ -253,7 +260,8 @@ def fig_to_html(fig, d3_url=None, mpld3_url=None, no_extras=False,
                            mpld3_url=mpld3_url,
                            figure_json=json.dumps(figure_json, cls=NumpyEncoder),
                            extra_css=extra_css,
-                           extra_js=extra_js)
+                           extra_js=extra_js,
+                           include_libraries=include_libraries)
 
 
 def display(fig=None, closefig=True, local=False, **kwargs):
