@@ -6,4 +6,3 @@
     }
 
     console.log("Loaded mpld3 version " + mpld3.version);
-}(d3);
