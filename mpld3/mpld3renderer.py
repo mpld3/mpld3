@@ -129,7 +129,7 @@ class MPLD3Renderer(Renderer):
                               ydomain=props['ydomain'],
                               xscale=props['xscale'],
                               yscale=props['yscale'],
-                              axes=props['axes'],
+                              axes=props['axes'] if props['axison'] else "",
                               axesbg=props['axesbg'],
                               axesbgalpha=props['axesbgalpha'],
                               zoomable=bool(props['dynamic']),
