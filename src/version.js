@@ -1,1 +1,1 @@
-mpld3.version = '0.5.2';
+mpld3.version = '0.5.5';

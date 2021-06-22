@@ -246,10 +246,7 @@ def run_main():
     if args.d3_url is None:
         args.d3_url = urls.D3_URL
     if args.mpld3_url is None:
-        # NOTE: Not sure why this used the web URL before, but we want to see
-        # our code changes when developing/running tests.
-        # args.mpld3_url = urls.MPLD3_URL
-        args.mpld3_url = urls.MPLD3_LOCAL
+        args.mpld3_url = urls.MPLD3_URL
 
     if args.local:
         args.d3_url = urls.D3_LOCAL
