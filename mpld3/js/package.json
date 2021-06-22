@@ -1,15 +1,15 @@
 {
   "name": "mpld3",
-  "version": "0.5.4",
+  "version": "0.5.5",
   "license": "MIT",
   "repository": {
     "type": "git",
     "url": "http://github.com/mpld3/mpld3"
   },
   "scripts": {
-    "build": "npx browserify mpld3.v0.5.2.min.js --standalone mpld3 -o dist/mpld3.v0.5.2.min.js"
+    "build": "npx browserify mpld3.v0.5.5.min.js --standalone mpld3 -o dist/mpld3.v0.5.5.min.js"
   },
-  "main": "dist/mpld3.v0.5.2.min.js",
+  "main": "dist/mpld3.v0.5.5.min.js",
   "bundleDependencies": false,
   "dependencies": {},
   "devDependencies": {
