@@ -72,7 +72,8 @@ def main(app):
 
     nbroots = []
     nbtitles = []
-    exporter = HTMLExporter(template_file='full')
+    exporter = HTMLExporter()
+    exporter.template_name = 'full'
 
     for nb_src in glob.glob(os.path.join(source_dir, '*.ipynb')):
         print("converting notebook {0}".format(nb_src))
