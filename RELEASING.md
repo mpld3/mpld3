@@ -44,6 +44,7 @@ Copy the Javascript to the separate website repository:
 ```
 cp mpld3/js/mpld3.*.js ../mpld3.github.io/js
 cd ../mpld3.github.io/
+git add .
 git commit -m "Update Javascript"
 git push origin master
 ```
