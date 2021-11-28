@@ -77,7 +77,6 @@ git add ...
 git commit ...
 git tag -a v0.3.0 -m "Version 0.3.0"
 git push && git push --tags
-git push origin v0.3.0
 ```
 
 ## Publishing to PyPI
