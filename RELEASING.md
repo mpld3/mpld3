@@ -85,6 +85,7 @@ Once you've confirmed that everything works, you can upload the package to PyPi.
 You'll need to be listed as a package maintainer to do this.
 
 ```
+rm dist/*
 python -m build
 twine upload dist/*
 ```
