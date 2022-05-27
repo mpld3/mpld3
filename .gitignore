@@ -60,6 +60,7 @@ package-lock.json
 # testing outputs
 _pngs
 _test_plots.html
+mpld3/test_plots_results
 
 # vim
 *.sw*
