@@ -73,8 +73,8 @@ omit the `--local` flag: `python visualise_tests.py`
 Once all this works, add all the new files to master:
 
 ```
-git add ...
-git commit ...
+git add .
+git commit "Bump to 0.3.0"
 git tag -a v0.3.0 -m "Version 0.3.0"
 git push && git push --tags
 ```
