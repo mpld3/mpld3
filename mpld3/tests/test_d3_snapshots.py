@@ -4,7 +4,7 @@ import glob
 import matplotlib
 from . import export
 
-from nose.plugins.skip import SkipTest
+from unittest import SkipTest
 matplotlib.use('Agg')
 
 TEST_PLOT_FILES  = os.path.join(mpld3.BASE_PATH, 'mpld3/test_plots/*.py')
