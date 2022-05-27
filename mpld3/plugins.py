@@ -16,6 +16,10 @@ import collections
 import json
 import uuid
 import matplotlib
+try:
+    from collections.abc import Iterable
+except ImportError:
+    from collections import Iterable
 
 from .utils import get_id
 
@@ -701,7 +705,7 @@ class InteractiveLegendPlugin(PluginBase):
         # D3 representation.
         for entry in plot_elements:
             ids = []
-            if isinstance(entry, collections.Iterable):
+            if isinstance(entry, Iterable):
                 for element in entry:
                     mpld3_id = get_id(element)
                     ids.append(mpld3_id)
