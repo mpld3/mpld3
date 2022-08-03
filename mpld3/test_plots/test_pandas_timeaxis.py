@@ -7,7 +7,7 @@ def create_plot():
     try:
         import pandas as pd
     except Exception:
-        from nose import SkipTest
+        from unittest import SkipTest
         raise SkipTest("pandas not installed")
     df2_index = pd.date_range(start="2010-01-01", periods=100, freq='D')
     df2 = pd.DataFrame({'a': range(100)}, index=df2_index)

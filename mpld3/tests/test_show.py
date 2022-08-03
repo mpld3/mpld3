@@ -21,6 +21,9 @@ def test_show():
         def makefile(self, *args, **kwargs):
             return IO(b"GET /")
 
+        def sendall(self, b):
+            pass
+
     class MockServer(object):
         def __init__(self, ip_port, Handler):
             handler = Handler(MockRequest(), ip_port[0], self)
