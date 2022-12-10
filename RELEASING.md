@@ -53,7 +53,8 @@ git commit -m "Update Javascript"
 git push origin master
 ```
 
-Update the website documentation:
+Update the website documentation. Make sure mpld3 is installed and that the
+packages in doc/requirements.txt are also installed.
 
 ```
 cd doc

@@ -1,0 +1,2 @@
+nbconvert==7.2.6
+nbformat==5.7.0
