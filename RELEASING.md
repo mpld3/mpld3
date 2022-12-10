@@ -14,7 +14,7 @@ version.
 
 ## Local testing
 
-Double-check that unit tests pass. Run Python tests using `nosetests mpld3`, and then
+Double-check that unit tests pass. Run Python tests using `nose2 mpld3`, and then
 run Javascript tests using `make test`.
 
 Examine visual tests, including checking for interactivity.

@@ -81,19 +81,19 @@ Additionally, if possible please add JavaScript unit tests of your new functiona
 Currently, mpld3 has three different levels of testing, though we hope to streamline this in the future:
 
 - There are automated JavaScript tests using [vows](https://www.npmjs.org/package/vows). These should be run if you modify the JavaScript code.
-- There are automated Python tests using [nose](http://nose.readthedocs.org). These should be run if you modify the Python code.
+- There are automated Python tests using [nose2](https://docs.nose2.io/en/latest/). These should be run if you modify the Python code.
 - There are manual plot tests using the ``visualize_tests.py`` script in the repository. These should be run if either the Python or JavaScript code is modified.
 
 
-### Testing Python with nose
+### Testing Python with nose2
 
 There is a set of non-comprehensive unit tests for the Python code which can be run with the command:
 
-    [~]$ nosetests mpld3
+    [~]$ nose2 mpld3
 
-To run these, you will need to install the [nose](http://nose.readthedocs.org) test suite, which can be done by running
+To run these, you will need to install the [nose2](https://docs.nose2.io/en/latest/) test suite, which can be done by running
 
-    [~]$ pip install nose
+    [~]$ pip install nose2
 
 These tests are in various directories within the Python source tree, for example ``mpld3/mplexporter/tests/``
 In addition to running nosetests, you should check any Python modifications using the ``visualize_tests.py`` script, described below.
@@ -111,7 +111,7 @@ In addition to running the vows tests, before submitting any JavaScript change, 
 
 
 ### Comprehensive JS/Python Test: ``visualize_tests.py``
-Until we can figure out a way to make the automatic tests with ``nose`` and ``vows`` more comprehensive, it is important to actually examine the interactive output of the mpld3 plot.
+Until we can figure out a way to make the automatic tests with ``nose2`` and ``vows`` more comprehensive, it is important to actually examine the interactive output of the mpld3 plot.
 In order to facilitate this, there is a script in the main directory, ``visualize_tests.py``, which allows the developer a side-by-side comparison of the matplotlib output and mpld3 output for a range of plot types.
 These test plots can be viewed by running
 

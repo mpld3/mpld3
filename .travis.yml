@@ -6,7 +6,7 @@ python:
   - 3.5
 
 env:
-  - DEPS="numpy=1.11 matplotlib=2.2.3 jinja2=2.8 pandas=0.18 nose"
+  - DEPS="numpy=1.11 matplotlib=2.2.3 jinja2=2.8 pandas=0.18 nose2"
 
 install:
   - conda create -n testenv --yes python=$TRAVIS_PYTHON_VERSION
@@ -41,5 +41,5 @@ before_install:
   - "sh -e /etc/init.d/xvfb start"
 
 script:
-  - MPLBE=Agg HIDE_PLOTS=True nosetests mpld3
+  - MPLBE=Agg HIDE_PLOTS=True nose2 mpld3
   - make test  # Javascript tests

@@ -13,7 +13,7 @@ You need to install node and puppeteer.
 
 To run the tests that confirm plots are as they should be run:
 
-`HIDE_PLOTS=True nosetests mpld3/tests/test_d3_snapshots.py`
+`HIDE_PLOTS=True nose2 mpld3/tests/test_d3_snapshots.py`
 
 # Updating Snapshots 
 
