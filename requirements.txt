@@ -1,6 +1,6 @@
 backports.functools-lru-cache==1.5
 cycler==0.10.0
-Jinja2==2.11.2
+Jinja2==2.11.3
 kiwisolver==1.0.1
 MarkupSafe==1.1.1
 matplotlib==3.5.0
