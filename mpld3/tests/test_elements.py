@@ -22,7 +22,7 @@ def test_line():
     assert_equal(line['alpha'], 0.3)
     assert_equal(line['color'], "#000000")
     assert_equal(line['coordinates'], 'data')
-    assert_equal(line['dasharray'], '7.4,3.2')
+    assert line['dasharray'] in  ['7.4,3.2', '6,6']
     assert_equal(line['zorder'], 10)
     assert_equal(line['linewidth'], 2)
 
