@@ -23,7 +23,7 @@ df = pd.DataFrame((.1 * (np.random.random((N, 5)) - .5)).cumsum(0),
 fig, ax = plt.subplots()
 ax.grid(True, alpha=0.3)
 
-for key, val in df.iteritems():
+for key, val in df.items():
     l, = ax.plot(val.index, val.values, label=key)
     ax.fill_between(val.index,
                     val.values * .5, val.values * 1.5,
