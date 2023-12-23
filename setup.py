@@ -47,7 +47,7 @@ setup(name=NAME,
       packages=['mpld3',
                 'mpld3/mplexporter',
                 'mpld3/mplexporter/renderers'],
-      package_data={'mpld3': ['js/*.js']},
+      package_data={'mpld3': ['js/*.js', 'testdata/*.csv']},
       install_requires=["jinja2", "matplotlib"],
       classifiers=[
           'Development Status :: 4 - Beta',

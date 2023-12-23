@@ -4,12 +4,17 @@ mpld3 Utilities
 Utility routines for the mpld3 package
 """
 
+from . import urls
+from functools import wraps
+from os import path
+import csv
+import inspect
 import os
 import re
 import shutil
 import warnings
-from functools import wraps
-from . import urls
+
+import numpy as np
 
 # Make sure that DeprecationWarning gets printed
 warnings.filterwarnings('always', category=DeprecationWarning, module='mpld3')
@@ -150,3 +155,29 @@ def write_ipynb_local_js(location=None, d3_src=None, mpld3_src=None):
 
 
     return prefix + d3js, prefix + mpld3js
+
+
+def load_test_dataset(dataset):
+    """
+    Loads test data from included CSV files.
+
+    Parameters
+    ----------
+    dataset : string
+        The name of the dataset. Available options are: "iris".
+    """
+    curr_dir = path.dirname(inspect.getfile(lambda: None))  # oof
+    with open(path.join(curr_dir, "testdata", dataset + ".csv"), "r", encoding="utf-8") as csv_file:
+        data_file = csv.reader(csv_file)
+        temp = next(data_file)
+        n_samples = int(temp[0])
+        n_features = int(temp[1])
+        target_names = np.array(temp[2:])
+        data = np.empty((n_samples, n_features))
+        target = np.empty((n_samples,), dtype=int)
+
+        for i, ir in enumerate(data_file):
+            data[i] = np.asarray(ir[:-1], dtype=np.float64)
+            target[i] = np.asarray(ir[-1], dtype=int)
+
+    return data, target, target_names

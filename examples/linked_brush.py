@@ -9,15 +9,12 @@ left can be used to enable and disable the behavior.
 import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
-from sklearn.datasets import load_iris
 
 import mpld3
 from mpld3 import plugins, utils
 
 
-data = load_iris()
-X = data.data
-y = data.target
+X, y, _ = utils.load_test_dataset("iris")
 
 # dither the data for clearer plotting
 X += 0.1 * np.random.random(X.shape)
