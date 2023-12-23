@@ -54,7 +54,8 @@ git push origin master
 ```
 
 Update the website documentation. Make sure mpld3 is installed and that the
-packages in doc/requirements.txt are also installed.
+packages in doc/requirements.txt are also installed. Additionally, make sure
+sphinx, nbformat and nbconvert are installed.
 
 ```
 cd doc
