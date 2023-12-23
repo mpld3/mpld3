@@ -15,14 +15,14 @@ def create_plot():
 
     p = [patches.Arrow(0.75, 0.75, 0.5, 0.5),
          patches.Circle((1, 2), 0.4),
-         patches.RegularPolygon((1, 3), 5, 0.4),
+         patches.RegularPolygon((1, 3), 5, radius=0.4),
          patches.Rectangle((1.6, 0.75), 0.8, 0.5),
          patches.CirclePolygon((2, 2), 0.4),
          patches.Polygon([[1.75, 3], [2, 3.25], [2.25, 3],
                           [2, 2.75], [1.75, 3]]),
          patches.Wedge((3, 1), 0.4, 0, 270),
          patches.Ellipse((3, 2), 0.6, 0.4),
-         patches.Arc((3, 3), 0.5, 0.5, 270, 90)]
+         patches.Arc((3, 3), 0.5, 0.5, angle=270, theta1=90)]
 
     for patch in p:
         patch.set_facecolor(rcolor_1)
