@@ -53,15 +53,15 @@ rather than from the git source.
 
 Once the submodule command has been run, you can build the package locally using
 
-    $ python setup.py build
+    $ python -m build
 
 or install the package to the standard Python path using:
 
-    $ python setup.py install
+    $ pip install .
 
 Or, to install to another location, use
 
-    $ python setup.py install --prefix=/path/to/location/
+    $ pip install . --prefix=/path/to/location/
 
 Then make sure your PYTHONPATH environment variable points to this location.
 
