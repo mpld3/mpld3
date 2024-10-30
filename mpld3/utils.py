@@ -26,9 +26,9 @@ def html_id_ok(objid, html5=False):
     If html5 == True, then use the more liberal html5 rules.
     """
     if html5:
-        return not re.search('\s', objid)
+        return not re.search(r'\s', objid)
     else:
-        return bool(re.match("^[a-zA-Z][a-zA-Z0-9\-\.\:\_]*$", objid))
+        return bool(re.match(r"^[a-zA-Z][a-zA-Z0-9\-\.\:\_]*$", objid))
 
 
 def get_id(obj, suffix="", prefix="el", warn_on_invalid=True):
