@@ -243,7 +243,7 @@ def fig_to_html(fig, d3_url=None, mpld3_url=None, no_extras=False,
 
     if figid is None:
         figid = 'fig_' + get_id(fig) + str(int(random.random() * 1E10))
-    elif re.search('\s', figid):
+    elif re.search(r'\s', figid):
         raise ValueError("figid must not contain spaces")
 
     renderer = MPLD3Renderer()
