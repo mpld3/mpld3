@@ -14,7 +14,7 @@ def create_plot():
     ticks = [times[0], times[1], times[2], times[6], times[-2], times[-1]]
     labels = [t.strftime("%Y-%m-%d") for t in ticks]
 
-    plt.plot_date(times, times, xdate=True, ydate=True)
+    plt.plot(times, times)
     plt.xticks(ticks, labels)
     plt.yticks(ticks)
     plt.xlim([times[1], times[-2]])

@@ -30,7 +30,7 @@ def test_line():
 def test_markers():
     fig, ax = plt.subplots()
     ax.plot(np.arange(10), np.random.random(10),
-            '^k', alpha=0.3, zorder=10, mec='r', mew=2, c='b')
+            '^', alpha=0.3, zorder=10, mec='r', mew=2, c='b')
     rep = fig_to_dict(fig)
     axrep = rep['axes'][0]
     markers = axrep['markers'][0]

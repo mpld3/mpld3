@@ -6,7 +6,7 @@ Javascript components must be simultaneously synced on the web.
 
 The following is the outline of how to cut a new mpld3 release. For
 concreteness, we'll assume we're releasing version 0.3.0 (change this
-accordingly)
+accordingly).
 
 It's good to make a new release of the npm package even if you haven't made any
 Javascript changes, so that it's clear for users that they're on the latest
