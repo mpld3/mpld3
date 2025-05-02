@@ -7,6 +7,8 @@ Utility routines for the mpld3 package
 from . import urls
 from functools import wraps
 from os import path
+from uuid import uuid4
+from weakref import ref
 import csv
 import inspect
 import os
@@ -18,6 +20,8 @@ import numpy as np
 
 # Make sure that DeprecationWarning gets printed
 warnings.filterwarnings('always', category=DeprecationWarning, module='mpld3')
+
+uuid_cache = {}
 
 
 def html_id_ok(objid, html5=False):
@@ -38,12 +42,21 @@ def get_id(obj, suffix="", prefix="el", warn_on_invalid=True):
     if not prefix:
         prefix = ""
 
-    objid = prefix + str(os.getpid()) + str(id(obj)) + suffix
+    obj_py_id = id(obj)
+    entry = uuid_cache.get(obj_py_id, None)
+    if entry is None or entry['ref']() is not obj:
+        # The weakref allows obj to be garbage collected as needed.
+        # `pop()` should prune the dictionary as objects are garbage collected.
+        obj_ref = ref(obj, lambda _: uuid_cache.pop(obj_py_id, None))
+        obj_uuid = uuid4()
+        uuid_cache[obj_py_id] = {'ref': obj_ref, 'uuid': obj_uuid}
 
-    if warn_on_invalid and not html_id_ok(objid):
+    obj_id = prefix + str(os.getpid()) + str(uuid_cache[obj_py_id]['uuid']) + suffix
+
+    if warn_on_invalid and not html_id_ok(obj_id):
         warnings.warn('"{0}" is not a valid html ID. This may cause problems')
 
-    return objid
+    return obj_id
 
 
 def deprecated(func, old_name, new_name):
