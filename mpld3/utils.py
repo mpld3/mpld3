@@ -7,6 +7,8 @@ Utility routines for the mpld3 package
 from . import urls
 from functools import wraps
 from os import path
+from uuid import uuid4
+from weakref import ref
 import csv
 import inspect
 import os
@@ -31,6 +33,7 @@ def html_id_ok(objid, html5=False):
         return bool(re.match(r"^[a-zA-Z][a-zA-Z0-9\-\.\:\_]*$", objid))
 
 
+uuid_cache = {}
 def get_id(obj, suffix="", prefix="el", warn_on_invalid=True):
     """Get a unique id for the object"""
     if not suffix:
@@ -38,7 +41,16 @@ def get_id(obj, suffix="", prefix="el", warn_on_invalid=True):
     if not prefix:
         prefix = ""
 
-    objid = prefix + str(os.getpid()) + str(id(obj)) + suffix
+    ref_id = id(obj)
+    entry = uuid_cache.get(ref_id, None)
+    if entry is None or entry[0]() is not obj:
+        # The weakref allows obj to be garbage collected as needed.
+        # pop should prune the dictionary as objects are garbage collected.
+        obj_ref = ref(obj, lambda _: uuid_cache.pop(ref_id, None))
+        _uuid = uuid4()
+        uuid_cache[ref_id] = (obj_ref, _uuid)
+
+    objid = prefix + str(os.getpid()) + str(uuid_cache[ref_id][1]) + suffix
 
     if warn_on_invalid and not html_id_ok(objid):
         warnings.warn('"{0}" is not a valid html ID. This may cause problems')
