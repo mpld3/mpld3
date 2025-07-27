@@ -49,13 +49,22 @@ Copy the Javascript to the separate website repository:
 cp mpld3/js/mpld3.*.js ../mpld3.github.io/js
 cd ../mpld3.github.io/
 git add .
-git commit -m "Update Javascript"
-git push origin master
+git commit -m "update javascript"
+git push
 ```
 
 Update the website documentation. Make sure mpld3 is installed and that the
 packages in doc/requirements.txt are also installed. Additionally, make sure
-sphinx, nbformat and nbconvert are installed.
+sphinx, nbformat and nbconvert are installed. So, you may need to do something
+like this:
+
+```
+pip install -r requirements.txt
+pip install -r doc/requirements.txt
+pip install .
+```
+
+Build the documentation:
 
 ```
 cd doc
@@ -64,15 +73,15 @@ make html
 cp -r _build/html/* ../../mpld3.github.io/
 cd ../../mpld3.github.io/
 git add .
-git commit -m "Update website for version 0.3.0"
-git push origin master
+git commit -m "update website for 0.3.0"
+git push
 ```
 
 ## Testing with remote JS
 
 Run all the visual tests again, using the version we uploaded to the website, since this
 is how most users will be accessing the JS libraries with the new release. Simply
-omit the `--local` flag: `python visualise_tests.py`
+omit the `--local` flag: `python visualize_tests.py`
 
 ## Pushing to master
 
@@ -80,7 +89,7 @@ Once all this works, add all the new files to master:
 
 ```
 git add .
-git commit "Bump to 0.3.0"
+git commit -m "bump to 0.3.0"
 git tag -a v0.3.0 -m "Version 0.3.0"
 git push && git push --tags
 ```

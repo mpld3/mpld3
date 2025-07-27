@@ -8,7 +8,7 @@ var mpld3 = {
   plugin_map: {}
 };
 
-mpld3.version = "0.5.11-dev";
+mpld3.version = "0.5.11";
 
 mpld3.register_plugin = function(name, obj) {
   mpld3.plugin_map[name] = obj;
@@ -524,7 +524,7 @@ mpld3_Axis.prototype.draw = function() {
       var formatted_string = d3.format(that.props.tickformat.format_string)(d);
       return that.props.tickformat.prefix + formatted_string + that.props.tickformat.suffix;
     });
-  } else if (this.props.tickformat_formatter == "fixed") {
+  } else if (this.props.tickformat_formatter == "fixed" || this.props.tickformat_formatter == "func") {
     this.axis = this.axis.tickFormat(function(d, i) {
       return that.props.filtered_tickformat[i];
     });
