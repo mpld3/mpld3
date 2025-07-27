@@ -196,7 +196,7 @@ mpld3_Axis.prototype.draw = function() {
             var formatted_string = d3.format(that.props.tickformat.format_string)(d);
             return that.props.tickformat.prefix + formatted_string + that.props.tickformat.suffix;
         });
-    } else if (this.props.tickformat_formatter == "fixed") {
+    } else if (this.props.tickformat_formatter == "fixed" || this.props.tickformat_formatter == "func") {
         this.axis = this.axis.tickFormat(function(d, i) {
             return that.props.filtered_tickformat[i];
         });
