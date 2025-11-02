@@ -65,10 +65,16 @@ mpld3_Path.prototype.draw = function() {
         .style("stroke", this.props.edgecolor)
         .style("stroke-width", this.props.edgewidth)
         .style("stroke-dasharray", this.props.dasharray)
-        .style("stroke-opacity", this.props.alpha)
         .style("fill", this.props.facecolor)
-        .style("fill-opacity", this.props.alpha)
         .attr("vector-effect", "non-scaling-stroke");
+
+    // Only set opacity if it's not encoded in the color, otherwise we're doubling it!
+    if (this.props.edgecolor.slice(0, 5) != "rgba(") {
+        this.path = this.path.style("stroke-opacity", this.props.alpha);
+    }
+    if (this.props.facecolor.slice(0, 5) != "rgba(") {
+        this.path = this.path.style("fill-opacity", this.props.alpha);
+    }
 
     if (this.props.offset !== null) {
         var offset = this.offsetcoords.xy(this.props.offset);

@@ -716,6 +716,14 @@ mpld3_Path.prototype.elements = function(d) {
   return this.path;
 };
 
+function colorHasEmbeddedAlpha(color) {
+  if (typeof color !== "string") {
+    return false;
+  }
+  var normalized = color.trim().toLowerCase();
+  return normalized;
+}
+
 mpld3.PathCollection = mpld3_PathCollection;
 
 mpld3_PathCollection.prototype = Object.create(mpld3_PlotElement.prototype);
