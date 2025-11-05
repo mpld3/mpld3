@@ -8,7 +8,7 @@ var mpld3 = {
   plugin_map: {}
 };
 
-mpld3.version = "0.5.11";
+mpld3.version = "0.5.12";
 
 mpld3.register_plugin = function(name, obj) {
   mpld3.plugin_map[name] = obj;
@@ -699,7 +699,13 @@ mpld3_Path.prototype.draw = function() {
   } else {
     this.path = this.ax.staticPaths.append("svg:path");
   }
-  this.path = this.path.attr("d", this.datafunc(this.data, this.pathcodes)).attr("class", "mpld3-path").style("stroke", this.props.edgecolor).style("stroke-width", this.props.edgewidth).style("stroke-dasharray", this.props.dasharray).style("stroke-opacity", this.props.alpha).style("fill", this.props.facecolor).style("fill-opacity", this.props.alpha).attr("vector-effect", "non-scaling-stroke");
+  this.path = this.path.attr("d", this.datafunc(this.data, this.pathcodes)).attr("class", "mpld3-path").style("stroke", this.props.edgecolor).style("stroke-width", this.props.edgewidth).style("stroke-dasharray", this.props.dasharray).style("fill", this.props.facecolor).attr("vector-effect", "non-scaling-stroke");
+  if (this.props.edgecolor.slice(0, 5) != "rgba(") {
+    this.path = this.path.style("stroke-opacity", this.props.alpha);
+  }
+  if (this.props.facecolor.slice(0, 5) != "rgba(") {
+    this.path = this.path.style("fill-opacity", this.props.alpha);
+  }
   if (this.props.offset !== null) {
     var offset = this.offsetcoords.xy(this.props.offset);
     this.path.attr("transform", "translate(" + offset + ")");
@@ -770,13 +776,20 @@ mpld3_PathCollection.prototype.pathFunc = function(d, i) {
 };
 
 mpld3_PathCollection.prototype.styleFunc = function(d, i) {
+  var stroke = getMod(this.props.edgecolors, i);
+  var fill = getMod(this.props.facecolors, i);
+  var alpha = getMod(this.props.alphas, i);
   var styles = {
-    stroke: getMod(this.props.edgecolors, i),
+    stroke: stroke,
     "stroke-width": getMod(this.props.edgewidths, i),
-    "stroke-opacity": getMod(this.props.alphas, i),
-    fill: getMod(this.props.facecolors, i),
-    "fill-opacity": getMod(this.props.alphas, i)
+    fill: fill
   };
+  if (stroke.slice(0, 5) != "rgba(") {
+    styles["stroke-opacity"] = alpha;
+  }
+  if (fill.slice(0, 5) != "rgba(") {
+    styles["fill-opacity"] = alpha;
+  }
   var ret = "";
   for (var key in styles) {
     ret += key + ":" + styles[key] + ";";
