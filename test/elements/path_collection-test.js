@@ -42,7 +42,7 @@ suite.addBatch({
                              "M 0 1 L 1 2 L 2 3 L 3 2 L 4 1 Z");
             },
             "has the expected style.": function(coll) {
-                assert.equal(coll.styleFunc([0, 0], 0), "stroke:#000000;stroke-width:1;stroke-opacity:0;fill:#0000FF;fill-opacity:0;");
+                assert.equal(coll.styleFunc([0, 0], 0), "stroke:#000000;stroke-width:1;fill:#0000FF;stroke-opacity:0;fill-opacity:0;");
             }
         }
     }

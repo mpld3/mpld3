@@ -79,13 +79,24 @@ mpld3_PathCollection.prototype.pathFunc = function(d, i) {
 };
 
 mpld3_PathCollection.prototype.styleFunc = function(d, i) {
+    var stroke = getMod(this.props.edgecolors, i);
+    var fill = getMod(this.props.facecolors, i);
+    var alpha = getMod(this.props.alphas, i);
+
     var styles = {
-        "stroke": getMod(this.props.edgecolors, i),
+        "stroke": stroke,
         "stroke-width": getMod(this.props.edgewidths, i),
-        "stroke-opacity": getMod(this.props.alphas, i),
-        "fill": getMod(this.props.facecolors, i),
-        "fill-opacity": getMod(this.props.alphas, i),
+        "fill": fill,
+    };
+
+    // Only set opacity if it's not encoded in the color, otherwise we're doubling it!
+    if (stroke.slice(0, 5) != "rgba(") {
+        styles["stroke-opacity"] = alpha;
     }
+    if (fill.slice(0, 5) != "rgba(") {
+        styles["fill-opacity"] = alpha;
+    }
+
     var ret = ""
     for (var key in styles) {
         ret += key + ":" + styles[key] + ";"
