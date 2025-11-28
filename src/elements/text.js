@@ -20,18 +20,23 @@ function mpld3_Text(ax, props) {
     mpld3_PlotElement.call(this, ax, props);
     this.text = this.props.text;
     this.position = this.props.position;
-    this.coords = new mpld3_Coordinates(this.props.coordinates, this.ax);
+    this.coords = new mpld3_Coordinates(this.props.coordinates, this.ax, this.fig);
 };
 
 mpld3_Text.prototype.draw = function() {
-    if (this.props.coordinates == "data") {
-        if (this.coords.zoomable) {
-            this.obj = this.ax.paths.append("text");
+    if (this.ax) {
+        if (this.props.coordinates == "data") {
+            if (this.coords.zoomable) {
+                this.obj = this.ax.paths.append("text");
+            } else {
+                this.obj = this.ax.staticPaths.append("text");
+            }
         } else {
-            this.obj = this.ax.staticPaths.append("text");
+            this.obj = this.ax.baseaxes.append("text");
         }
     } else {
-        this.obj = this.ax.baseaxes.append("text");
+        var target = this.fig.figureTextGroup || this.fig.canvas;
+        this.obj = target.append("text");
     }
 
     this.obj

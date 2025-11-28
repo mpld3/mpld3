@@ -4,7 +4,7 @@ Test creation of basic plot elements
 import numpy as np
 import matplotlib.pyplot as plt
 from .. import fig_to_dict, fig_to_html
-from numpy.testing import assert_equal
+from numpy.testing import assert_equal, assert_almost_equal
 
 
 def test_line():
@@ -135,6 +135,30 @@ def test_image():
     assert_equal(image['extent'], (2, 4, 3, 5))
     assert_equal(image['zorder'], 4)
     assert_equal(image['coordinates'], "data")
+
+
+def test_figure_texts_are_exported():
+    fig, ax = plt.subplots()
+    fig.suptitle("Hello title", x=0.25, y=0.9, ha="left")
+    fig.text(0.1, 0.05, "Footer", ha="center", va="center")
+
+    rep = fig_to_dict(fig)
+    texts = rep['texts']
+
+    assert_equal(len(texts), 2)
+
+    title = texts[0]
+    footer = texts[1]
+
+    assert_equal(title['text'], "Hello title")
+    assert_equal(title['coordinates'], "figure")
+    assert_almost_equal(title['position'][0], 0.25)
+    assert_almost_equal(title['position'][1], 0.9)
+
+    assert_equal(footer['text'], "Footer")
+    assert_equal(footer['coordinates'], "figure")
+    assert_almost_equal(footer['position'][0], 0.1)
+    assert_almost_equal(footer['position'][1], 0.05)
 
 
 def test_ticks():

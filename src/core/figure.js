@@ -12,6 +12,7 @@ mpld3_Figure.prototype.requiredProps = ["width", "height"];
 mpld3_Figure.prototype.defaultProps = {
     data: {},
     axes: [],
+    texts: [],
     plugins: [{type: "reset"}, {type: "zoom"}, {type: "boxzoom"}]
 };
 
@@ -32,6 +33,11 @@ function mpld3_Figure(figid, props) {
     this.axes = [];
     for (var i = 0; i < this.props.axes.length; i++)
         this.axes.push(new mpld3_Axes(this, this.props.axes[i]));
+
+    // Figure-level texts (e.g. suptitle, fig.text)
+    this.figuretexts = [];
+    for (var j = 0; j < this.props.texts.length; j++)
+        this.figuretexts.push(new mpld3.Text(this, this.props.texts[j]));
 
     // Connect the plugins to the figure
     this.plugins = [];
@@ -89,6 +95,12 @@ mpld3_Figure.prototype.draw = function() {
 
     for (var i = 0; i < this.axes.length; i++) {
         this.axes[i].draw();
+    }
+
+    this.figureTextGroup = this.canvas.append("g")
+        .attr("class", "mpld3-figure-texts");
+    for (var k = 0; k < this.figuretexts.length; k++) {
+        this.figuretexts[k].draw();
     }
 
     // disable zoom by default; plugins or toolbar items might change this.
