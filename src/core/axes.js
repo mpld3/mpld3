@@ -127,6 +127,9 @@ function mpld3_Axes(fig, props) {
         if (this.props.gridOn || axis.props.grid.gridOn) {
             this.elements.push(axis.getGrid());
         }
+        if (axis.props.minor_grid && axis.props.minor_grid.gridOn) {
+            this.elements.push(axis.getGrid('minor'));
+        }
     }
 
     // Add paths
