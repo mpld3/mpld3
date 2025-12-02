@@ -44,10 +44,13 @@ mpld3_Axis.prototype.defaultProps = {
     tickvalues: null,
     minor_tickvalues: null,
     tickformat: null,
+    minor_tickformat: null,
     filtered_tickvalues: null,
     filtered_tickformat: null,
     filtered_minortickvalues: null,
+    filtered_minortickformat: null,
     tickformat_formatter: null,
+    minor_tickformat_formatter: null,
     fontsize: "11px",
     fontcolor: "black",
     axiscolor: "black",
@@ -55,6 +58,7 @@ mpld3_Axis.prototype.defaultProps = {
     grid: {},
     minor_grid: {},
     minorticklength: null,
+    majorticklength: null,
     zorder: 0,
     visible: true
 };
@@ -83,6 +87,7 @@ function mpld3_Axis(ax, props) {
 
     this.tickNr = null;
     this.tickFormat = null;
+    this.minorTickFormat = null;
 }
 
 mpld3_Axis.prototype.getGrid = function(which) {
@@ -160,13 +165,47 @@ mpld3_Axis.prototype.wrapTicks = function() {
     }
 };
 
+function applyTickConfig(axisObj, values, formatterType, formatData, filteredFormat, tickFormatOverride, tickLength) {
+    if (values) {
+        axisObj = axisObj.tickValues(values);
+    }
+    if (tickLength !== undefined && tickLength !== null) {
+        axisObj = axisObj.tickSize(tickLength, 0, 0);
+    }
+    if (formatData === "") {
+        return axisObj.tickFormat(function() { return ""; });
+    }
+    if (formatterType == "index") {
+        return axisObj.tickFormat(function(d, i) {
+            return filteredFormat ? filteredFormat[d] : "";
+        });
+    } else if (formatterType == "percent" && formatData) {
+        return axisObj.tickFormat(function(d, i) {
+            var value = (d / formatData.xmax) * 100;
+            var decimals = formatData.decimals || 0;
+            var formatted_string = d3.format("." + decimals + "f")(value);
+            return formatted_string + formatData.symbol;
+        });
+    } else if (formatterType == "str_method" && formatData) {
+        return axisObj.tickFormat(function(d, i) {
+            var formatted_string = d3.format(formatData.format_string)(d);
+            return formatData.prefix + formatted_string + formatData.suffix;
+        });
+    } else if ((formatterType == "fixed" || formatterType == "func") && filteredFormat) {
+        return axisObj.tickFormat(function(d, i) {
+            return filteredFormat[i];
+        });
+    } else if (tickFormatOverride) {
+        return axisObj.tickFormat(tickFormatOverride);
+    }
+    return axisObj;
+}
+
 mpld3_Axis.prototype.draw = function() {
     var scale = (this.props.xy === 'x') ?
         this.parent.props.xscale : this.parent.props.yscale;
 
-    if (scale === 'date' && this.props.tickvalues) {
-        // Convert tick locations from floating point ordinal values
-        // to JavaScript Dates
+    if (scale === 'date') {
         var domain = (this.props.xy === 'x') ?
             this.parent.x.domain() :
             this.parent.y.domain();
@@ -176,9 +215,17 @@ mpld3_Axis.prototype.draw = function() {
         var ordinal_to_js_date = d3.scaleLinear()
             .domain(domain)
             .range(range);
-        this.props.tickvalues = this.props.tickvalues.map(function(value) {
-            return new Date(ordinal_to_js_date(value));
-        });
+
+        var convertTicks = function(prop) {
+            var values = this.props[prop];
+            if (!values) return;
+            this.props[prop] = values.map(function(value) {
+                return new Date(ordinal_to_js_date(value));
+            });
+        }.bind(this);
+
+        convertTicks('tickvalues');
+        convertTicks('minor_tickvalues');
     }
 
     var scaleMethod = {
@@ -194,37 +241,19 @@ mpld3_Axis.prototype.draw = function() {
 
     this.filter_ticks(this.axis.scale().domain());
 
-    if (this.props.tickformat_formatter == "index") {
-        this.axis = this.axis.tickFormat(function(d, i) {
-            return that.props.filtered_tickformat[d];
-        });
-    } else if (this.props.tickformat_formatter == "percent") {
-        this.axis = this.axis.tickFormat(function(d, i) {
-            var value = (d / that.props.tickformat.xmax) * 100;
-            var decimals = that.props.tickformat.decimals || 0;
-            var formatted_string = d3.format("."+decimals+"f")(value);
-            return formatted_string + that.props.tickformat.symbol;
-        });
-    } else if (this.props.tickformat_formatter == "str_method") {
-        this.axis = this.axis.tickFormat(function(d, i) {
-            var formatted_string = d3.format(that.props.tickformat.format_string)(d);
-            return that.props.tickformat.prefix + formatted_string + that.props.tickformat.suffix;
-        });
-    } else if (this.props.tickformat_formatter == "fixed" || this.props.tickformat_formatter == "func") {
-        this.axis = this.axis.tickFormat(function(d, i) {
-            return that.props.filtered_tickformat[i];
-        });
-    } else if (this.tickFormat) {
-        this.axis = this.axis.tickFormat(this.tickFormat);
-    }
-
     if (this.tickNr) {
         this.axis = this.axis.ticks(this.tickNr);
     }
 
     // NOTE (@vladh): Since we're always using `filtered_tickvalues`, let's
     // always filter on the axes. Is this a good idea? Well, I hope so!
-    this.axis = this.axis.tickValues(this.props.filtered_tickvalues)
+    this.axis = applyTickConfig(this.axis,
+        this.props.filtered_tickvalues,
+        this.props.tickformat_formatter,
+        this.props.tickformat,
+        this.props.filtered_tickformat,
+        this.tickFormat,
+        this.props.majorticklength || 3.5);
 
     /*
     Good tips:
@@ -241,10 +270,14 @@ mpld3_Axis.prototype.draw = function() {
     this.wrapTicks();
 
     if (this.props.filtered_minortickvalues && this.props.filtered_minortickvalues.length > 0) {
-        this.minorAxis = d3[scaleMethod](this.scale)
-            .tickValues(this.props.filtered_minortickvalues)
-            .tickSize(this.props.minorticklength || 4, 0, 0)
-            .tickFormat("");
+        this.minorAxis = d3[scaleMethod](this.scale);
+        this.minorAxis = applyTickConfig(this.minorAxis,
+            this.props.filtered_minortickvalues,
+            this.props.minor_tickformat_formatter,
+            this.props.minor_tickformat,
+            this.props.filtered_minortickformat,
+            this.minorTickFormat,
+            this.props.minorticklength || 2);
         this.minorElem = this.ax.baseaxes.append('g')
             .attr("transform", this.transform)
             .attr("class", this.cssclass + " minor")
@@ -304,6 +337,10 @@ mpld3_Axis.prototype.setTicks = function(nr, format) {
     this.tickFormat = format;
 };
 
+mpld3_Axis.prototype.setMinorTicks = function(format) {
+    this.minorTickFormat = format;
+};
+
 mpld3_Axis.prototype.filter_ticks = function(domain) {
     //Remove ticks outside axis limits.
     if (this.props.tickvalues) {
@@ -340,7 +377,15 @@ mpld3_Axis.prototype.filter_ticks = function(domain) {
         this.props.filtered_minortickvalues = this.props.minor_tickvalues.filter(function(d, i) {
             return minorFilteredTickIndices.includes(i);
         });
+        if (this.props.minor_tickformat) {
+            this.props.filtered_minortickformat = this.props.minor_tickformat.filter(function(d, i) {
+                return minorFilteredTickIndices.includes(i);
+            });
+        } else {
+            this.props.filtered_minortickformat = this.props.minor_tickformat;
+        }
     } else {
         this.props.filtered_minortickvalues = this.props.minor_tickvalues;
+        this.props.filtered_minortickformat = this.props.minor_tickformat;
     }
 }

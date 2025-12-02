@@ -177,3 +177,20 @@ def test_minor_tick_locations():
     rep = fig_to_dict(fig)
     y_axis = rep['axes'][0]['axes'][1]
     assert y_axis['minor_tickvalues'] == [0.5, 1.5, 2.5]
+
+
+def test_major_tick_length_export():
+    fig, ax = plt.subplots()
+    ax.tick_params(length=9)
+    rep = fig_to_dict(fig)
+    y_axis = rep['axes'][0]['axes'][1]
+    assert y_axis['majorticklength'] == 9
+
+
+def test_minor_tick_labels_default_hidden():
+    fig, ax = plt.subplots()
+    ax.yaxis.set_ticks([1, 2, 3])
+    ax.yaxis.set_ticks([1.1, 2.2, 3.3], minor=True)
+    rep = fig_to_dict(fig)
+    y_axis = rep['axes'][0]['axes'][1]
+    assert y_axis['minor_tickformat'] == ""
