@@ -85,9 +85,37 @@ function mpld3_Axis(ax, props) {
     this.cssclass = "mpld3-" + this.props.xy + "axis";
     this.scale = this.ax[this.props.xy + "dom"];
 
-    this.tickNr = null;
+    this.tickNr = this.props.nticks;
     this.tickFormat = null;
     this.minorTickFormat = null;
+}
+
+function logTickValues(scale) {
+    if (!scale || typeof scale.base !== "function") return null;
+    var domain = scale.domain();
+    var base = scale.base();
+    var lo = Math.min(domain[0], domain[1]);
+    var hi = Math.max(domain[0], domain[1]);
+    if (lo <= 0 || hi <= 0) return null;
+    var start = Math.ceil(Math.log(lo) / Math.log(base));
+    var end = Math.floor(Math.log(hi) / Math.log(base));
+    var ticks = [];
+    for (var exp = start; exp <= end; exp++) {
+        ticks.push(Math.pow(base, exp));
+    }
+    return ticks;
+}
+
+function formatLogLabel(value, base) {
+    var exp = Math.round(Math.log(value) / Math.log(base));
+    var supers = { "-": "\u207B", "0": "\u2070", "1": "\u00B9", "2": "\u00B2", "3": "\u00B3",
+                   "4": "\u2074", "5": "\u2075", "6": "\u2076", "7": "\u2077", "8": "\u2078", "9": "\u2079" };
+    var expStr = String(exp);
+    var sup = "";
+    for (var i = 0; i < expStr.length; i++) {
+        sup += supers[expStr[i]] || expStr[i];
+    }
+    return "10" + sup;
 }
 
 mpld3_Axis.prototype.getGrid = function(which) {
@@ -105,6 +133,9 @@ mpld3_Axis.prototype.getGrid = function(which) {
     var ticks = isMinor ? this.props.filtered_minortickvalues : this.props.filtered_tickvalues;
     if (ticks === null || ticks === undefined) {
         ticks = isMinor ? this.props.minor_tickvalues : this.props.tickvalues;
+    }
+    if (!ticks && this.props.scale === 'log' && !isMinor) {
+        ticks = logTickValues(this.scale);
     }
     gridprop.tickvalues = ticks;
     if (gridstyle) {
@@ -247,12 +278,25 @@ mpld3_Axis.prototype.draw = function() {
 
     // NOTE (@vladh): Since we're always using `filtered_tickvalues`, let's
     // always filter on the axes. Is this a good idea? Well, I hope so!
+    var majorTickValues = this.props.filtered_tickvalues;
+    if (!majorTickValues && this.props.scale === 'log') {
+        majorTickValues = logTickValues(this.axis.scale());
+    }
+    var majorFormatOverride = this.tickFormat;
+    if (!majorFormatOverride && this.props.scale === 'log' &&
+        this.props.tickformat_formatter === "" && !this.props.tickformat && !this.props.filtered_tickformat) {
+        var majorBase = this.axis.scale().base ? this.axis.scale().base() : 10;
+        majorFormatOverride = function(d) {
+            var p = Math.round(Math.log(d) / Math.log(majorBase));
+            return Math.pow(majorBase, p) === d ? formatLogLabel(d, majorBase) : "";
+        };
+    }
     this.axis = applyTickConfig(this.axis,
-        this.props.filtered_tickvalues,
+        majorTickValues,
         this.props.tickformat_formatter,
         this.props.tickformat,
         this.props.filtered_tickformat,
-        this.tickFormat,
+        majorFormatOverride,
         this.props.majorticklength || 3.5);
 
     /*
@@ -271,12 +315,17 @@ mpld3_Axis.prototype.draw = function() {
 
     if (this.props.filtered_minortickvalues && this.props.filtered_minortickvalues.length > 0) {
         this.minorAxis = d3[scaleMethod](this.scale);
+        var minorFormatOverride = this.minorTickFormat;
+        if (!minorFormatOverride && this.props.scale === 'log' &&
+            this.props.minor_tickformat_formatter === "") {
+            minorFormatOverride = function() { return ""; };
+        }
         this.minorAxis = applyTickConfig(this.minorAxis,
             this.props.filtered_minortickvalues,
             this.props.minor_tickformat_formatter,
             this.props.minor_tickformat,
             this.props.filtered_minortickformat,
-            this.minorTickFormat,
+            minorFormatOverride,
             this.props.minorticklength || 2);
         this.minorElem = this.ax.baseaxes.append('g')
             .attr("transform", this.transform)
@@ -306,7 +355,13 @@ mpld3_Axis.prototype.zoomed = function(transform) {
     // if we set tickValues for the axis, we are responsible for
     // updating them when they pan or zoom off of the chart
     this.filter_ticks(this.axis.scale().domain());
-    this.axis = this.axis.tickValues(this.props.filtered_tickvalues)
+    var scaledAxis = this.props.xy == 'x' ? (transform ? transform.rescaleX(this.scale) : this.axis.scale())
+                                          : (transform ? transform.rescaleY(this.scale) : this.axis.scale());
+    var majorValues = this.props.filtered_tickvalues;
+    if (!majorValues && this.props.scale === 'log') {
+        majorValues = logTickValues(scaledAxis);
+    }
+    this.axis = this.axis.tickValues(majorValues);
     if (transform) {
         if (this.props.xy == 'x') {
             this.elem.call(this.axis.scale(transform.rescaleX(this.scale)));
