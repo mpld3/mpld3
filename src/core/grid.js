@@ -49,8 +49,11 @@ mpld3_Grid.prototype.draw = function() {
         .tickValues(this.props.tickvalues)
         .tickSize(this.tickSize, 0, 0)
         .tickFormat("");
-    this.elem = this.ax.axes.append("g")
-        .attr("class", this.cssclass)
+    var beforePaths = this.ax.axes.select(".mpld3-paths-container");
+    var parent = this.ax.axes;
+    // Insert grids before data layers so they stay visually beneath lines/marks.
+    this.elem = beforePaths.empty() ? parent.append("g") : parent.insert("g", ".mpld3-paths-container");
+    this.elem.attr("class", this.cssclass)
         .attr("transform", this.transform)
         .call(this.grid);
 
