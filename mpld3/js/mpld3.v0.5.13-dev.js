@@ -597,16 +597,12 @@ mpld3_Axis.prototype.filter_ticks = function(domain) {
 
 mpld3.Coordinates = mpld3_Coordinates;
 
-function mpld3_Coordinates(trans, ax) {
+function mpld3_Coordinates(trans, ax, fig) {
   this.trans = trans;
-  if (typeof ax === "undefined") {
-    this.ax = null;
-    this.fig = null;
-    if (this.trans !== "display") throw "ax must be defined if transform != 'display'";
-  } else {
-    this.ax = ax;
-    this.fig = ax.fig;
-  }
+  this.ax = typeof ax === "undefined" ? null : ax;
+  this.fig = typeof fig === "undefined" ? this.ax ? this.ax.fig : null : fig;
+  if (this.ax === null && this.fig === null && this.trans !== "display") throw "ax or fig must be defined if transform != 'display'";
+  if (this.ax === null && this.trans !== "display" && this.trans !== "figure") throw "ax must be defined if transform != 'display' and transform != 'figure'";
   this.zoomable = this.trans === "data";
   this.x = this["x_" + this.trans];
   this.y = this["y_" + this.trans];
@@ -644,11 +640,11 @@ mpld3_Coordinates.prototype.y_axes = function(y) {
 };
 
 mpld3_Coordinates.prototype.x_figure = function(x) {
-  return x * this.fig.width - this.ax.position[0];
+  return this.ax ? x * this.fig.width - this.ax.position[0] : x * this.fig.width;
 };
 
 mpld3_Coordinates.prototype.y_figure = function(y) {
-  return (1 - y) * this.fig.height - this.ax.position[1];
+  return this.ax ? (1 - y) * this.fig.height - this.ax.position[1] : (1 - y) * this.fig.height;
 };
 
 mpld3.Path = mpld3_Path;
@@ -980,18 +976,23 @@ function mpld3_Text(ax, props) {
   mpld3_PlotElement.call(this, ax, props);
   this.text = this.props.text;
   this.position = this.props.position;
-  this.coords = new mpld3_Coordinates(this.props.coordinates, this.ax);
+  this.coords = new mpld3_Coordinates(this.props.coordinates, this.ax, this.fig);
 }
 
 mpld3_Text.prototype.draw = function() {
-  if (this.props.coordinates == "data") {
-    if (this.coords.zoomable) {
-      this.obj = this.ax.paths.append("text");
+  if (this.ax) {
+    if (this.props.coordinates == "data") {
+      if (this.coords.zoomable) {
+        this.obj = this.ax.paths.append("text");
+      } else {
+        this.obj = this.ax.staticPaths.append("text");
+      }
     } else {
-      this.obj = this.ax.staticPaths.append("text");
+      this.obj = this.ax.baseaxes.append("text");
     }
   } else {
-    this.obj = this.ax.baseaxes.append("text");
+    var target = this.fig.figureTextGroup || this.fig.canvas;
+    this.obj = target.append("text");
   }
   this.obj.attr("class", "mpld3-text").text(this.text).style("text-anchor", this.props.h_anchor).style("dominant-baseline", this.props.v_baseline).style("font-size", this.props.fontsize).style("fill", this.props.color).style("opacity", this.props.alpha);
   this.applyTransform();
@@ -1849,6 +1850,7 @@ mpld3_Figure.prototype.requiredProps = [ "width", "height" ];
 mpld3_Figure.prototype.defaultProps = {
   data: {},
   axes: [],
+  texts: [],
   plugins: [ {
     type: "reset"
   }, {
@@ -1868,6 +1870,8 @@ function mpld3_Figure(figid, props) {
   this.root = d3.select("#" + figid).append("div").style("position", "relative");
   this.axes = [];
   for (var i = 0; i < this.props.axes.length; i++) this.axes.push(new mpld3_Axes(this, this.props.axes[i]));
+  this.figuretexts = [];
+  for (var j = 0; j < this.props.texts.length; j++) this.figuretexts.push(new mpld3.Text(this, this.props.texts[j]));
   this.plugins = [];
   this.pluginsByType = {};
   this.props.plugins.forEach(function(plugin) {
@@ -1905,6 +1909,10 @@ mpld3_Figure.prototype.draw = function() {
   this.canvas = this.root.append("svg:svg").attr("class", "mpld3-figure").attr("width", this.width).attr("height", this.height);
   for (var i = 0; i < this.axes.length; i++) {
     this.axes[i].draw();
+  }
+  this.figureTextGroup = this.canvas.append("g").attr("class", "mpld3-figure-texts");
+  for (var k = 0; k < this.figuretexts.length; k++) {
+    this.figuretexts[k].draw();
   }
   this.disableZoom();
   for (var i = 0; i < this.plugins.length; i++) {

@@ -104,6 +104,7 @@ class MPLD3Renderer(Renderer):
                                 height=props['figheight'] * props['dpi'],
                                 axes=[],
                                 data={},
+                                texts=[],
                                 id=get_id(fig))
 
     def close_figure(self, fig):
@@ -245,6 +246,21 @@ class MPLD3Renderer(Renderer):
                     zorder=style['zorder'],
                     id=get_id(mplobj))
         self.axes_json['texts'].append(text)
+
+    def draw_figure_text(self, text, position, coordinates, style,
+                         text_type=None, mplobj=None):
+        text = dict(text=text,
+                    position=tuple(position),
+                    coordinates=coordinates,
+                    h_anchor=TEXT_HA_DICT[style['halign']],
+                    v_baseline=TEXT_VA_DICT[style['valign']],
+                    rotation=-style['rotation'],
+                    fontsize=style['fontsize'],
+                    color=style['color'],
+                    alpha=style['alpha'],
+                    zorder=style['zorder'],
+                    id=get_id(mplobj))
+        self.figure_json['texts'].append(text)
 
     def draw_image(self, imdata, extent, coordinates, style, mplobj=None):
         image = dict(data=imdata, extent=extent, coordinates=coordinates)
