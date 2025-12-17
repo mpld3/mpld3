@@ -36,6 +36,7 @@ mpld3_Text.prototype.draw = function() {
 
     this.obj
         .attr("class", "mpld3-text")
+        .attr("xml:space", "preserve")
         .text(this.text)
         .style("text-anchor", this.props.h_anchor)
         .style("dominant-baseline", this.props.v_baseline)
