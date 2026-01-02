@@ -211,7 +211,11 @@ class MPLD3Renderer(Renderer):
                              offsets, offset_coordinates, offset_order,
                              styles, mplobj=None):
         if len(paths) != 0:
+            dasharrays = styles.get('dasharray', None)
+            if dasharrays is None:
+                dasharrays = ["none"]
             styles = dict(alphas=[styles['alpha']],
+                          dasharrays=list(dasharrays),
                           edgecolors=[export_color(ec)
                                       for ec in styles['edgecolor']],
                           facecolors=[export_color(fc)
