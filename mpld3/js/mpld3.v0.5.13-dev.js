@@ -993,7 +993,7 @@ mpld3_Text.prototype.draw = function() {
   } else {
     this.obj = this.ax.baseaxes.append("text");
   }
-  this.obj.attr("class", "mpld3-text").text(this.text).style("text-anchor", this.props.h_anchor).style("dominant-baseline", this.props.v_baseline).style("font-size", this.props.fontsize).style("fill", this.props.color).style("opacity", this.props.alpha);
+  this.obj.attr("class", "mpld3-text").attr("xml:space", "preserve").text(this.text).style("text-anchor", this.props.h_anchor).style("dominant-baseline", this.props.v_baseline).style("font-size", this.props.fontsize).style("fill", this.props.color).style("opacity", this.props.alpha);
   this.applyTransform();
 };
 
