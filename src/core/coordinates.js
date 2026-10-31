@@ -3,17 +3,14 @@
 /*   `trans` is one of ["data", "figure", "axes", "display"]           */
 mpld3.Coordinates = mpld3_Coordinates;
 
-function mpld3_Coordinates(trans, ax) {
+function mpld3_Coordinates(trans, ax, fig) {
     this.trans = trans;
-    if (typeof(ax) === "undefined") {
-        this.ax = null;
-        this.fig = null;
-        if (this.trans !== "display")
-            throw "ax must be defined if transform != 'display'";
-    } else {
-        this.ax = ax;
-        this.fig = ax.fig;
-    }
+    this.ax = (typeof(ax) === "undefined") ? null : ax;
+    this.fig = (typeof(fig) === "undefined") ? (this.ax ? this.ax.fig : null) : fig;
+    if (this.ax === null && this.fig === null && this.trans !== "display")
+        throw "ax or fig must be defined if transform != 'display'";
+    if (this.ax === null && this.trans !== "display" && this.trans !== "figure")
+        throw "ax must be defined if transform != 'display' and transform != 'figure'";
     this.zoomable = (this.trans === "data");
     this.x = this["x_" + this.trans];
     this.y = this["y_" + this.trans];
@@ -46,8 +43,8 @@ mpld3_Coordinates.prototype.y_axes = function(y) {
     return this.ax.height * (1 - y);
 }
 mpld3_Coordinates.prototype.x_figure = function(x) {
-    return x * this.fig.width - this.ax.position[0];
+    return this.ax ? x * this.fig.width - this.ax.position[0] : x * this.fig.width;
 }
 mpld3_Coordinates.prototype.y_figure = function(y) {
-    return (1 - y) * this.fig.height - this.ax.position[1];
+    return this.ax ? (1 - y) * this.fig.height - this.ax.position[1] : (1 - y) * this.fig.height;
 }

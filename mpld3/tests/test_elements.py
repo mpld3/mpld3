@@ -4,7 +4,7 @@ Test creation of basic plot elements
 import numpy as np
 import matplotlib.pyplot as plt
 from .. import fig_to_dict, fig_to_html
-from numpy.testing import assert_equal
+from numpy.testing import assert_equal, assert_almost_equal
 
 
 def test_line():
@@ -106,8 +106,8 @@ def test_text():
 
     assert_equal(list(sorted(text.keys())),
                  ['alpha', 'color', 'coordinates', 'fontsize', 'h_anchor',
-                  'id', 'position', 'rotation', 'text', 'v_baseline',
-                  'zorder'])
+                  'id', 'linespacing', 'm_align', 'position', 'rotation',
+                  'text', 'v_align', 'v_baseline', 'zorder'])
     assert_equal(text['alpha'], 0.7)
     assert_equal(text['color'], "#FF0000")
     assert_equal(text['text'], "abcde")
@@ -118,6 +118,27 @@ def test_text():
     assert_equal(text['v_baseline'], 'central')
     assert_equal(text['zorder'], 3)
     assert_equal(text['coordinates'], "data")
+
+
+def test_text_bbox():
+    fig, ax = plt.subplots()
+    ax.text(0.1, 0.1, "boxed",
+            bbox=dict(boxstyle="round,pad=0.3",
+                      fc="yellow", ec="black", lw=2, alpha=0.5))
+    rep = fig_to_dict(fig)
+    text = rep['axes'][0]['texts'][0]
+
+    assert_equal(list(sorted(text.keys())),
+                 ['alpha', 'bbox', 'color', 'coordinates', 'fontsize',
+                  'h_anchor', 'id', 'linespacing', 'm_align', 'position',
+                  'rotation', 'text', 'v_align', 'v_baseline', 'zorder'])
+    bbox = text['bbox']
+    assert_equal(bbox['facecolor'], "#FFFF00")
+    assert_equal(bbox['edgecolor'], "#000000")
+    assert_equal(bbox['edgewidth'], 2)
+    assert_almost_equal(bbox['alpha'], 0.5)
+    assert_equal(bbox['boxstyle'], "round")
+    assert_almost_equal(bbox['pad'], 0.3)
 
 
 def test_image():
@@ -135,6 +156,42 @@ def test_image():
     assert_equal(image['extent'], (2, 4, 3, 5))
     assert_equal(image['zorder'], 4)
     assert_equal(image['coordinates'], "data")
+
+
+def test_figure_texts_are_exported():
+    fig, ax = plt.subplots()
+    fig.suptitle("Hello title", x=0.25, y=0.9, ha="left")
+    fig.text(0.1, 0.05, "Footer", ha="center", va="center")
+
+    rep = fig_to_dict(fig)
+    texts = rep['texts']
+
+    assert_equal(len(texts), 2)
+
+    title = texts[0]
+    footer = texts[1]
+
+    assert_equal(title['text'], "Hello title")
+    assert_equal(title['coordinates'], "figure")
+    assert_almost_equal(title['position'][0], 0.25)
+    assert_almost_equal(title['position'][1], 0.9)
+
+    assert_equal(footer['text'], "Footer")
+    assert_equal(footer['coordinates'], "figure")
+    assert_almost_equal(footer['position'][0], 0.1)
+    assert_almost_equal(footer['position'][1], 0.05)
+
+
+def test_left_right_titles_exported():
+    fig, ax = plt.subplots()
+    ax.set_title("Left", loc="left")
+    ax.set_title("Right", loc="right")
+
+    rep = fig_to_dict(fig)
+    texts = [text['text'] for text in rep['axes'][0]['texts']]
+
+    assert "Left" in texts
+    assert "Right" in texts
 
 
 def test_ticks():

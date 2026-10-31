@@ -14,7 +14,7 @@ def test_basic_figure():
     plt.close(fig)
 
     assert_equal(list(sorted(rep.keys())),
-                 ['axes', 'data', 'height', 'id', 'plugins', 'width'])
+                 ['axes', 'data', 'height', 'id', 'plugins', 'texts', 'width'])
     assert_equal(rep['width'], size[0] * dpi)
     assert_equal(rep['height'], size[1] * dpi)
     assert_equal(rep['data'], {})
