@@ -11,6 +11,7 @@ mpld3_Grid.prototype.defaultProps = {
     color: "gray",
     dasharray: "2,2",
     alpha: "0.5",
+    linewidth: 1,
     nticks: 10,
     gridOn: true,
     tickvalues: null,
@@ -54,12 +55,15 @@ mpld3_Grid.prototype.draw = function() {
         .attr("transform", this.transform)
         .call(this.grid);
 
+    this.applyGridStyle();
+
     // We create header-level CSS to style these elements, because
     // zooming/panning creates new elements with these classes.
     mpld3.insert_css("div#" + this.ax.fig.figid +
         " ." + this.cssclass + " .tick", {
             "stroke": this.props.color,
             "stroke-dasharray": this.props.dasharray,
+            "stroke-width": this.props.linewidth,
             "stroke-opacity": this.props.alpha
         });
     mpld3.insert_css("div#" + this.ax.fig.figid +
@@ -84,4 +88,13 @@ mpld3_Grid.prototype.zoomed = function(transform) {
         // Backwards compatibility.
         this.elem.call(this.grid);
     }
+    this.applyGridStyle();
+};
+
+mpld3_Grid.prototype.applyGridStyle = function() {
+    this.elem.selectAll(".tick line")
+        .attr("stroke", this.props.color)
+        .attr("stroke-dasharray", this.props.dasharray)
+        .attr("stroke-width", this.props.linewidth)
+        .attr("stroke-opacity", this.props.alpha);
 };
