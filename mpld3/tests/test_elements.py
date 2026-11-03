@@ -154,3 +154,26 @@ def test_ticks():
     rep = fig_to_html(plt.gcf())
     # TODO: use casperjs here if available to confirm that the xticks
     # are rendeder as expected
+
+
+def test_minor_grid_export():
+    fig, ax = plt.subplots()
+    ax.set_ylim(0, 3)
+    ax.minorticks_on()
+    ax.grid(which='minor', axis='y', c='blue', ls='--', lw=2)
+    rep = fig_to_dict(fig)
+    y_axis = rep['axes'][0]['axes'][1]
+    assert y_axis['minor_grid']['gridOn'] is True
+    assert y_axis['minor_grid']['color'] == '#0000FF'
+    assert y_axis['minor_grid']['dasharray'] == '6,6'
+    assert y_axis['minor_grid']['linewidth'] == 2
+    assert len(y_axis['minor_tickvalues']) > 0
+
+
+def test_minor_tick_locations():
+    fig, ax = plt.subplots()
+    ax.minorticks_on()
+    ax.yaxis.set_minor_locator(plt.FixedLocator([0.5, 1.5, 2.5]))
+    rep = fig_to_dict(fig)
+    y_axis = rep['axes'][0]['axes'][1]
+    assert y_axis['minor_tickvalues'] == [0.5, 1.5, 2.5]
