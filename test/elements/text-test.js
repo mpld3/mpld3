@@ -43,4 +43,45 @@ suite.addBatch({
     }
 });
 
+suite.addBatch({
+    "Zooming text": {
+        topic: load("elements/path").document(),
+        "keeps data text at a fixed size while its anchor moves": function(mpld3) {
+            var d3 = require("d3");
+            var container = document.createElement("div");
+            container.id = "zoom-chart";
+            document.body.appendChild(container);
+            var fig = new mpld3.Figure("zoom-chart", {
+                width: 400, height: 300, plugins: [],
+                axes: [{xlim: [0, 4], ylim: [0, 4], axes: [], texts: [
+                    {text: "data", position: [1, 3], rotation: 30},
+                    {text: "axes", position: [0.5, 0.5], coordinates: "axes"}
+                ]}]
+            });
+            fig.draw();
+            var ax = fig.axes[0];
+            var texts = ax.elements.filter(function(element) { return element instanceof mpld3.Text; });
+            var text = texts[0], fixedText = texts[1];
+            var pos = text.coords.xy(text.position);
+            var rotation = "rotate(30," + pos + ")";
+            var parent = text.obj.node().parentNode;
+            ax.bindZoom();
+            ax.zoom.extent([[0, 0], [ax.width, ax.height]]);
+            [2, 0.5, 4].forEach(function(k) {
+                ax.doZoom(false, d3.zoomIdentity.translate(10, 20).scale(k), false);
+                assert.equal(text.obj.attr("transform"),
+                    "translate(" + pos + ")scale(" + (1 / k) + ")translate(" +
+                    [-pos[0], -pos[1]] + ")" + rotation);
+                assert.equal(text.obj.attr("x"), pos[0]);
+                assert.equal(text.obj.attr("y"), pos[1]);
+                assert.equal(text.obj.node().parentNode, parent);
+                assert.equal(fixedText.obj.attr("transform"), null);
+            });
+            ax.doZoom(false, d3.zoomIdentity, false);
+            assert.equal(text.obj.attr("transform"), rotation);
+            container.parentNode.removeChild(container);
+        }
+    }
+});
+
 suite.export(module);

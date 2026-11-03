@@ -1001,10 +1001,17 @@ mpld3_Text.prototype.elements = function(d) {
   return d3.select(this.obj);
 };
 
-mpld3_Text.prototype.applyTransform = function() {
+mpld3_Text.prototype.applyTransform = function(zoomScale) {
   var pos = this.coords.xy(this.position);
+  var transform = "";
   this.obj.attr("x", pos[0]).attr("y", pos[1]);
-  if (this.props.rotation) this.obj.attr("transform", "rotate(" + this.props.rotation + "," + pos + ")");
+  if (zoomScale && zoomScale !== 1) transform = "translate(" + pos + ")scale(" + 1 / zoomScale + ")translate(" + [ -pos[0], -pos[1] ] + ")";
+  if (this.props.rotation) transform += "rotate(" + this.props.rotation + "," + pos + ")";
+  this.obj.attr("transform", transform || null);
+};
+
+mpld3_Text.prototype.zoomed = function(transform) {
+  if (this.coords.zoomable) this.applyTransform(transform.k);
 };
 
 mpld3.Axes = mpld3_Axes;
