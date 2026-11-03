@@ -69,6 +69,7 @@ mpld3_PathCollection.prototype.transformFunc = function(d, i) {
 
 mpld3_PathCollection.prototype.pathFunc = function(d, i) {
     return mpld3_path()
+        .defined(this.pathFinite.bind(this))
         .x(function(d) {
             return this.pathcoords.x(d[0]);
         }.bind(this))
@@ -76,6 +77,11 @@ mpld3_PathCollection.prototype.pathFunc = function(d, i) {
             return this.pathcoords.y(d[1]);
         }.bind(this))
         .apply(this, getMod(this.props.paths, i));
+};
+
+mpld3_PathCollection.prototype.pathFinite = function(d, i) {
+    return isFinite(this.pathcoords.x(d[0])) &&
+        isFinite(this.pathcoords.y(d[1]));
 };
 
 mpld3_PathCollection.prototype.styleFunc = function(d, i) {
@@ -106,7 +112,11 @@ mpld3_PathCollection.prototype.styleFunc = function(d, i) {
 
 mpld3_PathCollection.prototype.allFinite = function(d) {
     if (d instanceof Array) {
-        return (d.length == d.filter(isFinite).length);
+        var x = d[this.props.xindex];
+        var y = d[this.props.yindex];
+        return isFinite(x) && isFinite(y) &&
+            isFinite(this.offsetcoords.x(x)) &&
+            isFinite(this.offsetcoords.y(y));
     } else {
         return true;
     }
@@ -121,7 +131,7 @@ mpld3_PathCollection.prototype.draw = function() {
     }
 
     this.pathsobj = this.group.selectAll("paths")
-        .data(this.offsets.filter(this.allFinite))
+        .data(this.offsets.filter(this.allFinite.bind(this)))
         .enter().append("svg:path")
         .attr("d", this.pathFunc.bind(this))
         .attr("class", "mpld3-path")
