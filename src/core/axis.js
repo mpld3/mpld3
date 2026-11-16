@@ -82,10 +82,11 @@ function mpld3_Axis(ax, props) {
 }
 
 mpld3_Axis.prototype.getGrid = function() {
+    this.filter_ticks(this.scale.domain());
     var gridprop = {
         nticks: this.props.nticks,
         zorder: this.props.zorder,
-        tickvalues: null,
+        tickvalues: this.props.filtered_tickvalues ?? this.props.tickvalues,
         xy: this.props.xy
     }
     if (this.props.grid) {
