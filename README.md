@@ -1,8 +1,10 @@
 mpld3: A D3 Viewer for Matplotlib
 =================================
 
-- Status: We are [looking for a new maintainer](https://github.com/mpld3/mpld3/issues/551)!
-- Interim maintainers: [@vladh](https://github.com/vladh), [@cliffckerr](https://github.com/cliffckerr)
+- Maintenance status: The maintainers are not currently able to dedicate time to maintaining this project, but we will
+  merge changes on a best-effort basis.
+- Maintainers: [@vladh](https://github.com/vladh), [@lucasb-eyer](https://github.com/lucasb-eyer),
+  [@cliffckerr](https://github.com/cliffckerr)
 - Original author: Jake Vanderplas <jakevdp@cs.washington.edu>
 - License: BSD 3-clause
 
