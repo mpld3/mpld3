@@ -106,8 +106,8 @@ def test_text():
 
     assert_equal(list(sorted(text.keys())),
                  ['alpha', 'color', 'coordinates', 'fontsize', 'h_anchor',
-                  'id', 'position', 'rotation', 'text', 'v_baseline',
-                  'zorder'])
+                  'id', 'linespacing', 'm_align', 'position', 'rotation',
+                  'text', 'v_align', 'v_baseline', 'zorder'])
     assert_equal(text['alpha'], 0.7)
     assert_equal(text['color'], "#FF0000")
     assert_equal(text['text'], "abcde")
@@ -135,6 +135,18 @@ def test_image():
     assert_equal(image['extent'], (2, 4, 3, 5))
     assert_equal(image['zorder'], 4)
     assert_equal(image['coordinates'], "data")
+
+
+def test_left_right_titles_exported():
+    fig, ax = plt.subplots()
+    ax.set_title("Left", loc="left")
+    ax.set_title("Right", loc="right")
+
+    rep = fig_to_dict(fig)
+    texts = [text['text'] for text in rep['axes'][0]['texts']]
+
+    assert "Left" in texts
+    assert "Right" in texts
 
 
 def test_ticks():
