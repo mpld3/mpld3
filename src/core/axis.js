@@ -42,15 +42,19 @@ mpld3_Axis.prototype.requiredProps = ["position"];
 mpld3_Axis.prototype.defaultProps = {
     nticks: 10,
     tickvalues: null,
+    minor_tickvalues: null,
     tickformat: null,
     filtered_tickvalues: null,
     filtered_tickformat: null,
+    filtered_minortickvalues: null,
     tickformat_formatter: null,
     fontsize: "11px",
     fontcolor: "black",
     axiscolor: "black",
     scale: "linear",
     grid: {},
+    minor_grid: {},
+    minorticklength: null,
     zorder: 0,
     visible: true
 };
@@ -81,16 +85,26 @@ function mpld3_Axis(ax, props) {
     this.tickFormat = null;
 }
 
-mpld3_Axis.prototype.getGrid = function() {
+mpld3_Axis.prototype.getGrid = function(which) {
+    which = which || 'major';
+    this.filter_ticks(this.scale.domain());
+    var isMinor = which === 'minor';
     var gridprop = {
         nticks: this.props.nticks,
         zorder: this.props.zorder,
         tickvalues: null,
         xy: this.props.xy
     }
-    if (this.props.grid) {
-        for (var key in this.props.grid) {
-            gridprop[key] = this.props.grid[key];
+    var gridstyle = isMinor ? this.props.minor_grid : this.props.grid;
+    // NOTE: This could be simplified with ?? but our current uglify doesn't support it?
+    var ticks = isMinor ? this.props.filtered_minortickvalues : this.props.filtered_tickvalues;
+    if (ticks === null || ticks === undefined) {
+        ticks = isMinor ? this.props.minor_tickvalues : this.props.tickvalues;
+    }
+    gridprop.tickvalues = ticks;
+    if (gridstyle) {
+        for (var key in gridstyle) {
+            gridprop[key] = gridprop[key] || gridstyle[key];
         }
     }
     return new mpld3_Grid(this.ax, gridprop);
@@ -226,6 +240,20 @@ mpld3_Axis.prototype.draw = function() {
 
     this.wrapTicks();
 
+    if (this.props.filtered_minortickvalues && this.props.filtered_minortickvalues.length > 0) {
+        this.minorAxis = d3[scaleMethod](this.scale)
+            .tickValues(this.props.filtered_minortickvalues)
+            .tickSize(this.props.minorticklength || 4, 0, 0)
+            .tickFormat("");
+        this.minorElem = this.ax.baseaxes.append('g')
+            .attr("transform", this.transform)
+            .attr("class", this.cssclass + " minor")
+            .call(this.minorAxis);
+    } else {
+        this.minorAxis = null;
+        this.minorElem = null;
+    }
+
     // We create header-level CSS to style these elements, because
     // zooming/panning creates new elements with these classes.
     mpld3.insert_css("div#" + this.ax.fig.figid + " ." + this.cssclass + " line, " + " ." + this.cssclass + " path", {
@@ -255,6 +283,19 @@ mpld3_Axis.prototype.zoomed = function(transform) {
         this.wrapTicks();
     } else {
         this.elem.call(this.axis);
+    }
+
+    if (this.minorAxis) {
+        this.minorAxis = this.minorAxis.tickValues(this.props.filtered_minortickvalues || []);
+        if (transform) {
+            if (this.props.xy == 'x') {
+                this.minorElem.call(this.minorAxis.scale(transform.rescaleX(this.scale)));
+            } else {
+                this.minorElem.call(this.minorAxis.scale(transform.rescaleY(this.scale)));
+            }
+        } else {
+            this.minorElem.call(this.minorAxis);
+        }
     }
 };
 
@@ -286,5 +327,20 @@ mpld3_Axis.prototype.filter_ticks = function(domain) {
     } else {
         this.props.filtered_tickvalues = this.props.tickvalues;
         this.props.filtered_tickformat = this.props.tickformat;
+    }
+
+    if (this.props.minor_tickvalues) {
+        const that = this;
+        const minorFilteredTickIndices = this.props.minor_tickvalues.map(function(d, i) {
+            return i;
+        }).filter(function(d, i) {
+            const v = that.props.minor_tickvalues[d];
+            return (v >= domain[0]) && (v <= domain[1]);
+        });
+        this.props.filtered_minortickvalues = this.props.minor_tickvalues.filter(function(d, i) {
+            return minorFilteredTickIndices.includes(i);
+        });
+    } else {
+        this.props.filtered_minortickvalues = this.props.minor_tickvalues;
     }
 }
