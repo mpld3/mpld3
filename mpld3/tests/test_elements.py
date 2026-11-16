@@ -60,10 +60,12 @@ def test_scatter():
     points = axrep['collections'][0]
 
     assert_equal(list(sorted(points.keys())),
-                 ['alphas', 'edgecolors', 'edgewidths', 'facecolors', 'id',
-                  'offsetcoordinates', 'offsets', 'pathcoordinates', 'paths',
-                  'pathtransforms', 'xindex', 'yindex', 'zorder'])
+                 ['alphas', 'dasharrays', 'edgecolors', 'edgewidths',
+                  'facecolors', 'id', 'offsetcoordinates', 'offsets',
+                  'pathcoordinates', 'paths', 'pathtransforms', 'xindex',
+                  'yindex', 'zorder'])
     assert_equal(points['alphas'], [0.3])
+    assert_equal(points['dasharrays'], ['none'])
     assert_equal(points['zorder'], 10)
     assert_equal(points['edgecolors'], ['rgba(0, 0, 255, 0.3)'])
     assert_equal(points['facecolors'], ['rgba(255, 0, 0, 0.3)'])
@@ -118,6 +120,17 @@ def test_text():
     assert_equal(text['v_baseline'], 'central')
     assert_equal(text['zorder'], 3)
     assert_equal(text['coordinates'], "data")
+
+
+def test_hlines_linestyle():
+    fig, ax = plt.subplots()
+    ax.hlines([0, 1], [0, 0], [1, 2], linestyles='--')
+    rep = fig_to_dict(fig)
+    collection = rep['axes'][0]['collections'][0]
+
+    assert 'dasharrays' in collection
+    assert len(collection['dasharrays']) > 0
+    assert collection['dasharrays'][0] not in (None, 'none')
 
 
 def test_image():

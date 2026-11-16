@@ -17,6 +17,7 @@ mpld3_PathCollection.prototype.defaultProps = {
     edgecolors: ["#000000"],
     drawstyle: "none",
     edgewidths: [1.0],
+    dasharrays: ["none"],
     facecolors: ["#0000FF"],
     alphas: [1.0],
     zorder: 2
@@ -86,6 +87,7 @@ mpld3_PathCollection.prototype.styleFunc = function(d, i) {
     var styles = {
         "stroke": stroke,
         "stroke-width": getMod(this.props.edgewidths, i),
+        "stroke-dasharray": getMod(this.props.dasharrays, i),
         "fill": fill,
     };
 
